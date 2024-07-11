@@ -26,6 +26,7 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument(
         "--output", '-o',
     )
+    return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
