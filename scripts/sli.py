@@ -33,7 +33,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     pipe = pipeline(
         'audio-classification', 
         args.model,
-        device=args.device,
+        device=(torch.device(args.device)),
     )
     dataset = load_from_disk(args.dataset)
 
