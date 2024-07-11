@@ -41,18 +41,21 @@ def compare_predictions(row: Dict[str, Any]):
     pred_col = 'output'
 
     label = row[label_col].lower()
-    # TODO: allow using decision threshold for P(ENG)
     pred = row[pred_col]
-    pred_max = get_max_score(pred)
-    pred_label = pred_max['label']
-    pred_score = pred_max['score']
+    pred.sort(key=lambda x:x['score'], reverse=True)
 
+    pred_label = pred[0]['label']
+    pred_score = pred[0]['score']
+
+    eng_score = [score for score in pred if score['label'].lower()=='eng'][0]['score']
+
+    # TODO: allow using decision threshold for P(ENG) to determine accuracy
+    # TODO: allow metalang to be set dynamically
     # correct if model predicts same label
     # in practice this will be when model predicts 'eng' for English
     if label==pred_label:
         acc=1
     # correct if model predicts non-English for non-English
-    # TODO: allow metalang to be set dynamically
     elif (label!='eng') and (pred_label!='eng'):
         acc=1
     # incorrect otherwise
@@ -63,12 +66,9 @@ def compare_predictions(row: Dict[str, Any]):
         "label": label,
         "pred": pred_label,
         "pred_score": pred_score,
+        "eng_score": eng_score,
         "acc": acc,
     }
-
-def get_max_score(score_list: List[Dict[str, Union[str, float]]]):
-    scores_sorted = sorted(score_list, key=lambda x:x['score'], reverse=True)
-    return scores_sorted[0]
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
