@@ -91,7 +91,6 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         desc='SLI pipeline'
     ):
         output.append(batch_output)
-    # output=pipe(dataset['audio'], batch_size=args.batch_size)
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
