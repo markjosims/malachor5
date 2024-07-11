@@ -79,10 +79,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # run inference on dataset using pipeline
     # output=pipe(dataset['audio'], batch_size=args.batch_size)
-    output = dataset.map(lambda r: pipe(r['audio']), batch_size=args.batch_size)
+    output = dataset.map(lambda r: {'output': pipe(r['audio'])}, batch_size=args.batch_size)
 
     # calculate accuracy on output
-    dataset = dataset.add_column("output", output)
+    # dataset = dataset.add_column("output", output)
     output_metrics = dataset.map(compare_predictions)
     output_metrics = output_metrics.to_pandas()
 
