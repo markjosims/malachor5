@@ -85,7 +85,11 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     # run inference on dataset using pipeline
     ds_gen = dataset_generator(dataset)
     output = []
-    for batch_output in tqdm(pipe(ds_gen, batch_size=args.batch_size)):
+    for batch_output in tqdm(
+        pipe(ds_gen, batch_size=args.batch_size),
+        total=len(dataset),
+        desc='SLI pipeline'
+    ):
         output.append(batch_output)
     # output=pipe(dataset['audio'], batch_size=args.batch_size)
 
