@@ -45,23 +45,25 @@ def compare_predictions(row: Dict[str, Any]):
     pred = row[pred_col]
     pred_max = get_max_score(pred)
     pred_label = pred_max['label']
+    pred_score = pred_max['score']
 
     # correct if model predicts same label
     # in practice this will be when model predicts 'eng' for English
     if label==pred_label:
-        score=1
+        acc=1
     # correct if model predicts non-English for non-English
     # TODO: allow metalang to be set dynamically
     elif (label!='eng') and (pred_label!='eng'):
-        score=1
+        acc=1
     # incorrect otherwise
     else:
-        score=0
+        acc=0
 
     return {
         "label": label,
         "pred": pred_label,
-        "score": score,
+        "pred_score": pred_score,
+        "acc": acc,
     }
 
 def get_max_score(score_list: List[Dict[str, Union[str, float]]]):
