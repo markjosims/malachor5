@@ -1,13 +1,18 @@
 from transformers import pipeline
-from datasets import load_from_disk, Audio
-from typing import Optional, Sequence, Dict, Any, Union, List
+from datasets import load_from_disk, Audio, Dataset
+from typing import Optional, Sequence, Dict, Any, Union, List, Generator
 from argparse import ArgumentParser
 import torch
 import os
+from tqdm import tqdm
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
 DEVICE = 0 if torch.cuda.is_available() else -1
+
+def dataset_generator(dataset: Dataset) -> Generator:
+    for row in dataset:
+        yield row['audio']
 
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
@@ -78,11 +83,14 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     # run inference on dataset using pipeline
+    ds_gen = dataset_generator(dataset)
+    output = []
+    for batch_output in tqdm(pipe(ds_gen, batch_size=args.batch_size)):
+        output.append(batch_output)
     # output=pipe(dataset['audio'], batch_size=args.batch_size)
-    output = dataset.map(lambda r: {'output': pipe(r['audio'])}, batch_size=args.batch_size)
 
     # calculate accuracy on output
-    # dataset = dataset.add_column("output", output)
+    dataset = dataset.add_column("output", output)
     output_metrics = dataset.map(compare_predictions)
     output_metrics = output_metrics.to_pandas()
 
