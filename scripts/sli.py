@@ -26,6 +26,9 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument(
         "--output", '-o',
     )
+    parser.add_argument(
+        "--split", '-s', choices=['train', 'test', 'validation'], default='test',
+    )
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -37,7 +40,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         args.model,
         device=(torch.device(args.device)),
     )
-    dataset = load_from_disk(args.dataset)
+    dataset = load_from_disk(args.dataset, split=args.split)
+
 
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
