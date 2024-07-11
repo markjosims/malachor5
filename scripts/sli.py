@@ -94,7 +94,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
-    output_metrics = dataset.map(compare_predictions, remove_columns=dataset.column_namess)
+    output_metrics = dataset.map(compare_predictions, remove_columns=dataset.column_names)
     output_metrics = output_metrics.to_pandas()
 
     # save result
