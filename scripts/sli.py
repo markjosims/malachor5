@@ -1,32 +1,43 @@
-from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
-from datasets import load_from_disk
+from transformers import pipeline
+from datasets import load_from_disk, Audio
 from typing import Optional, Sequence
 from argparse import ArgumentParser
+import json
 
 MMS_LID_256 = 'facebook/mms-lid-256'
+DEFAULT_SR = 16_000
 
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
     parser.add_argument(
-        "--model", '-m'
+        "--model", '-m',
     )
     parser.add_argument(
-        "--dataset", '-d'
+        "--dataset", '-d',
     )
     parser.add_argument(
         "--device", '-D', type=int,
+    )
+    parser.add_argument(
+        '--batch_size', '-b', type=int,
+    )
+    parser.add_argument(
+        "--output", '-o',
     )
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
     args = parser.parse_args(argv)
 
-    model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
-    proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
-
+    pipe = pipeline('audio-classification', args.model)
     dataset = load_from_disk(args.dataset)
 
-    
+    dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
+
+    output=pipe(dataset['audio'], batch_size=args.batch_size)
+
+    with open(args.output, 'w') as f:
+        json.dump(output, f)
 
     return 0
 
