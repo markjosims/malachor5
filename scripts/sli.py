@@ -4,6 +4,7 @@ from typing import Optional, Sequence
 from argparse import ArgumentParser
 import json
 import torch
+import os
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -40,7 +41,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         args.model,
         device=(torch.device(args.device)),
     )
-    dataset = load_from_disk(args.dataset, split=args.split)
+    split_path = os.path.join(args.dataset, args.split)
+    dataset = load_from_disk(split_path)
 
 
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
