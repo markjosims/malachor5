@@ -47,7 +47,8 @@ def compare_predictions(row: Dict[str, Any]):
     pred_label = pred[0]['label']
     pred_score = pred[0]['score']
 
-    eng_score = [score for score in pred if score['label'].lower()=='eng'][0]['score']
+    eng = [score for score in pred if score['label'].lower()=='eng']
+    eng_score = eng[0]['score'] if len(eng)>0 else 0
 
     # TODO: allow using decision threshold for P(ENG) to determine accuracy
     # TODO: allow metalang to be set dynamically
