@@ -81,7 +81,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     output=pipe(dataset['audio'], batch_size=args.batch_size)
 
     # calculate accuracy on output
-    dataset.add_column("output", output)
+    dataset = dataset.add_column("output", output)
     output_metrics = dataset.map(compare_predictions)
     output_metrics = output_metrics.to_pandas()
 
