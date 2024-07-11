@@ -78,7 +78,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     # run inference on dataset using pipeline
-    output=pipe(dataset['audio'], batch_size=args.batch_size)
+    # output=pipe(dataset['audio'], batch_size=args.batch_size)
+    output = dataset['audio'].map(pipe, batch_size=args.batch_size)
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
