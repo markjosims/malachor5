@@ -3,6 +3,7 @@ from datasets import load_from_disk, Audio
 from typing import Optional, Sequence
 from argparse import ArgumentParser
 import json
+import torch
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
