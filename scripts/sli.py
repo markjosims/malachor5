@@ -69,8 +69,8 @@ def compare_predictions(row: Dict[str, Any]):
     return {
         "label": label,
         "pred": pred_label,
-        "pred_score": pred_score,
-        "eng_score": eng_score,
+        "pred_score": round(pred_score, 4),
+        "eng_score": round(eng_score, 4),
         "acc": acc,
     }
 
@@ -80,12 +80,12 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
     label_tic = metrics['label']=='tic'
     label_eng = metrics['label']=='eng'
 
-    summary_obj['tic_mean_acc'] = metrics[label_tic]['acc'].mean()
-    summary_obj['tic_mean_eng_score'] = metrics[label_tic]['eng_score'].mean()
+    summary_obj['tic_mean_acc'] = round(metrics[label_tic]['acc'].mean(), 4)
+    summary_obj['tic_mean_eng_score'] = round(metrics[label_tic]['eng_score'].mean(), 4)
     summary_obj['tic_lang_counts'] = metrics[label_tic]['pred'].value_counts().to_dict()
     
-    summary_obj['eng_mean_acc'] = metrics[label_eng]['acc'].mean()
-    summary_obj['eng_mean_eng_score'] = metrics[label_eng]['eng_score'].mean()
+    summary_obj['eng_mean_acc'] = round(metrics[label_eng]['acc'].mean(), 4)
+    summary_obj['eng_mean_eng_score'] = round(metrics[label_eng]['eng_score'].mean(), 4)
     summary_obj['eng_lang_counts'] = metrics[label_eng]['pred'].value_counts().to_dict()
 
     return summary_obj
