@@ -6,6 +6,8 @@ from argparse import ArgumentParser
 import torch
 import os
 from tqdm import tqdm
+import pandas as pd
+import json
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -72,6 +74,23 @@ def compare_predictions(row: Dict[str, Any]):
         "acc": acc,
     }
 
+def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
+    summary_obj = {}
+
+    label_tic = metrics['label']=='tic'
+    label_eng = metrics['label']=='eng'
+
+    summary_obj['tic_mean_acc'] = metrics[label_tic]['acc'].mean()
+    summary_obj['tic_mean_eng_score'] = metrics[label_tic]['eng_score'].mean()
+    summary_obj['tic_lang_counts'] = metrics[label_tic]['pred'].value_counts().to_dict()
+    
+    summary_obj['eng_mean_acc'] = metrics[label_eng]['acc'].mean()
+    summary_obj['eng_mean_eng_score'] = metrics[label_eng]['eng_score'].mean()
+    summary_obj['eng_lang_counts'] = metrics[label_eng]['pred'].value_counts().to_dict()
+
+    return summary_obj
+
+
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
     args = parser.parse_args(argv)
@@ -104,9 +123,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.add_column("output", output)
     output_metrics = dataset.map(compare_predictions, remove_columns=dataset.column_names)
     output_metrics = output_metrics.to_pandas()
+    summary = get_metric_summary(output_metrics)
 
     # save result
-    output_metrics.to_csv(args.output)
+    output_metrics.to_csv(args.output+'.csv')
+    with open(args.output+'.json', 'w') as f:
+        json.dump(summary, f, indent=2)
 
     return 0
 
