@@ -1,5 +1,6 @@
 from transformers import pipeline
 from datasets import load_from_disk, Audio, Dataset
+from datasets.combine import concatenate_datasets
 from typing import Optional, Sequence, Dict, Any, Union, List, Generator
 from argparse import ArgumentParser
 import torch
@@ -32,7 +33,7 @@ def init_argparser() -> ArgumentParser:
         "--output", '-o',
     )
     parser.add_argument(
-        "--split", '-s', choices=['train', 'test', 'validation'], default='test',
+        "--split", '-s', choices=['train', 'test', 'validation', 'all'], default='test',
     )
     return parser
 
@@ -81,8 +82,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         args.model,
         device=(torch.device(args.device)),
     )
-    split_path = os.path.join(args.dataset, args.split)
-    dataset = load_from_disk(split_path)
+    if args.split == 'all':
+        dataset = load_from_disk(split_path)
+        dataset = concatenate_datasets(dataset.values())
+    else:
+        split_path = os.path.join(args.dataset, args.split)
+        dataset = load_from_disk(split_path)
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     # run inference on dataset using pipeline
