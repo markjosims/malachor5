@@ -90,7 +90,7 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 
     tic_langs = set(metrics[label_tic]['pred'])
     eng_langs = set(metrics[label_eng]['pred'])
-    overlap_langs = set.union(tic_langs, eng_langs)
+    overlap_langs = set.intersection(tic_langs, eng_langs)
     summary_obj['overlap'] = list(overlap_langs)
 
     return summary_obj
