@@ -83,7 +83,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         device=(torch.device(args.device)),
     )
     if args.split == 'all':
-        dataset = load_from_disk(split_path)
+        dataset = load_from_disk(args.dataset)
         dataset = concatenate_datasets(dataset.values())
     else:
         split_path = os.path.join(args.dataset, args.split)
