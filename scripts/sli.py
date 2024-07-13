@@ -88,6 +88,11 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
     summary_obj['eng_mean_eng_score'] = round(metrics[label_eng]['eng_score'].mean(), 4)
     summary_obj['eng_lang_counts'] = metrics[label_eng]['pred'].value_counts().to_dict()
 
+    tic_langs = set(metrics[label_tic]['pred'])
+    eng_langs = set(metrics[label_eng]['pred'])
+    overlap_langs = set.union(tic_langs, eng_langs)
+    summary_obj['overlap'] = list(overlap_langs)
+
     return summary_obj
 
 
