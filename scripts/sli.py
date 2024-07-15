@@ -62,7 +62,7 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
     # create a dataloader that returns batches of wav objs
     dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
     dataloader = DataLoader(
-        dataset['wav'],
+        dataset,
         batch_size=args.batch_size,
         collate_fn=lambda b: PaddedBatch(b).wav
     )
