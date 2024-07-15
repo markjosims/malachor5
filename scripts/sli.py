@@ -13,31 +13,41 @@ MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
 DEVICE = 0 if torch.cuda.is_available() else -1
 
+# ----------------------- #
+# Data processing methods #
+# ----------------------- #
+
 def dataset_generator(dataset: Dataset) -> Generator:
     for row in dataset:
         yield row['audio']
 
-def init_argparser() -> ArgumentParser:
-    parser = ArgumentParser("Script for running SLI experiment")
-    parser.add_argument(
-        "--model", '-m',
+# ----------------- #
+# Inference methods #
+# ----------------- #
+
+def infer_hf(args, dataset):
+    pipe = pipeline(
+        'audio-classification', 
+        args.model,
+        device=(torch.device(args.device)),
     )
-    parser.add_argument(
-        "--dataset", '-d',
-    )
-    parser.add_argument(
-        "--device", '-D', type=int, default=DEVICE,
-    )
-    parser.add_argument(
-        '--batch_size', '-b', type=int,
-    )
-    parser.add_argument(
-        "--output", '-o',
-    )
-    parser.add_argument(
-        "--split", '-s', choices=['train', 'test', 'validation', 'all'], default='test',
-    )
-    return parser
+
+    ds_gen = dataset_generator(dataset)
+    output = []
+    for batch_output in tqdm(
+        pipe(ds_gen, batch_size=args.batch_size),
+        total=len(dataset),
+        desc='SLI pipeline'
+    ):
+        output.append(batch_output)
+    return output
+
+def infer_sb(args, dataset):
+    ...
+
+# ------------------ #
+# Evaluation methods #
+# ------------------ #
 
 def compare_predictions(row: Dict[str, Any]):
     label_col = 'lang'
@@ -95,17 +105,40 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 
     return summary_obj
 
+# ---- #
+# Main #
+# ---- #
+
+def init_argparser() -> ArgumentParser:
+    parser = ArgumentParser("Script for running SLI experiment")
+    parser.add_argument(
+        "--model", '-m',
+    )
+    parser.add_argument(
+        "--dataset", '-d',
+    )
+    parser.add_argument(
+        "--device", '-D', type=int, default=DEVICE,
+    )
+    parser.add_argument(
+        '--batch_size', '-b', type=int,
+    )
+    parser.add_argument(
+        "--output", '-o',
+    )
+    parser.add_argument(
+        "--split", '-s', choices=['train', 'test', 'validation', 'all'], default='test',
+    )
+    parser.add_argument(
+        '--inference_api', '-a', choices=['hf', 'sb'], default='hf',
+    )
+    return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
     args = parser.parse_args(argv)
 
-    # load model and dataset
-    pipe = pipeline(
-        'audio-classification', 
-        args.model,
-        device=(torch.device(args.device)),
-    )
+    # load dataset
     if args.split == 'all':
         dataset = load_from_disk(args.dataset)
         dataset = concatenate_datasets(dataset.values())
@@ -115,14 +148,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     # run inference on dataset using pipeline
-    ds_gen = dataset_generator(dataset)
-    output = []
-    for batch_output in tqdm(
-        pipe(ds_gen, batch_size=args.batch_size),
-        total=len(dataset),
-        desc='SLI pipeline'
-    ):
-        output.append(batch_output)
+    if args.inference_api == 'hf':
+        output = infer_hf(args, dataset)
+    else:
+        output = infer_sb(args, dataset)
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
