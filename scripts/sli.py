@@ -58,7 +58,14 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
         savedir=args.sb_savedir,
         run_opts={"device":torch.device(args.device)},
     )
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=PaddedBatch)
+
+    # create a dataloader that returns batches of wav objs
+    dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    dataloader = DataLoader(
+        dataset['wav'],
+        batch_size=args.batch_size,
+        collate_fn=lambda b: PaddedBatch(b).wav
+    )
 
     label_encoder = model.hparams.label_encoder
     assert label_encoder.is_continuous()
