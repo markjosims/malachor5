@@ -63,7 +63,7 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
     label_encoder = model.hparams.label_encoder
     assert label_encoder.is_continuous()
 
-    long_labels = label_encoder.encode_sequence(range(len(label_encoder)))
+    long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
     iso_codes = [label.split(':')[0] for label in long_labels]
 
     outputs = []
