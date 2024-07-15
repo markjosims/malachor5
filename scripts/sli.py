@@ -1,9 +1,13 @@
+import torch.utils
 from transformers import pipeline
+from speechbrain.inference.classifiers import EncoderClassifier
+from speechbrain.dataio.batch import PaddedBatch
 from datasets import load_from_disk, Audio, Dataset
 from datasets.combine import concatenate_datasets
-from typing import Optional, Sequence, Dict, Any, Union, List, Generator
+from typing import Optional, Sequence, Dict, Any, List, List, Generator
 from argparse import ArgumentParser
 import torch
+from torch.utils.data import DataLoader
 import os
 from tqdm import tqdm
 import pandas as pd
@@ -18,14 +22,20 @@ DEVICE = 0 if torch.cuda.is_available() else -1
 # ----------------------- #
 
 def dataset_generator(dataset: Dataset) -> Generator:
+    """
+    For progress bars to work with the HuggingFace pipeline,
+    the dataset must be wrapped in an iterable class,
+    with the Pipeline object handling batching.
+    """
     for row in dataset:
         yield row['audio']
+
 
 # ----------------- #
 # Inference methods #
 # ----------------- #
 
-def infer_hf(args, dataset):
+def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     pipe = pipeline(
         'audio-classification', 
         args.model,
@@ -42,8 +52,36 @@ def infer_hf(args, dataset):
         output.append(batch_output)
     return output
 
-def infer_sb(args, dataset):
-    ...
+def infer_sb(args, dataset) -> List[Dict[str, Any]]:
+    model = EncoderClassifier.from_hparams(
+        source=args.model,
+        savedir=args.sb_savedir,
+        run_opts={"device":torch.device(args.device)},
+    )
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=PaddedBatch)
+
+    label_encoder = model.hparams.label_encoder
+    assert label_encoder.is_continuous()
+
+    long_labels = label_encoder.encode_sequence(range(len(label_encoder)))
+    iso_codes = [label.split(':')[0] for label in long_labels]
+
+    outputs = []
+    for batch in tqdm(dataloader):
+        prediction = model.classify_batch(batch)
+        probs = prediction[0]
+
+        # save label probabilities as a list of dicts
+        # to match output returned by HF pipeline
+        for row_probs in probs:
+            row_obj = []
+            for i, log_prob in row_probs:
+                label = iso_codes[i]
+                long_label = long_labels[i]
+                prob = log_prob.exp().item()
+                row_obj.append()
+            outputs.append({'label': label, 'score': prob, 'long_label': long_label})
+    return outputs
 
 # ------------------ #
 # Evaluation methods #
@@ -131,6 +169,9 @@ def init_argparser() -> ArgumentParser:
     )
     parser.add_argument(
         '--inference_api', '-a', choices=['hf', 'sb'], default='hf',
+    )
+    parser.add_argument(
+        '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
     )
     return parser
 
