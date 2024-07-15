@@ -60,11 +60,11 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
     )
 
     # create a dataloader that returns batches of wav objs
-    dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,
-        collate_fn=lambda b: PaddedBatch(b).wav
+        collate_fn=lambda b: PaddedBatch([row['wav'] for row in b])
     )
 
     label_encoder = model.hparams.label_encoder
