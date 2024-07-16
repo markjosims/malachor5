@@ -4,7 +4,7 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from speechbrain.dataio.batch import PaddedBatch
 from datasets import load_from_disk, Audio, Dataset
 from datasets.combine import concatenate_datasets
-from typing import Optional, Sequence, Dict, Any, List, List, Generator
+from typing import Optional, Sequence, Dict, Any, List, List, Generator, Union
 from argparse import ArgumentParser
 import torch
 from torch.utils.data import DataLoader
@@ -97,7 +97,7 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
 # Evaluation methods #
 # ------------------ #
 
-def compare_predictions(row: Dict[str, Any]):
+def compare_predictions(row: Dict[str, Any], meta_threshold: Optional[float]=None) -> Dict[str, Union[str, float]]:
     label_col = 'lang'
     pred_col = 'output'
 
@@ -111,18 +111,30 @@ def compare_predictions(row: Dict[str, Any]):
     eng = [score for score in pred if score['label'].lower()=='eng']
     eng_score = eng[0]['score'] if len(eng)>0 else 0
 
-    # TODO: allow using decision threshold for P(ENG) to determine accuracy
     # TODO: allow metalang to be set dynamically
-    # correct if model predicts same label
-    # in practice this will be when model predicts 'eng' for English
-    if label==pred_label:
-        acc=1
-    # correct if model predicts non-English for non-English
-    elif (label!='eng') and (pred_label!='eng'):
-        acc=1
-    # incorrect otherwise
+    if meta_threshold:
+        # correct if model gives P(ENG) higher than threshold
+        # when label is ENG
+        if (label=='eng') and eng_score > meta_threshold:
+            acc=1
+        # correct if model gives P(ENG) lower than threshold
+        # when label is fieldwork
+        elif (label!='eng') and eng_score < meta_threshold:
+            acc=1
+        # incorrect otherwise
+        else:
+            acc=0
     else:
-        acc=0
+        # correct if model predicts same label
+        # in practice this will be when model predicts 'eng' for English
+        if label==pred_label:
+            acc=1
+        # correct if model predicts non-English for non-English
+        elif (label!='eng') and (pred_label!='eng'):
+            acc=1
+        # incorrect otherwise
+        else:
+            acc=0
 
     return {
         "label": label,
@@ -184,6 +196,9 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument(
         '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
     )
+    parser.add_argument(
+        '--meta_threshold', type=float,
+    )
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -207,7 +222,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
-    output_metrics = dataset.map(compare_predictions, remove_columns=dataset.column_names)
+    output_metrics = dataset.map(
+        lambda row: compare_predictions(row, args.meta_threshold),
+        remove_columns=dataset.column_names
+    )
     output_metrics = output_metrics.to_pandas()
     summary = get_metric_summary(output_metrics)
 
