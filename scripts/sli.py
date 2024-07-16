@@ -72,7 +72,7 @@ def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     return output
 
 def infer_sb(args, dataset) -> List[Dict[str, Any]]:
-    model = sb_model(args, dataset)
+    model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
     label_encoder = model.hparams.label_encoder
@@ -180,7 +180,7 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # ----------------- #
 
 def sb_embeddings(args, dataset) -> torch.Tensor:
-    model = sb_model(args, dataset)
+    model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
     embeddings = []
