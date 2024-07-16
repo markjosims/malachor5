@@ -215,7 +215,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
     # ]
 
     for batch in tqdm(dataloader):
-        processed_batch = proc(batch, return_tensors='pt')
+        processed_batch = proc(batch.numpy(), return_tensors='pt')
         with torch.no_grad():
             output = model(**processed_batch)
         output_hs = output['hidden_states']
