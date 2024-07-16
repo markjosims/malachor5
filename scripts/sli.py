@@ -230,7 +230,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     summary = get_metric_summary(output_metrics)
 
     # save result
-    output_metrics.to_csv(args.output+'.csv')
+    output_metrics.to_csv(args.output+'.csv', index=False)
     with open(args.output+'.json', 'w') as f:
         json.dump(summary, f, indent=2)
 
