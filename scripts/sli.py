@@ -193,8 +193,9 @@ def sb_embeddings(args, dataset) -> torch.Tensor:
 
 def hf_embeddings(args, dataset) -> torch.Tensor:
     model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
-    model.to(torch.device(args.device))
     proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
+    model.to(torch.device(args.device))
+    proc.to(torch.device(args.device))
     dataloader = build_dataloader(dataset, args.batch_size)
 
     logits = []
