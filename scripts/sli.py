@@ -185,7 +185,7 @@ def sb_embeddings(args, dataset) -> torch.Tensor:
 
     embeddings = []
     for batch in tqdm(dataloader):
-        batch_embeds = model.encode_batch(batch)
+        batch_embeds = model.encode_batch(batch).cpu()
         embeddings.append(batch_embeds)
 
     embedding_tensor = torch.concat(embeddings)
