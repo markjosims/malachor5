@@ -245,7 +245,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         else:
             embeds = sb_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
-        
+
+        dataset = dataset.remove_columns('audio')
+        dataset = dataset.rename_column('audio_path', 'audio')
+        dataset.to_csv(args.output+'.csv')
+
+        return 0
         
     else:
         # run inference on dataset
