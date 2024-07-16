@@ -64,7 +64,7 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,
-        collate_fn=lambda b: PaddedBatch([row['array'] for row in b])
+        collate_fn=lambda b: PaddedBatch({'wav':row['audio']['array'] for row in b}).wav.data
     )
 
     label_encoder = model.hparams.label_encoder
