@@ -237,7 +237,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 record_activations=record_activations[not_padded]
                 # add this layer's activations to the tensor corresponding
                 # to the current record
-                if not batch_hidden_states[i]:
+                if batch_hidden_states[i] is None:
                     batch_hidden_states[i] = record_activations
                 else:
                     batch_hidden_states[i] = torch.stack([
