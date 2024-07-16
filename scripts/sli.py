@@ -236,7 +236,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         split_path = os.path.join(args.dataset, args.split)
         dataset = load_from_disk(split_path)
     # cast 'audio' to Audio obj but keep path as a separate col
-    dataset = dataset.add_column('audio_path', dataset['audio'])
+    dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
