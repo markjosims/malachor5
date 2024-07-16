@@ -82,7 +82,7 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
         # to match output returned by HF pipeline
         for row_probs in probs:
             row_obj = []
-            for i, log_prob in row_probs:
+            for i, log_prob in enumerate(row_probs):
                 label = iso_codes[i]
                 long_label = long_labels[i]
                 prob = log_prob.exp().item()
