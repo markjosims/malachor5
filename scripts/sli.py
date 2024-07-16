@@ -30,6 +30,22 @@ def dataset_generator(dataset: Dataset) -> Generator:
     for row in dataset:
         yield row['audio']
 
+def sb_model_dataloader(args, dataset):
+    model = EncoderClassifier.from_hparams(
+        source=args.model,
+        savedir=args.sb_savedir,
+        run_opts={"device":torch.device(args.device)},
+    )
+
+    # create a dataloader that returns batches of wav objs
+    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    dataloader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        collate_fn=lambda b: PaddedBatch([{'wav':row['audio']['array']} for row in b]).wav.data
+    )
+    
+    return model, dataloader
 
 # ----------------- #
 # Inference methods #
@@ -53,19 +69,7 @@ def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     return output
 
 def infer_sb(args, dataset) -> List[Dict[str, Any]]:
-    model = EncoderClassifier.from_hparams(
-        source=args.model,
-        savedir=args.sb_savedir,
-        run_opts={"device":torch.device(args.device)},
-    )
-
-    # create a dataloader that returns batches of wav objs
-    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
-    dataloader = DataLoader(
-        dataset,
-        batch_size=args.batch_size,
-        collate_fn=lambda b: PaddedBatch([{'wav':row['audio']['array']} for row in b]).wav.data
-    )
+    model, dataloader = sb_model_dataloader(args, dataset)
 
     label_encoder = model.hparams.label_encoder
     assert label_encoder.is_continuous()
@@ -165,6 +169,39 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
     summary_obj['overlap'] = list(overlap_langs)
 
     return summary_obj
+
+# ----------------- #
+# Embedding methods #
+# ----------------- #
+
+def sb_embeddings(args, dataset):
+    model, dataloader = sb_model_dataloader(args, dataset)
+
+    label_encoder = model.hparams.label_encoder
+    assert label_encoder.is_continuous()
+
+    long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
+    iso_codes = [label.split(':')[0] for label in long_labels]
+    # normalize 'en' to 'eng'
+    en_idx = iso_codes.index('en')
+    iso_codes[en_idx]='eng'
+
+    outputs = []
+    for batch in tqdm(dataloader):
+        prediction = model.classify_batch(batch)
+        probs = prediction[0]
+
+        # save label probabilities as a list of dicts
+        # to match output returned by HF pipeline
+        for row_probs in probs:
+            row_obj = []
+            for i, log_prob in enumerate(row_probs):
+                label = iso_codes[i]
+                long_label = long_labels[i]
+                prob = log_prob.exp().item()
+                row_obj.append({'label': label, 'score': prob, 'long_label': long_label})
+            outputs.append(row_obj)
+    return outputs
 
 # ---- #
 # Main #
