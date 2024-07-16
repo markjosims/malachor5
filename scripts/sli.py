@@ -1,5 +1,5 @@
 import torch.utils
-from transformers import pipeline
+from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from speechbrain.inference.classifiers import EncoderClassifier
 from speechbrain.dataio.batch import PaddedBatch
 from datasets import load_from_disk, Audio, Dataset
@@ -30,22 +30,25 @@ def dataset_generator(dataset: Dataset) -> Generator:
     for row in dataset:
         yield row['audio']
 
-def sb_model_dataloader(args, dataset):
+def build_dataloader(dataset, batch_size):
+    # create a dataloader that returns batches of wav objs
+    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn=lambda b: PaddedBatch([{'wav':row['audio']['array']} for row in b]).wav.data
+    )
+    
+    return dataloader
+
+def sb_model(args):
     model = EncoderClassifier.from_hparams(
         source=args.model,
         savedir=args.sb_savedir,
         run_opts={"device":torch.device(args.device)},
     )
+    return model
 
-    # create a dataloader that returns batches of wav objs
-    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
-    dataloader = DataLoader(
-        dataset,
-        batch_size=args.batch_size,
-        collate_fn=lambda b: PaddedBatch([{'wav':row['audio']['array']} for row in b]).wav.data
-    )
-    
-    return model, dataloader
 
 # ----------------- #
 # Inference methods #
@@ -69,7 +72,8 @@ def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     return output
 
 def infer_sb(args, dataset) -> List[Dict[str, Any]]:
-    model, dataloader = sb_model_dataloader(args, dataset)
+    model = sb_model(args, dataset)
+    dataloader = build_dataloader(dataset, args.batch_size)
 
     label_encoder = model.hparams.label_encoder
     assert label_encoder.is_continuous()
@@ -176,7 +180,8 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # ----------------- #
 
 def sb_embeddings(args, dataset) -> torch.Tensor:
-    model, dataloader = sb_model_dataloader(args, dataset)
+    model = sb_model(args, dataset)
+    dataloader = build_dataloader(dataset, args.batch_size)
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -185,6 +190,60 @@ def sb_embeddings(args, dataset) -> torch.Tensor:
 
     embedding_tensor = torch.concat(embeddings)
     return embedding_tensor
+
+def hf_embeddings(args, dataset) -> torch.Tensor:
+    model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
+    proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
+    dataloader = build_dataloader(dataset, args.batch_size)
+
+    logits = []
+    # [
+    # tensor([logit, logit, logit,...]),  logits for example 1
+    # tensor([logit, logit, logit,...]),  logits for example 2
+    # ...
+    #]
+    hidden_states = []
+    # [
+    #   tensor([                                    activations for example 1
+    #     [activation, activation, ...] * frames,   activations for layer 1 example 1
+    #     [activation, activation, ...] * frames,   activations for layer 2 example 1
+    #   ... ]),
+    #   tensor([                                    activations for example 2
+    #     [activation, activation, ...] * frames,   activations for layer 1 example 2
+    #     [activation, activation, ...] * frames,   activations for layer 2 example 2
+    #   ... ]),
+    # ]
+
+    for batch in dataloader:
+        processed_batch = proc(batch)
+        with torch.no_grad():
+            output = model(**processed_batch)
+        output_hs = output['hidden_states']
+        output_lgts = output['logits']
+
+        # logits are simple, just append
+        logits.append(output_lgts)
+        
+        # hidden states are the problem child
+        # first make a list where each item is a tensor of hidden states for a single example
+        batch_hidden_states = [torch.Tensor() for _ in range(len(batch))]
+        for layer in output_hs:
+            for i, record_activations in layer:
+                # `record_activations` is a 2D tensor of hidden units by frame
+                # remove any padded zeros
+                not_padded = record_activations.abs().sum(dim=1)!=0
+                record_activations=record_activations[not_padded]
+                # add this layer's activations to the tensor corresponding
+                # to the current record
+                batch_hidden_states[i] = torch.stack([
+                    batch_hidden_states[i],
+                    record_activations
+                ])
+
+    # logits are simple
+    logits = torch.concat(logits)
+
+    return logits, hidden_states
 
 # ---- #
 # Main #
@@ -240,12 +299,14 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
+        # calculate embeddings
         if args.inference_api == 'hf':
-            embeds = ...
+            embeds = hf_embeddings(args, dataset)
         else:
             embeds = sb_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
 
+        # save metadata
         dataset = dataset.remove_columns('audio')
         dataset = dataset.rename_column('audio_path', 'audio')
         dataset = dataset.to_pandas()
@@ -253,26 +314,25 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
         return 0
         
+    # run inference on dataset
+    if args.inference_api == 'hf':
+        output = infer_hf(args, dataset)
     else:
-        # run inference on dataset
-        if args.inference_api == 'hf':
-            output = infer_hf(args, dataset)
-        else:
-            output = infer_sb(args, dataset)
+        output = infer_sb(args, dataset)
 
-        # calculate accuracy on output
-        dataset = dataset.add_column("output", output)
-        output_metrics = dataset.map(
-            lambda row: compare_predictions(row, args.meta_threshold),
-            remove_columns=dataset.column_names
-        )
-        output_metrics = output_metrics.to_pandas()
-        summary = get_metric_summary(output_metrics)
+    # calculate accuracy on output
+    dataset = dataset.add_column("output", output)
+    output_metrics = dataset.map(
+        lambda row: compare_predictions(row, args.meta_threshold),
+        remove_columns=dataset.column_names
+    )
+    output_metrics = output_metrics.to_pandas()
+    summary = get_metric_summary(output_metrics)
 
-        # save result
-        output_metrics.to_csv(args.output+'.csv', index=False)
-        with open(args.output+'.json', 'w') as f:
-            json.dump(summary, f, indent=2)
+    # save result
+    output_metrics.to_csv(args.output+'.csv', index=False)
+    with open(args.output+'.json', 'w') as f:
+        json.dump(summary, f, indent=2)
 
     return 0
 
