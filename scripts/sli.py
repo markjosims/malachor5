@@ -242,7 +242,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 else:
                     batch_hidden_states[i] = torch.stack([
                         batch_hidden_states[i],
-                        record_activations
+                        record_activations.unsqueeze(0)
                     ])
 
     # logits are simple
