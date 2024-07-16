@@ -230,7 +230,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
         # first make a list where each item is a tensor of hidden states for a single example
         batch_hidden_states = [torch.Tensor() for _ in range(len(batch))]
         for layer in output_hs:
-            for i, record_activations in layer:
+            for i, record_activations in enumerate(layer):
                 # `record_activations` is a 2D tensor of hidden units by frame
                 # remove any padded zeros
                 not_padded = record_activations.abs().sum(dim=1)!=0
