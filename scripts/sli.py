@@ -220,6 +220,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
         processed_batch = processed_batch.to(torch.device(args.device))
         with torch.no_grad():
             output = model(**processed_batch, output_hidden_states=True)
+        output = output.cpu()
         output_hs = output['hidden_states']
         output_lgts = output['logits']
 
