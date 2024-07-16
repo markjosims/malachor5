@@ -249,7 +249,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         dataset = dataset.remove_columns('audio')
         dataset = dataset.rename_column('audio_path', 'audio')
         dataset = dataset.to_pandas()
-        dataset.to_csv(args.output+'.csv')
+        dataset.to_csv(args.output+'.csv', index=False)
 
         return 0
         
