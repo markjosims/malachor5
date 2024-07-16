@@ -228,7 +228,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
         
         # hidden states are the problem child
         # first make a list where each item is a tensor of hidden states for a single example
-        batch_hidden_states = [torch.Tensor() for _ in range(len(batch))]
+        batch_hidden_states = [None for _ in range(len(batch))]
         for layer in output_hs:
             for i, record_activations in enumerate(layer):
                 # `record_activations` is a 2D tensor of hidden units by frame
@@ -237,10 +237,13 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 record_activations=record_activations[not_padded]
                 # add this layer's activations to the tensor corresponding
                 # to the current record
-                batch_hidden_states[i] = torch.stack([
-                    batch_hidden_states[i],
-                    record_activations
-                ])
+                if not batch_hidden_states[i]:
+                    batch_hidden_states[i] = record_activations
+                else:
+                    batch_hidden_states[i] = torch.stack([
+                        batch_hidden_states[i],
+                        record_activations
+                    ])
 
     # logits are simple
     logits = torch.concat(logits)
