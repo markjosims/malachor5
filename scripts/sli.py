@@ -199,6 +199,9 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument(
         '--meta_threshold', type=float,
     )
+    parser.add_argument(
+        '--output_type', choices=['inference', 'embedding'], default='inference',
+    )
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -214,25 +217,28 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         dataset = load_from_disk(split_path)
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
-    # run inference on dataset using pipeline
-    if args.inference_api == 'hf':
-        output = infer_hf(args, dataset)
+    if args.output_type == 'embedding':
+        ...
     else:
-        output = infer_sb(args, dataset)
+        # run inference on dataset
+        if args.inference_api == 'hf':
+            output = infer_hf(args, dataset)
+        else:
+            output = infer_sb(args, dataset)
 
-    # calculate accuracy on output
-    dataset = dataset.add_column("output", output)
-    output_metrics = dataset.map(
-        lambda row: compare_predictions(row, args.meta_threshold),
-        remove_columns=dataset.column_names
-    )
-    output_metrics = output_metrics.to_pandas()
-    summary = get_metric_summary(output_metrics)
+        # calculate accuracy on output
+        dataset = dataset.add_column("output", output)
+        output_metrics = dataset.map(
+            lambda row: compare_predictions(row, args.meta_threshold),
+            remove_columns=dataset.column_names
+        )
+        output_metrics = output_metrics.to_pandas()
+        summary = get_metric_summary(output_metrics)
 
-    # save result
-    output_metrics.to_csv(args.output+'.csv', index=False)
-    with open(args.output+'.json', 'w') as f:
-        json.dump(summary, f, indent=2)
+        # save result
+        output_metrics.to_csv(args.output+'.csv', index=False)
+        with open(args.output+'.json', 'w') as f:
+            json.dump(summary, f, indent=2)
 
     return 0
 
