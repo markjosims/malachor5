@@ -241,7 +241,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 if batch_hidden_states[i] is None:
                     batch_hidden_states[i] = record_activations
                 else:
-                    batch_hidden_states[i] = torch.stack([
+                    batch_hidden_states[i] = torch.concat([
                         batch_hidden_states[i],
                         record_activations
                     ])
