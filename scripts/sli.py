@@ -72,6 +72,9 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
 
     long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
     iso_codes = [label.split(':')[0] for label in long_labels]
+    # normalize 'en' to 'eng'
+    en_idx = iso_codes.index('en')
+    iso_codes[en_idx]='eng'
 
     outputs = []
     for batch in tqdm(dataloader):
