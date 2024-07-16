@@ -174,34 +174,16 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # Embedding methods #
 # ----------------- #
 
-def sb_embeddings(args, dataset):
+def sb_embeddings(args, dataset) -> torch.Tensor:
     model, dataloader = sb_model_dataloader(args, dataset)
 
-    label_encoder = model.hparams.label_encoder
-    assert label_encoder.is_continuous()
-
-    long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
-    iso_codes = [label.split(':')[0] for label in long_labels]
-    # normalize 'en' to 'eng'
-    en_idx = iso_codes.index('en')
-    iso_codes[en_idx]='eng'
-
-    outputs = []
+    embeddings = []
     for batch in tqdm(dataloader):
-        prediction = model.classify_batch(batch)
-        probs = prediction[0]
+        batch_embeds = model.encode_batch(batch)
+        embeddings.append(batch_embeds)
 
-        # save label probabilities as a list of dicts
-        # to match output returned by HF pipeline
-        for row_probs in probs:
-            row_obj = []
-            for i, log_prob in enumerate(row_probs):
-                label = iso_codes[i]
-                long_label = long_labels[i]
-                prob = log_prob.exp().item()
-                row_obj.append({'label': label, 'score': prob, 'long_label': long_label})
-            outputs.append(row_obj)
-    return outputs
+    embedding_tensor = torch.concat(embeddings)
+    return embedding_tensor
 
 # ---- #
 # Main #
@@ -255,7 +237,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
-        ...
+        if args.inference_api == 'hf':
+            embeds = ...
+        else:
+            embeds = sb_embeddings(args, dataset)
+        torch.save(embeds, args.output+'.pt')
+        
     else:
         # run inference on dataset
         if args.inference_api == 'hf':
