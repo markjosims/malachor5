@@ -146,6 +146,7 @@ def compare_predictions(row: Dict[str, Any], meta_threshold: Optional[float]=Non
         "pred_score": round(pred_score, 4),
         "eng_score": round(eng_score, 4),
         "acc": acc,
+        "audio": row['audio_path'],
     }
 
 def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
