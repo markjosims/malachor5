@@ -86,8 +86,8 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
                 label = iso_codes[i]
                 long_label = long_labels[i]
                 prob = log_prob.exp().item()
-                row_obj.append()
-            outputs.append({'label': label, 'score': prob, 'long_label': long_label})
+                row_obj.append({'label': label, 'score': prob, 'long_label': long_label})
+            outputs.append(row_obj)
     return outputs
 
 # ------------------ #
