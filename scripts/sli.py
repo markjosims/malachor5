@@ -234,6 +234,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     else:
         split_path = os.path.join(args.dataset, args.split)
         dataset = load_from_disk(split_path)
+    # cast 'audio' to Audio obj but keep path as a separate col
+    dataset = dataset.add_column('audio_path', dataset['audio'])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
@@ -242,6 +244,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         else:
             embeds = sb_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
+        
         
     else:
         # run inference on dataset
