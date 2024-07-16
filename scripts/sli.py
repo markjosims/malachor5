@@ -245,7 +245,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                         batch_hidden_states[i],
                         record_activations
                     ])
-        output_hs.append(batch_hidden_states)
+        hidden_states.append(batch_hidden_states)
 
     # logits are simple
     logits = torch.concat(logits)
