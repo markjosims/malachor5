@@ -235,6 +235,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 # remove any padded zeros
                 not_padded = record_activations.abs().sum(dim=1)!=0
                 record_activations=record_activations[not_padded]
+                record_activations=record_activations.unsqueeze(0)
                 # add this layer's activations to the tensor corresponding
                 # to the current record
                 if batch_hidden_states[i] is None:
@@ -242,7 +243,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                 else:
                     batch_hidden_states[i] = torch.stack([
                         batch_hidden_states[i],
-                        record_activations.unsqueeze(0)
+                        record_activations
                     ])
 
     # logits are simple
