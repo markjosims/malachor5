@@ -220,7 +220,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
         processed_batch = processed_batch.to(torch.device(args.device))
         with torch.no_grad():
             output = model(**processed_batch, output_hidden_states=True)
-        output_hs = [hs.cpu() for hs in output['hidden_states']]
+        output_hs = output['hidden_states']
         output_lgts = output['logits']
 
         # logits are simple, just append
@@ -245,6 +245,7 @@ def hf_embeddings(args, dataset) -> torch.Tensor:
                         batch_hidden_states[i],
                         record_activations
                     ])
+        batch_hidden_states = [hs.cpu() for hs in batch_hidden_states]
         hidden_states.append(batch_hidden_states)
 
     # logits are simple
