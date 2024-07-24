@@ -55,6 +55,7 @@ def sb_model(args):
 # ----------------- #
 
 def infer_hf(args, dataset) -> List[Dict[str, Any]]:
+    print(f"Loading HuggingFace model {args.model} for performing inference.")
     pipe = pipeline(
         'audio-classification', 
         args.model,
@@ -72,6 +73,7 @@ def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     return output
 
 def infer_sb(args, dataset) -> List[Dict[str, Any]]:
+    print(f"Loading SpeechBrain model {args.model} for performing inference.")
     model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
@@ -180,6 +182,7 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # ----------------- #
 
 def sb_embeddings(args, dataset) -> torch.Tensor:
+    print(f"Loading SpeechBrain model {args.model} for extracting embeddings.")
     model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
@@ -192,6 +195,7 @@ def sb_embeddings(args, dataset) -> torch.Tensor:
     return embedding_tensor
 
 def hf_embeddings(args, dataset) -> torch.Tensor:
+    print(f"Loading HuggingFace model {args.model} for extracting embeddings.")
     model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
     proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
     model.to(torch.device(args.device))
