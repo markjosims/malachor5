@@ -307,22 +307,11 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
-        # calculate embeddings
-        if args.inference_api == 'hf':
-            embeds = hf_embeddings(args, dataset)
-        else:
-            embeds = sb_embeddings(args, dataset)
-        torch.save(embeds, args.output+'.pt')
-
-        # save metadata
-        dataset = dataset.remove_columns('audio')
-        dataset = dataset.rename_column('audio_path', 'audio')
-        dataset = dataset.to_pandas()
-        dataset.to_csv(args.output+'.csv', index=False)
-
-        return 0
+        return make_embeddings(args, dataset)
         
-    # run inference on dataset
+    return do_inference(args, dataset)
+
+def do_inference(args, dataset) -> int:
     if args.inference_api == 'hf':
         output = infer_hf(args, dataset)
     else:
@@ -342,6 +331,20 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     with open(args.output+'.json', 'w') as f:
         json.dump(summary, f, indent=2)
 
+    return 0
+
+def make_embeddings(args, dataset) -> int:
+    if args.inference_api == 'hf':
+        embeds = hf_embeddings(args, dataset)
+    else:
+        embeds = sb_embeddings(args, dataset)
+    torch.save(embeds, args.output+'.pt')
+
+    # save metadata
+    dataset = dataset.remove_columns('audio')
+    dataset = dataset.rename_column('audio_path', 'audio')
+    dataset = dataset.to_pandas()
+    dataset.to_csv(args.output+'.csv', index=False)
     return 0
 
 if __name__ == '__main__':
