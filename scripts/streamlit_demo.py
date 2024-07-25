@@ -5,10 +5,6 @@ from streamlit_vega_lite import altair_component
 from playsound import playsound
 import os
 
-st.title("Penguin Data Explorer 🐧")
-
-st.write("Hover over the scatterplot to reveal details about a penguin. The code for this demo is at https://github.com/domoritz/streamlit-vega-lite-demo.")
-
 @st.cache
 def load(url):
     return  pd.read_csv(url)
@@ -19,19 +15,35 @@ if st.checkbox("Show Raw Data"):
     st.write(df)
 
 @st.cache
-def make_altair_scatterplot():
-    selected = alt.selection_single(on="click", empty="none")
+def make_altair_histo():
+    #selected = alt.selection_interval(encodings=['x'])
+    
+    histo=alt.Chart(df).mark_bar().encode(
+        x=alt.X("sec:Q", bin=True),
+        y="count()",
+        color=alt.Color("lang")
+    )#.add_selection(selected)
 
-    return alt.Chart(df).mark_circle(size=150).encode(
+    return histo#, selected
+
+@st.cache
+def make_altair_scatterplot():
+    clicked = alt.selection_single(on="click", empty="none")
+    scatter=alt.Chart(df).mark_circle(size=150).encode(
         alt.X("ecapa_voxlingua_x1", scale=alt.Scale(zero=False)),
         alt.Y("ecapa_voxlingua_x2", scale=alt.Scale(zero=False)),
-        # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
+        size="sec",
         color=alt.Color("lang")
-    ).add_selection(selected)
+    ).add_selection(clicked)
 
+    return scatter
 
-selection = altair_component(make_altair_scatterplot())
+histo = make_altair_histo()
+scatter = make_altair_scatterplot()
+altair_component(histo)
+selection = altair_component(scatter)
 
+st.info(selection)
 if "_vgsid_" in selection:
     # the ids start at 1
     id=selection["_vgsid_"][0] - 1
