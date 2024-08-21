@@ -82,8 +82,11 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
 
     long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
     iso_codes = [label.split(':')[0] for label in long_labels]
-    # normalize 'en' to 'eng'
-    en_idx = iso_codes.index('en')
+    # normalize 'en' or 'English' to 'eng'
+    if 'en' in iso_codes:
+        en_idx = iso_codes.index('en')
+    else:
+        en_idx = iso_codes.index('English')
     iso_codes[en_idx]='eng'
 
     outputs = []
