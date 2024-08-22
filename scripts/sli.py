@@ -282,7 +282,7 @@ def init_argparser() -> ArgumentParser:
         "--output", '-o',
     )
     parser.add_argument(
-        "--split", '-s', choices=['train', 'test', 'validation', 'all'], default='test',
+        "--split", '-s', choices=['train', 'test', 'validation', 'all'],
     )
     parser.add_argument(
         '--inference_api', '-a', choices=['hf', 'sb'], default='hf',
