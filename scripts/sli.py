@@ -306,9 +306,11 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     if args.split == 'all':
         dataset = load_from_disk(args.dataset)
         dataset = concatenate_datasets(dataset.values())
-    else:
+    elif args.split:
         split_path = os.path.join(args.dataset, args.split)
         dataset = load_from_disk(split_path)
+    else:
+        dataset = load_from_disk(args.dataset)
     # cast 'audio' to Audio obj but keep path as a separate col
     dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
