@@ -7,9 +7,10 @@ import torch
 from fleurs import _FLEURS_LONG_TO_LANG
 
 
-def whisper_embeddings(args, language: str) -> torch.Tensor:
+def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
     print("Calculating embeddings for language", language, "from dataset", args.dataset)
-    model = WhisperEncoder.from_pretrained(args.model)
+    if not model:
+        model = WhisperEncoder.from_pretrained(args.model)
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
     ds = load_dataset(
         args.dataset,
@@ -55,8 +56,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     args = parser.parse_args(argv)
     if args.language == ['all']:
         args.language = _FLEURS_LONG_TO_LANG.keys()
+    model = WhisperEncoder.from_pretrained(args.model)
+
     for language in args.language:
-        embeds = whisper_embeddings(args, language=language)
+        embeds = whisper_embeddings(args, model=model, language=language)
         embeds_name = args.output or \
             f"{args.dataset.split('/')[-1]}-{_FLEURS_LONG_TO_LANG[language]}-{args.split}.pt"
         torch.save(embeds, embeds_name)
