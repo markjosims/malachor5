@@ -7,12 +7,13 @@ import torch
 from fleurs import _FLEURS_LONG_TO_LANG
 
 
-def whisper_embeddings(args) -> torch.Tensor:
+def whisper_embeddings(args, language: str) -> torch.Tensor:
+    print("Calculating embeddings for language", language, "from dataset", args.dataset)
     model = WhisperEncoder.from_pretrained(args.model)
-    proc = WhisperProcessor.from_pretrained(args.model, language=args.language)
+    proc = WhisperProcessor.from_pretrained(args.model, language=language)
     ds = load_dataset(
         args.dataset,
-        _FLEURS_LONG_TO_LANG[args.language],
+        _FLEURS_LONG_TO_LANG[language],
         split=args.split
     )
     ds = ds.map(
@@ -42,7 +43,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--model', '-m', default="openai/whisper-large-v3")
     # TODO: implement choosing Encoder vs Decoder
     parser.add_argument('--dataset', '-d', default='google/fleurs')
-    parser.add_argument('--language', '-l')
+    parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--split', '-s', default='test')
     # parser.add_argument('--sample_num', '-n', default=500)
     parser.add_argument('--output', '-o')
@@ -52,10 +53,13 @@ def init_parser() -> ArgumentParser:
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
-    embeds = whisper_embeddings(args)
-    embeds_name = args.output or \
-        f"{args.dataset.split('/')[-1]}-{_FLEURS_LONG_TO_LANG[args.language]}-{args.split}.pt"
-    torch.save(embeds, embeds_name)
+    if args.language == ['all']:
+        args.language = _FLEURS_LONG_TO_LANG.keys()
+    for language in args.language:
+        embeds = whisper_embeddings(args, language=language)
+        embeds_name = args.output or \
+            f"{args.dataset.split('/')[-1]}-{_FLEURS_LONG_TO_LANG[language]}-{args.split}.pt"
+        torch.save(embeds, embeds_name)
     return 0
 
 if __name__ == '__main__':
