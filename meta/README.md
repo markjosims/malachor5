@@ -1,0 +1,1 @@
+- `language_codes.json`: Dictionary mapping Whisper language names to FLEURS language codes. Only contains data for languages that overlap between Whisper and FLEURS.
