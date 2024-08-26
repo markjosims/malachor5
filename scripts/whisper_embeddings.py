@@ -4,9 +4,14 @@ from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
 from datasets import load_dataset
 import torch
-from fleurs import _FLEURS_LONG_TO_LANG
+import json
+import os
 
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
+
+with open('meta/language_codes.json') as f:
+    LANGUAGE_CODES = json.load(f)
+
 
 def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
     print("Calculating embeddings for language", language, "from dataset", args.dataset)
@@ -15,7 +20,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
     ds = load_dataset(
         args.dataset,
-        _FLEURS_LONG_TO_LANG[language],
+        LANGUAGE_CODES[language],
         split=args.split
     )
     ds = ds.map(
@@ -57,14 +62,15 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
     if args.language == ['all']:
-        args.language = _FLEURS_LONG_TO_LANG.keys()
+        args.language = LANGUAGE_CODES.keys()
     model = WhisperEncoder.from_pretrained(args.model)
 
     for language in args.language:
         embeds = whisper_embeddings(args, model=model, language=language)
-        embeds_name = args.output or \
-            f"{args.dataset.split('/')[-1]}-{_FLEURS_LONG_TO_LANG[language]}-{args.split}.pt"
-        torch.save(embeds, embeds_name)
+        embeds_path = f"{args.dataset.split('/')[-1]}-{LANGUAGE_CODES[language]}-{args.split}.pt"
+        if args.output:
+            embeds_path = os.path.join(args.output, embeds_path)
+        torch.save(embeds, embeds_path)
     return 0
 
 if __name__ == '__main__':
