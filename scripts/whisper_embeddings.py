@@ -23,7 +23,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
         batched=True,
         batch_size=8,
     )
-    embeds = torch.tensor(ds['embeds'])
+    embeds = torch.tensor(ds['embed'])
     if args.average:
         embeds = torch.mean(embeds, dim=0)
     return embeds
