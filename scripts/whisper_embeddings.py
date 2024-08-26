@@ -6,6 +6,7 @@ from datasets import load_dataset
 import torch
 from fleurs import _FLEURS_LONG_TO_LANG
 
+DEVICE = 0 if torch.cuda.is_available() else "cpu"
 
 def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
     print("Calculating embeddings for language", language, "from dataset", args.dataset)
@@ -21,7 +22,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
         lambda batch: embed_record(batch, proc, model),
         remove_columns=ds.column_names,
         batched=True,
-        batch_size=8,
+        batch_size=args.batch_size,
     )
     embeds = torch.tensor(ds['embed'])
     if args.average:
@@ -49,6 +50,7 @@ def init_parser() -> ArgumentParser:
     # parser.add_argument('--sample_num', '-n', default=500)
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
+    parser.add_argument('--batch_size', '-b', type=int)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
