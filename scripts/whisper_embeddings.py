@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
 from datasets import load_dataset
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 import torch
 import json
 import os
@@ -12,39 +14,40 @@ DEVICE = 0 if torch.cuda.is_available() else "cpu"
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
 
+def collate_hf_dataset(batch, proc, device):
+    return proc(
+        [row['audio']['array'] for row in batch],
+        return_tensors='pt',
+        sampling_rate=16_000,
+    ).to(device)
 
 def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
     print("Calculating embeddings for language", language, "from dataset", args.dataset)
     if not model:
         model = WhisperEncoder.from_pretrained(args.model)
+        model = model.to(args.device)
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
     ds = load_dataset(
         args.dataset,
         LANGUAGE_CODES[language],
         split=args.split,
-        # streaming=True,
+        streaming=True,
     )
-    ds = ds.map(
-        lambda batch: embed_record(batch, proc, model),
-        remove_columns=ds.column_names,
-        batched=True,
+    dataloader = DataLoader(
+        ds,
         batch_size=args.batch_size,
+        collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
     )
-    embeds = torch.tensor(ds['embed'])
+    embeds = []
+    for batch in tqdm(dataloader):
+        batch_embeds = model(batch['input_features'])['last_hidden_state']
+        embeds.append(batch_embeds)
+    
+    embeds = torch.concat(embeds, dim=0)
     if args.average:
         embeds = torch.mean(embeds, dim=0)
     return embeds
         
-
-def embed_record(batch, proc, model):
-    input_dict = proc(
-        [row["array"] for row in batch['audio']],
-        sampling_rate=batch['audio'][0]['sampling_rate'],
-        return_tensors='pt',    
-    )
-    hidden_states = model(input_dict['input_features'])['last_hidden_state']
-    embed = torch.mean(hidden_states, 1)
-    return {'embed': embed}
 
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
@@ -57,6 +60,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
+    parser.add_argument('--device', '-D', default=DEVICE)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -65,6 +69,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     if args.language == ['all']:
         args.language = LANGUAGE_CODES.keys()
     model = WhisperEncoder.from_pretrained(args.model)
+    model = model.to(args.device)
 
     for language in args.language:
         embeds = whisper_embeddings(args, model=model, language=language)
