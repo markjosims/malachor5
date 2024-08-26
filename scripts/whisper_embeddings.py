@@ -41,7 +41,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
     embeds = []
     for batch in tqdm(dataloader):
         batch_embeds = model(batch['input_features'])['last_hidden_state']
-        embeds.append(batch_embeds)
+        embeds.append(batch_embeds.to('cpu'))
     
     embeds = torch.concat(embeds, dim=0)
     if args.average:
