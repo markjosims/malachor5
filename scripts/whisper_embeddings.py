@@ -22,7 +22,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
         args.dataset,
         LANGUAGE_CODES[language],
         split=args.split,
-        streaming=True,
+        # streaming=True,
     )
     ds = ds.map(
         lambda batch: embed_record(batch, proc, model),
