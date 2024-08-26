@@ -55,7 +55,7 @@ def init_parser() -> ArgumentParser:
     # parser.add_argument('--sample_num', '-n', default=500)
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
-    parser.add_argument('--batch_size', '-b', type=int)
+    parser.add_argument('--batch_size', '-b', type=int, default=32)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
