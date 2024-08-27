@@ -76,7 +76,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
-    parser.add_argument('--device', '-D', default=DEVICE)
+    parser.add_argument('--device', '-D', default=DEVICE, type=int)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
