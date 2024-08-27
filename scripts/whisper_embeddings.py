@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch
@@ -29,14 +29,19 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
             args.dataset,
             LANGUAGE_CODES[language],
             split=args.split,
-            streaming=not local,
+            streaming=True,
         )
+    elif local:
+        ds = load_from_disk(args.dataset, split=args.split)
     else:
         ds = load_dataset(
             args.dataset,
             split=args.split,
-            streaming=not local,
+            streaming=True,
         )
+    if args.num_samples:
+        ds = ds.shuffle()
+        ds = ds[:args.num_samples]
     return DataLoader(
         ds,
         batch_size=args.batch_size,
@@ -67,7 +72,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--dataset', '-d', default='google/fleurs')
     parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--split', '-s', default='test')
-    parser.add_argument('--sample_num', '-n')
+    parser.add_argument('--num_samples', '-n', type=int)
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
