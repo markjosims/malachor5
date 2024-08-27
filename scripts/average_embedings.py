@@ -8,6 +8,7 @@ def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', help='globstr for matching pytorch files.')
     parser.add_argument('--output', '-o')
+    parser.add_argument('--device', '-d', type=int)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -15,10 +16,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     args = parser.parse_args(argv)
     embeds_dict = {}
     for pt_file in tqdm(glob(args.input)):
-        embed_matrix = torch.load(pt_file)
-        embed_avg = torch.mean(embed_matrix, dim=0)
+        embed_matrix = torch.load(pt_file, map_location=torch.device(args.device))
+        embed_avg = torch.mean(embed_matrix, dim=0).to('cpu')
         embeds_dict[pt_file]=embed_avg
-    torch.save(embed_matrix, args.output)
+    torch.save(embeds_dict, args.output)
 
 if __name__ == '__main__':
     main()
