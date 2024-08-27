@@ -26,7 +26,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
 
     # number of records taken indicated in split str for `load_dataset` method
-    split_str = args.splits
+    split_str = args.split
     if args.num_samples:
         args.split = split_str+f'[:{args.num_samples}]'
     # load dataset
