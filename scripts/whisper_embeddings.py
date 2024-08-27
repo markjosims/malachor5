@@ -24,27 +24,33 @@ def collate_hf_dataset(batch, proc, device):
 def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     local = os.path.exists(args.dataset)
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
+
+    # number of records taken indicated in split str for `load_dataset` method
+    split_str = args.splits
+    if args.num_samples:
+        args.split = split_str+f'[:{args.num_samples}]'
+    # load dataset
     if language:
         ds = load_dataset(
             args.dataset,
             LANGUAGE_CODES[language],
-            split=args.split,
+            split=split_str,
             streaming=True,
         )
     elif local:
         try:
+            # BUG: can't use `split` kwarg for `load_from_disk`
+            # TODO: implement slicing in this case
             ds = load_from_disk(args.dataset)[args.split]
         except FileNotFoundError:
-            ds = load_dataset(args.dataset, split=args.split)
+            ds = load_dataset(args.dataset, split=split_str)
     else:
         ds = load_dataset(
             args.dataset,
-            split=args.split,
+            split=split_str,
             streaming=True,
         )
-    if args.num_samples:
-        ds = ds.shuffle()
-        ds = ds[:args.num_samples]
+
     return DataLoader(
         ds,
         batch_size=args.batch_size,
