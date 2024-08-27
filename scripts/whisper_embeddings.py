@@ -32,7 +32,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
             streaming=True,
         )
     elif local:
-        ds = load_from_disk(args.dataset, split=args.split)
+        ds = load_from_disk(args.dataset)[args.split]
     else:
         ds = load_dataset(
             args.dataset,
