@@ -6,8 +6,8 @@ from tqdm import tqdm
 
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
-    parser.add_arg('--input', '-i', help='globstr for matching pytorch files.')
-    parser.add_arg('--output', '-o')
+    parser.add_argument('--input', '-i', help='globstr for matching pytorch files.')
+    parser.add_argument('--output', '-o')
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
