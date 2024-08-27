@@ -32,7 +32,10 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
             streaming=True,
         )
     elif local:
-        ds = load_from_disk(args.dataset)[args.split]
+        try:
+            ds = load_from_disk(args.dataset)[args.split]
+        except FileNotFoundError:
+            ds = load_dataset(args.dataset, split=args.split)
     else:
         ds = load_dataset(
             args.dataset,
