@@ -21,23 +21,33 @@ def collate_hf_dataset(batch, proc, device):
         sampling_rate=16_000,
     ).to(device)
 
-def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
-    print("Calculating embeddings for language", language, "from dataset", args.dataset)
-    if not model:
-        model = WhisperEncoder.from_pretrained(args.model)
-        model = model.to(args.device)
+def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
+    local = os.path.exists(args.dataset)
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
-    ds = load_dataset(
-        args.dataset,
-        LANGUAGE_CODES[language],
-        split=args.split,
-        streaming=True,
-    )
-    dataloader = DataLoader(
+    if language:
+        ds = load_dataset(
+            args.dataset,
+            LANGUAGE_CODES[language],
+            split=args.split,
+            streaming=not local,
+        )
+    else:
+        ds = load_dataset(
+            args.dataset,
+            split=args.split,
+            streaming=not local,
+        )
+    return DataLoader(
         ds,
         batch_size=args.batch_size,
         collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
     )
+
+def whisper_embeddings(args, language: Optional[str]=None, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
+    if not model:
+        model = WhisperEncoder.from_pretrained(args.model)
+        model = model.to(args.device)
+    dataloader = get_dataloader(args, language)
     embeds = []
     with torch.no_grad():
         for batch in tqdm(dataloader):
@@ -48,7 +58,7 @@ def whisper_embeddings(args, language: str, model: Optional[WhisperEncoder]=None
     if args.average:
         embeds = torch.mean(embeds, dim=0)
     return embeds
-        
+
 
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
@@ -57,7 +67,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--dataset', '-d', default='google/fleurs')
     parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--split', '-s', default='test')
-    # parser.add_argument('--sample_num', '-n', default=500)
+    parser.add_argument('--sample_num', '-n')
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
@@ -72,9 +82,19 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     model = WhisperEncoder.from_pretrained(args.model)
     model = model.to(args.device)
 
-    for language in args.language:
-        embeds = whisper_embeddings(args, model=model, language=language)
-        embeds_path = f"{args.dataset.split('/')[-1]}-{LANGUAGE_CODES[language]}-{args.split}.pt"
+    # for FLEURS dataset load each language individually
+    if args.language:
+        for language in args.language:
+            print("Calculating embeddings for language", language, "from dataset", args.dataset)
+            embeds = whisper_embeddings(args, model=model, language=language)
+            embeds_path = f"{args.dataset.split('/')[-1]}-{LANGUAGE_CODES[language]}-{args.split}.pt"
+            if args.output:
+                embeds_path = os.path.join(args.output, embeds_path)
+            torch.save(embeds, embeds_path)
+    # otherwise assume monolingual dataset, e.g. Tira ASR corpus
+    else:
+        embeds = whisper_embeddings(args, model=model)
+        embeds_path = f"{args.dataset.split('/')[-1]}-{args.split}.pt"
         if args.output:
             embeds_path = os.path.join(args.output, embeds_path)
         torch.save(embeds, embeds_path)
