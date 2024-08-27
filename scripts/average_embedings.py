@@ -10,7 +10,7 @@ def init_parser() -> ArgumentParser:
     parser.add_arg('--output', '-o')
     return parser
 
-def main(argv: Optional[Sequence[str]]) -> int:
+def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
     embeds_dict = {}
