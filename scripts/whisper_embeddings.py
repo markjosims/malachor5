@@ -82,6 +82,7 @@ def init_parser() -> ArgumentParser:
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
+    args.device = torch.device(args.device)
     if args.language == ['all']:
         args.language = LANGUAGE_CODES.keys()
     model = WhisperEncoder.from_pretrained(args.model)
