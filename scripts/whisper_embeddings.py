@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, Audio
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch
@@ -44,6 +44,10 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
             ds = load_from_disk(args.dataset)[args.split]
         except FileNotFoundError:
             ds = load_dataset(args.dataset, split=split_str)
+        # for local datasets, check if we need to resample
+        sampling_rate = ds[0]['audio']['sampling_rate']
+        if sampling_rate != 16_000:
+            ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
     else:
         ds = load_dataset(
             args.dataset,
