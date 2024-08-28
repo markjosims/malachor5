@@ -47,6 +47,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
         # for local datasets, check if we need to resample
         sampling_rate = ds[0]['audio']['sampling_rate']
         if sampling_rate != 16_000:
+            print("Resampling to 16_000Hz")
             ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
     else:
         ds = load_dataset(
