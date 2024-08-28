@@ -62,13 +62,17 @@ def whisper_embeddings(args, language: Optional[str]=None, model: Optional[Whisp
         model = WhisperEncoder.from_pretrained(args.model)
         model = model.to(args.device)
     dataloader = get_dataloader(args, language)
-    embeds = []
+    hidden_states = []
     with torch.no_grad():
         for batch in tqdm(dataloader):
             batch_embeds = model(batch['input_features'])['last_hidden_state']
-            embeds.append(batch_embeds.to('cpu'))
+            hidden_states.append(batch_embeds.to('cpu'))
     
-    embeds = torch.concat(embeds, dim=0)
+    hidden_states = torch.concat(hidden_states, dim=0)
+    # make embedding by averaging activations across timestamps
+    embeds = torch.mean(hidden_states, dim=1)
+    del hidden_states
+    # optionally average across all records
     if args.average:
         embeds = torch.mean(embeds, dim=0)
     return embeds
