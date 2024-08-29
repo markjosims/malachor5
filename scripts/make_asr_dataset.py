@@ -25,6 +25,7 @@ def init_parser() -> ArgumentParser:
     pool_eaf_data_parser.set_defaults(func=pool_eaf_data)
 
     make_clips_parser=commands.add_parser('make_clips')
+    make_clips_parser.add_argument('--check_clips_exist', action='store_true')
     make_clips_parser.set_defaults(func=make_clips)
     return parser
 
