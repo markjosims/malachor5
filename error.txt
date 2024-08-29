@@ -1,0 +1,33 @@
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/02192021-Tira/HH02192021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/10212020-Tira/HH10212020.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/09172020-Tira/HH09172020.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/07242020-Tira/HH07242020-Zoom3.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/07242020-Tira/HH07242020-Zoom2.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/07242020-Tira/HH07242020-Zoom1.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/01082021-Tira/HH01082021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/08212020-Tira/HH08212020-1.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/06162021-Tira/HH06162021.wav
+Could not open wav_source ./HH20240417.wav
+Could not open wav_source ./HH20240424.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/06112021-Tira/HH06112021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/04162021-Tira/HH04162021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/02122021-Tira/HH02122021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/01222021-Tira/HH01222021.wav
+Could not open wav_source /tmp/annotate/HH20230717-1.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/08072020-Tira/HH08072020.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/11042020-Tira/HH11042020-Zoom.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/11042020-Tira/HH11042020-Zoom-1.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/20210728-Tira/HH20210728.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/09242020-Tira/HH09242020.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/2022-07-26-Tira/HH20220726-1.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/2022-08-23-Tira/HH20220823.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/11252020-Tira/HH11252020.wav
+Could not open wav_source /tmp/annotate/HH20230724.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/20210810-Tira/Pumpkin Three_Children Story.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/04092021-Tira/HH04092021.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/09022020-Tira/HH09022020.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/08142020-Tira /HH08142020.wav
+Could not open wav_source ./HH20240424-ZOOM.wav
+Could not open wav_source ./HH20240417-ZOOM.wav
+Could not open wav_source ./HH20240412-ZOOM.wav
+Could not open wav_source /Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings/2021-10-11-Tira/HH20212011.wav
