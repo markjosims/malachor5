@@ -33,6 +33,9 @@ def init_parser() -> ArgumentParser:
     hf_dataset_parser=commands.add_parser('make_hf_dataset')
     hf_dataset_parser.set_defaults(func=make_hf_dataset)
 
+    remove_clips_parser=commands.add_parser('remove_extra_clips')
+    remove_clips_parser.set_defaults(func=remove_extra_clips)
+
     return parser
 
 # -------------- #
@@ -156,7 +159,8 @@ def pool_eaf_data(args) -> int:
 
 def make_clips(args) -> int:
     df=pd.read_csv(args.input)
-    df['clip']=''
+    # choosing colname `file_name` bc that's what HF AudioFolder expects
+    df['file_name']=''
     output_dir=args.output if os.path.isdir(args.output) else os.path.dirname(args.output)
     csv_path=args.output if args.output.endswith('.csv') else os.path.join(output_dir, 'clipdata.csv')
     clip_dir=os.path.join(output_dir, 'clips')
@@ -173,7 +177,7 @@ def make_clips(args) -> int:
                 with open(args.logfile, 'a') as f:
                     f.write("Could not open wav_source "+wav_source)
                 continue
-        df.loc[is_wav_source, 'clip']=df.loc[is_wav_source].progress_apply(
+        df.loc[is_wav_source, 'file_name']=df.loc[is_wav_source].progress_apply(
             lambda row: clip_segment(
                 wav=wav,
                 start_ms=row['start'],
@@ -192,6 +196,17 @@ def make_hf_dataset(args) -> int:
     ds = ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds.save_to_disk(args.output)
     return 0
+
+def remove_extra_clips(args) -> int:
+    df = pd.read_csv(args.input)
+    clip_dir = args.output or os.path.join(
+        os.path.dirname(args.input),
+        'clips',
+    )
+    clip_wavs = glob(os.path.join(clip_dir, '*.wav'))
+    for clip_wav in tqdm(clip_wavs):
+        if clip_wav not in df['file_name']:
+            os.remove(clip_wav)
 
 # ---- #
 # main #
