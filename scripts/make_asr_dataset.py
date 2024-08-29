@@ -8,6 +8,7 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
+from datasets import load_dataset, Audio
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 tqdm.pandas()
@@ -28,6 +29,10 @@ def init_parser() -> ArgumentParser:
     make_clips_parser=commands.add_parser('make_clips')
     make_clips_parser.add_argument('--check_clips_exist', action='store_true')
     make_clips_parser.set_defaults(func=make_clips)
+
+    hf_dataset_parser=commands.add_parser('make_hf_dataset')
+    hf_dataset_parser.set_defaults(func=make_hf_dataset)
+
     return parser
 
 # -------------- #
@@ -180,6 +185,12 @@ def make_clips(args) -> int:
             axis=1
         )
     df.to_csv(csv_path, index=False)
+    return 0
+
+def make_hf_dataset(args) -> int:
+    ds = load_dataset("audiofolder", data_dir=args.input)
+    ds = ds.cast_column("audio", Audio(sampling_rate=16_000))
+    ds.save_to_disk(args.output)
     return 0
 
 # ---- #
