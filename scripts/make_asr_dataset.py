@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import pandas as pd
 import os
 import librosa
+import numpy as np
 import soundfile
 from tqdm import tqdm
 
@@ -69,17 +70,19 @@ def ms_to_humantime(ms: int) -> str:
     return timestr
 
 def clip_segment(
-        wav,
-        start_ms,
-        end_ms,
+        wav: Optional[np.ndarray],
+        start_ms: int,
+        end_ms: int,
         wav_basename: str,
         target_dir: str,
-        sampling_rate: int=16_000
-    ):
-    start_samples=ms_to_samples(start_ms, sampling_rate=sampling_rate)
-    end_samples=ms_to_samples(end_ms, sampling_rate=sampling_rate)
-    wav_clip = wav[start_samples:end_samples]
-
+        sampling_rate: int=16_000,
+    ) -> str:
+    """
+    Generate filepath from `wav_basename` corresponding to the start
+    and end timestamps specified by `start_ms` and `end_ms`.
+    If `wav` argument is provided, clip to respective timestamps
+    and save to filepath. Either way, return filepath as str.
+    """
     start_timestr=ms_to_humantime(start_ms)
     end_timestr=ms_to_humantime(end_ms)
 
@@ -90,8 +93,21 @@ def clip_segment(
         clip_basename
     )
 
-    soundfile.write(clip_fp, wav_clip, samplerate=sampling_rate)
+    if wav is not None:
+        start_samples=ms_to_samples(start_ms, sampling_rate=sampling_rate)
+        end_samples=ms_to_samples(end_ms, sampling_rate=sampling_rate)
+        wav_clip = wav[start_samples:end_samples]
+        soundfile.write(clip_fp, wav_clip, samplerate=sampling_rate)
+
     return clip_fp
+
+def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> bool:
+    num_source = is_source.value_counts()[True]
+    source_basename = os.path.basename(wav_source)
+    glob_basename = source_basename.removesuffix('.wav')+'*.wav'
+    glob_str = os.path.join(clip_dir, glob_basename)
+    clip_paths = glob(glob_str)
+    return len(clip_paths) == num_source
 
 # --------------- #
 # Command methods #
@@ -142,12 +158,16 @@ def make_clips(args) -> int:
     os.makedirs(clip_dir, exist_ok=True)
     for wav_source in tqdm(df['wav_source'].unique()):
         is_wav_source=df['wav_source']==wav_source
-        try:
-            wav, sampling_rate=librosa.load(wav_source, sr=16_000, mono=True)
-        except:
-            with open(args.logfile, 'a') as f:
-                f.write("Could not open wav_source "+wav_source)
-            continue
+        if args.check_clips_exist and check_clips_exist(is_wav_source, wav_source, clip_dir):
+            # if clips already exist, skip loading in wav but still save clip filepaths
+            wav, sampling_rate = None, None
+        else:
+            try:
+                wav, sampling_rate=librosa.load(wav_source, sr=16_000, mono=True)
+            except:
+                with open(args.logfile, 'a') as f:
+                    f.write("Could not open wav_source "+wav_source)
+                continue
         df.loc[is_wav_source, 'clip']=df.loc[is_wav_source].progress_apply(
             lambda row: clip_segment(
                 wav=wav,
