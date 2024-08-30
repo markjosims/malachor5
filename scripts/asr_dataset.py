@@ -184,7 +184,7 @@ def infer_vad(args) -> int:
     pipe.to(torch.device(args.device))
     def map_pipe(row):
         result = pipe(
-            {'waveform': torch.tensor(row['audio']['array']).unsqueeze(0), 'sample_rate': row['sampling_rate'],},
+            {'waveform': torch.tensor(row['audio']['array']).unsqueeze(0), 'sample_rate': row['audio']['sampling_rate'],},
             num_speakers=1,
         )
         out={}
