@@ -361,7 +361,7 @@ def infer_allosaurus(args):
             'allosaurus': result,
         }
         return out
-    ds=ds.map(map_allosaurus, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
+    ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
     return 0
 
