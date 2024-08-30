@@ -169,9 +169,9 @@ def infer_asr(args) -> int:
         out={}
         model_col = args.model.split(sep='/')[-1]
         out[model_col] = [item['text'] for item in result]
-        out['audio'] = [audio['path'] for audio in row['audio']]
+        out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
     ds.to_csv(args.output)
     return 0
 
@@ -195,9 +195,9 @@ def infer_vad(args) -> int:
         # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
         model_col = args.model.split(sep='/')[-1]
         out[model_col]=result.to_lab()
-        out['audio'] = row['audio']['path']
+        out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe)
+    ds=ds.map(map_pipe, remove_columns=ds.column_names)
     ds.to_csv(args.output)
     return 0
 
