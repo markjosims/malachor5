@@ -302,7 +302,7 @@ def infer_asr(args) -> int:
         out[model_col] = [item['text'] for item in result]
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
     return 0
 
@@ -328,7 +328,7 @@ def infer_vad(args) -> int:
         out[model_col]=result.to_lab().replace('\n', ';')
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, remove_columns=ds.column_names)
+    ds=ds.map(map_pipe, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
     return 0
 
@@ -361,7 +361,7 @@ def infer_allosaurus(args):
             'allosaurus': result,
         }
         return out
-    ds=ds.map(map_allosaurus, batch_size=args.batch_size, remove_columns=ds.column_names)
+    ds=ds.map(map_allosaurus, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
     return 0
 
