@@ -172,7 +172,7 @@ def infer_asr(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    ds['train'].to_csv(args.output)
     return 0
 
 def infer_vad(args) -> int:
@@ -198,7 +198,7 @@ def infer_vad(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    ds['train'].to_csv(args.output)
     return 0
 
 # --------------- #
