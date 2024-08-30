@@ -8,9 +8,12 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
-from datasets import load_dataset, Audio
+from datasets import load_dataset, load_from_disk, Audio
+from transformers import pipeline
+import torch
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
+DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 tqdm.pandas()
 
 def init_parser() -> ArgumentParser:
@@ -51,8 +54,15 @@ def init_parser() -> ArgumentParser:
     )
     remove_clips_parser.set_defaults(func=remove_extra_clips)
 
-    infer_asr_parser = commands.add_parser('infer_asr')
-    infer_asr_parser.add_argument('--model', '-m', 'openai/whisper-large-v3', help=infer_asr.__doc__)
+    infer_asr_parser = commands.add_parser('infer_asr', help=infer_asr.__doc__)
+    infer_asr_parser.add_argument('--model', '-m', default='openai/whisper-large-v3')
+    infer_asr_parser.add_argument(
+        '--device',
+        '-D',
+        type=lambda s: int(s) if s!='cpu' else s,
+        default=DEVICE
+    )
+    infer_asr_parser.add_argument('--batch_size', '-b', default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
     return parser
@@ -141,6 +151,15 @@ def infer_asr(args) -> int:
     Run ASR using HF pipeline on `audio` column in input dataset.
     Save output csv with results in column named after model checkpoint specified.
     """
+    ds = load_from_disk(args.input)
+    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    def map_pipe(row):
+        result = pipe([audio['array'] for audio in row['audio']])
+        out={}
+        out[args.model] = result['text']
+        out['audio'] = [audio['path'] for audio in row['audio']]
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
+    ds.to_csv(args.output)
     return 0
 
 # --------------- #
