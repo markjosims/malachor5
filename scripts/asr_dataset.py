@@ -51,6 +51,10 @@ def init_parser() -> ArgumentParser:
     )
     remove_clips_parser.set_defaults(func=remove_extra_clips)
 
+    infer_asr_parser = commands.add_parser('infer_asr')
+    infer_asr_parser.add_argument('--model', '-m', 'openai/whisper-large-v3', help=infer_asr.__doc__)
+    infer_asr_parser.set_defaults(func=infer_asr)
+
     return parser
 
 # -------------- #
@@ -131,6 +135,13 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     glob_str = os.path.join(clip_dir, glob_basename)
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
+
+def infer_asr(args) -> int:
+    """
+    Run ASR using HF pipeline on `audio` column in input dataset.
+    Save output csv with results in column named after model checkpoint specified.
+    """
+    return 0
 
 # --------------- #
 # Command methods #
