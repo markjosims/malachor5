@@ -1,7 +1,7 @@
 from glob import glob
 from pympi import Elan
 from typing import Optional, Sequence
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 import pandas as pd
 import os
 import librosa
@@ -12,6 +12,9 @@ from datasets import load_dataset, load_from_disk, Audio
 from transformers import pipeline
 from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
+import torchaudio
+import allosaurus
+from tempfile import TemporaryDirectory
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
@@ -321,6 +324,39 @@ def infer_vad(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, remove_columns=ds.column_names)
+    ds['train'].to_csv(args.output)
+    return 0
+
+def infer_allosaurus(args):
+    """
+    Load in HF audio dataset and run Allosaurus on each row.
+    """
+    ds=load_from_disk(args.input)
+    config=Namespace(
+        model=args.model,
+        device_id=args.device,
+        lang=args.lang,
+        approximate=False,
+        prior=None
+    )
+    model=allosaurus.app.read_recognizer(config)
+    def map_allosaurus(row):
+        clip_paths=[audio['path'] for audio in row['audio']]
+        clip_basenames=[os.path.basename(clip) for clip in clip_paths]
+        audio_tensors=[torch.tensor(audio['array']).unsqueeze(0) for audio in row['audio']]
+        sample_rate=row['audio'][0]['sample_rate']
+        result=[]
+        with TemporaryDirectory() as tempdir:
+            audio_paths=[os.path.join(tempdir, basename) for basename in clip_basenames]
+            for path, tensor in zip(audio_paths, audio_tensors):
+                torchaudio.save(path, tensor, sample_rate)
+                result.append(model.recognize(path, args.lang))
+        out = {
+            'path': row['clip'],
+            'allosaurus': result,
+        }
+        return out
+    ds=ds.map(map_allosaurus, batch_size=args.batch_size, remove_columns=ds.column_names)
     ds['train'].to_csv(args.output)
     return 0
 
