@@ -62,7 +62,7 @@ def init_parser() -> ArgumentParser:
         type=lambda s: int(s) if s!='cpu' else s,
         default=DEVICE
     )
-    infer_asr_parser.add_argument('--batch_size', '-b', default=32)
+    infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
     return parser
