@@ -72,6 +72,7 @@ def init_parser() -> ArgumentParser:
     infer_allosaurus_parser = commands.add_parser('infer_allosaurus', help=infer_allosaurus.__doc__)
     infer_allosaurus_parser.add_argument('--model', '-m', default='uni2005')
     infer_allosaurus_parser.add_argument('--batch_size', '-b', default=32)
+    infer_allosaurus_parser.add_argument('--lang', '-l', default='tic')
     infer_allosaurus_parser.add_argument(
         '--device',
         '-D',
