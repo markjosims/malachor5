@@ -34,23 +34,20 @@ def init_parser() -> ArgumentParser:
 
     make_clips_parser=commands.add_parser(
         'make_clips',
-        help="Open input `.csv` file, create `clips` dir in output dir which is populated with"+\
-        "`.wav` files for each interval in the input csv and add column with relative path of clip. "+\
-        "If --output is csv file, save to output path, else if output is dir, save to `clipdata.csv` in output dir."
+        help=make_clips.__doc__
     )
     make_clips_parser.add_argument('--check_clips_exist', action='store_true')
     make_clips_parser.set_defaults(func=make_clips)
 
     hf_dataset_parser=commands.add_parser(
         'make_hf_dataset',
-        help='Create an AudioFolder dataset from input dir and saves to output dir. '+\
-        'Expects input dir to contain `metadata.csv` with column `clip` or `file_name.`'
+        help=make_hf_dataset.__doc__
     )
     hf_dataset_parser.set_defaults(func=make_hf_dataset)
 
     remove_clips_parser=commands.add_parser(
         'remove_extra_clips',
-        help='Looks for any clips not found in input `.csv` file and deletes from `clips` dir.'
+        help=remove_extra_clips.__doc__
     )
     remove_clips_parser.set_defaults(func=remove_extra_clips)
 
@@ -179,6 +176,12 @@ def pool_eaf_data(args) -> int:
     return 0
 
 def make_clips(args) -> int:
+    """
+    Open input `.csv` file, create `clips` dir in output dir which is populated with
+    `.wav` files for each interval in the input csv and add column with relative path of clip.
+    If --output is csv file, save to output path, else if output is dir, save to `clipdata.csv`
+    in output dir.
+    """
     df=pd.read_csv(args.input)
     # choosing colname `file_name` bc that's what HF AudioFolder expects
     df['file_name']=''
@@ -213,6 +216,10 @@ def make_clips(args) -> int:
     return 0
 
 def make_hf_dataset(args) -> int:
+    """
+    Create an AudioFolder dataset from input dir and saves to output dir.
+    Expects input dir to contain `metadata.csv` with column `clip` or `file_name.`
+    """
     metadata_path=os.path.join(args.input, 'metadata.csv')
     df = pd.read_csv(metadata_path)
     if 'file_name' not in df.columns:
@@ -232,6 +239,9 @@ def make_hf_dataset(args) -> int:
     return 0
 
 def remove_extra_clips(args) -> int:
+    """
+    Looks for any clips not found in input `.csv` file and deletes from `clips` dir.
+    """
     df = pd.read_csv(args.input)
     clip_dir = args.output or os.path.join(
         os.path.dirname(args.input),
