@@ -13,7 +13,7 @@ from transformers import pipeline
 from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
-import allosaurus
+from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -344,7 +344,7 @@ def infer_allosaurus(args):
         approximate=False,
         prior=None
     )
-    model=allosaurus.app.read_recognizer(config)
+    model=read_recognizer(config)
     def map_allosaurus(row):
         clip_paths=[audio['path'] for audio in row['audio']]
         clip_basenames=[os.path.basename(clip) for clip in clip_paths]
