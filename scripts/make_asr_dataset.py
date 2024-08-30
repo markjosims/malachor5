@@ -192,6 +192,19 @@ def make_clips(args) -> int:
     return 0
 
 def make_hf_dataset(args) -> int:
+    metadata_path=os.path.join(args.input, 'metadata.csv')
+    df = pd.read_csv(metadata_path)
+    if 'file_name' not in df.columns:
+        # assume csv has column 'clip' which includes absolute path
+        # or path relative from project directory for each clip
+        # add new column 'file_name' which is relative to dataset directory
+        df['file_name']=df['clip'].apply(
+            lambda s: os.path.join(
+                os.path.relpath(s, args.input)
+            )
+        )
+        df.to_csv(metadata_path, index=False)
+    del df
     ds = load_dataset("audiofolder", data_dir=args.input)
     ds = ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds.save_to_disk(args.output)
@@ -206,7 +219,7 @@ def remove_extra_clips(args) -> int:
     clip_wavs = glob(os.path.join(clip_dir, '*.wav'))
     for clip_wav in tqdm(clip_wavs):
         if clip_wav not in df['file_name']:
-            os.remove(clip_wav)
+            breakpoint()#os.remove(clip_wav)
 
 # ---- #
 # main #
