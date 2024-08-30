@@ -65,6 +65,17 @@ def init_parser() -> ArgumentParser:
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
+    infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
+    infer_vad_parser.add_argument('--model', '-m', default='pyannote/speaker-diarization-3.1')
+    infer_vad_parser.add_argument(
+        '--device',
+        '-D',
+        type=lambda s: int(s) if s!='cpu' else s,
+        default=DEVICE
+    )
+    infer_vad_parser.add_argument('--batch_size', '-b', type=int, default=32)
+    infer_vad_parser.set_defaults(func=infer_vad)
+
     return parser
 
 # -------------- #
