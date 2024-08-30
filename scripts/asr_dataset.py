@@ -154,7 +154,10 @@ def pool_eaf_data(args) -> int:
         'eaf_source': eaf_source,
         'wav_source': wav_source,
     })
-    df.to_csv(args.output, index=False)
+    csv_path = args.output
+    if os.path.isdir(csv_path):
+        csv_path=os.path.join(csv_path, 'metadata.csv')
+    df.to_csv(csv_path, index=False)
     return 0
 
 def make_clips(args) -> int:
