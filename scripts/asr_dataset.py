@@ -349,7 +349,7 @@ def infer_allosaurus(args):
         clip_paths=[audio['path'] for audio in row['audio']]
         clip_basenames=[os.path.basename(clip) for clip in clip_paths]
         audio_tensors=[torch.tensor(audio['array']).unsqueeze(0) for audio in row['audio']]
-        sample_rate=row['audio'][0]['sample_rate']
+        sample_rate=row['audio'][0]['sampling_rate']
         result=[]
         with TemporaryDirectory() as tempdir:
             audio_paths=[os.path.join(tempdir, basename) for basename in clip_basenames]
