@@ -156,7 +156,29 @@ def infer_asr(args) -> int:
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
         out={}
-        out[args.model] = [item['text'] for item in result]
+        model_col = args.model.split(sep='/')[-1]
+        out[model_col] = [item['text'] for item in result]
+        out['audio'] = [audio['path'] for audio in row['audio']]
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
+    ds.to_csv(args.output)
+    return 0
+
+def infer_vad(args) -> int:
+    """
+    Run VAD using PyAnnote speaker diarization set to detect one speaker.
+    Add column indicating number of ms of detected speech.
+    """
+    ds = load_from_disk(args.input)
+    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    def map_pipe(row):
+        result = pipe([audio['array'] for audio in row['audio']])
+        out={}
+        # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
+        charts = [item.chart() for item in result]
+        sec = [chart[0][1] for chart in charts]
+        ms = [int(s*1000) for s in sec]
+        model_col = args.model.split(sep='/')[-1]
+        out[model_col]=ms
         out['audio'] = [audio['path'] for audio in row['audio']]
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
     ds.to_csv(args.output)
