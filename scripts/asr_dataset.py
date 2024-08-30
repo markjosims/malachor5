@@ -22,18 +22,36 @@ def init_parser() -> ArgumentParser:
 
     commands=parser.add_subparsers(help='Command to run')
 
-    pool_eaf_data_parser=commands.add_parser('pool_eaf_data')
+    pool_eaf_data_parser=commands.add_parser(
+        'pool_eaf_data',
+        help="Glob all `.eaf` files in input directory recursively and create `.csv` file "+\
+        "containing rows for each interval with columns `start`, `end`, `transcription`, "+\
+        "`eaf_source` and `wav_source.` --output may be path to `.csv` file or directory to "+\
+        "create `metadata.csv` in."
+    )
     pool_eaf_data_parser.add_argument('--transcription_tier', '-t', default='IPA Transcription')
     pool_eaf_data_parser.set_defaults(func=pool_eaf_data)
 
-    make_clips_parser=commands.add_parser('make_clips')
+    make_clips_parser=commands.add_parser(
+        'make_clips',
+        help="Open input `.csv` file, create `clips` dir in output dir which is populated with"+\
+        "`.wav` files for each interval in the input csv and add column with relative path of clip. "+\
+        "If --output is csv file, save to output path, else if output is dir, save to `clipdata.csv` in output dir."
+    )
     make_clips_parser.add_argument('--check_clips_exist', action='store_true')
     make_clips_parser.set_defaults(func=make_clips)
 
-    hf_dataset_parser=commands.add_parser('make_hf_dataset')
+    hf_dataset_parser=commands.add_parser(
+        'make_hf_dataset',
+        help='Create an AudioFolder dataset from input dir and saves to output dir. '+\
+        'Expects input dir to contain `metadata.csv` with column `clip` or `file_name.`'
+    )
     hf_dataset_parser.set_defaults(func=make_hf_dataset)
 
-    remove_clips_parser=commands.add_parser('remove_extra_clips')
+    remove_clips_parser=commands.add_parser(
+        'remove_extra_clips',
+        help='Looks for any clips not found in input `.csv` file and deletes from `clips` dir.'
+    )
     remove_clips_parser.set_defaults(func=remove_extra_clips)
 
     return parser
