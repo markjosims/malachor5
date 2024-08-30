@@ -194,7 +194,7 @@ def infer_vad(args) -> int:
         out={}
         # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
         model_col = args.model.split(sep='/')[-1]
-        out[model_col]=result.to_lab()
+        out[model_col]=result.to_lab().replace('\n', ';')
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, remove_columns=ds.column_names)
