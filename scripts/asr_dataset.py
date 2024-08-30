@@ -69,15 +69,19 @@ def init_parser() -> ArgumentParser:
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
-    infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
-    infer_vad_parser.add_argument('--model', '-m', default='pyannote/speaker-diarization-3.1')
-    infer_vad_parser.add_argument(
+    infer_allosaurus_parser = commands.add_parser('infer_allosaurus', help=infer_allosaurus.__doc__)
+    infer_allosaurus_parser.add_argument('--model', '-m', default='uni2005')
+    infer_allosaurus_parser.add_argument('--batch_size', '-b', default=32)
+    infer_allosaurus_parser.add_argument(
         '--device',
         '-D',
-        type=lambda s: int(s) if s!='cpu' else s,
-        default=DEVICE
+        type=int,
+        # allosaurus uses -1 for 'cpu'
+        default=DEVICE if DEVICE is int else -1,
     )
-    infer_vad_parser.set_defaults(func=infer_vad)
+    infer_allosaurus_parser.set_defaults(func=infer_allosaurus)
+
+
 
     return parser
 
