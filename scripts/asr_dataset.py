@@ -157,50 +157,6 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
 
-def infer_asr(args) -> int:
-    """
-    Run ASR using HF pipeline on `audio` column in input dataset.
-    Save output csv with results in column named after model checkpoint specified.
-    """
-    ds = load_from_disk(args.input)
-    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
-    def map_pipe(row):
-        result = pipe([audio['array'] for audio in row['audio']])
-        out={}
-        model_col = args.model.split(sep='/')[-1]
-        out[model_col] = [item['text'] for item in result]
-        out['path'] = row['audio']['path']
-        return out
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds['train'].to_csv(args.output)
-    return 0
-
-def infer_vad(args) -> int:
-    """
-    Run VAD using PyAnnote speaker diarization set to detect one speaker.
-    Add column indicating number of ms of detected speech.
-    """
-    ds = load_from_disk(args.input)
-    pipe=pyannote_pipeline.from_pretrained(args.model)
-    pipe.to(torch.device(args.device))
-    def map_pipe(row):
-        result = pipe(
-            {
-                'waveform': torch.tensor(row['audio']['array']).unsqueeze(0).to(args.device).float(),
-                'sample_rate': row['audio']['sampling_rate'],
-            },
-            num_speakers=1,
-        )
-        out={}
-        # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
-        model_col = args.model.split(sep='/')[-1]
-        out[model_col]=result.to_lab().replace('\n', ';')
-        out['path'] = row['audio']['path']
-        return out
-    ds=ds.map(map_pipe, remove_columns=ds.column_names)
-    ds['train'].to_csv(args.output)
-    return 0
-
 # --------------- #
 # Command methods #
 # --------------- #
@@ -323,6 +279,50 @@ def remove_extra_clips(args) -> int:
     for clip_wav in tqdm(clip_wavs):
         if clip_wav not in df_clip_wavs:
             os.remove(clip_wav)
+
+def infer_asr(args) -> int:
+    """
+    Run ASR using HF pipeline on `audio` column in input dataset.
+    Save output csv with results in column named after model checkpoint specified.
+    """
+    ds = load_from_disk(args.input)
+    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    def map_pipe(row):
+        result = pipe([audio['array'] for audio in row['audio']])
+        out={}
+        model_col = args.model.split(sep='/')[-1]
+        out[model_col] = [item['text'] for item in result]
+        out['path'] = row['audio']['path']
+        return out
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    ds['train'].to_csv(args.output)
+    return 0
+
+def infer_vad(args) -> int:
+    """
+    Run VAD using PyAnnote speaker diarization set to detect one speaker.
+    Add column indicating number of ms of detected speech.
+    """
+    ds = load_from_disk(args.input)
+    pipe=pyannote_pipeline.from_pretrained(args.model)
+    pipe.to(torch.device(args.device))
+    def map_pipe(row):
+        result = pipe(
+            {
+                'waveform': torch.tensor(row['audio']['array']).unsqueeze(0).to(args.device).float(),
+                'sample_rate': row['audio']['sampling_rate'],
+            },
+            num_speakers=1,
+        )
+        out={}
+        # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
+        model_col = args.model.split(sep='/')[-1]
+        out[model_col]=result.to_lab().replace('\n', ';')
+        out['path'] = row['audio']['path']
+        return out
+    ds=ds.map(map_pipe, remove_columns=ds.column_names)
+    ds['train'].to_csv(args.output)
+    return 0
 
 # ---- #
 # main #
