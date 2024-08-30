@@ -10,6 +10,7 @@ import soundfile
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio
 from transformers import pipeline
+from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -180,7 +181,7 @@ def infer_vad(args) -> int:
     Add column indicating number of ms of detected speech.
     """
     ds = load_from_disk(args.input)
-    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    pipe=pyannote_pipeline(args.model, device=args.device)
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
         out={}
