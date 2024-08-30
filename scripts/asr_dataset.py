@@ -74,7 +74,6 @@ def init_parser() -> ArgumentParser:
         type=lambda s: int(s) if s!='cpu' else s,
         default=DEVICE
     )
-    infer_vad_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_vad_parser.set_defaults(func=infer_vad)
 
     return parser
@@ -184,16 +183,18 @@ def infer_vad(args) -> int:
     pipe=pyannote_pipeline.from_pretrained(args.model)
     pipe.to(torch.device(args.device))
     def map_pipe(row):
-        result = pipe([audio['array'] for audio in row['audio']])
+        result = pipe(
+            {'waveform': torch.tensor(row['audio']['array']).unsqueeze(0), 'sample_rate': row['sampling_rate'],},
+            num_speakers=1,
+        )
         out={}
         # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
-        charts = [item.chart() for item in result]
-        sec = [chart[0][1] for chart in charts]
-        ms = [int(s*1000) for s in sec]
+        sec = result.chart()[0][1]
+        ms = int(sec*1000)
         model_col = args.model.split(sep='/')[-1]
         out[model_col]=ms
-        out['audio'] = [audio['path'] for audio in row['audio']]
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
+        out['audio'] = row['audio']['path']
+    ds=ds.map(map_pipe)
     ds.to_csv(args.output)
     return 0
 
