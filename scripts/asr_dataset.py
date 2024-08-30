@@ -243,14 +243,17 @@ def remove_extra_clips(args) -> int:
     Looks for any clips not found in input `.csv` file and deletes from `clips` dir.
     """
     df = pd.read_csv(args.input)
+    data_dir = os.path.dirname(args.input)
     clip_dir = args.output or os.path.join(
-        os.path.dirname(args.input),
+        data_dir,
         'clips',
     )
     clip_wavs = glob(os.path.join(clip_dir, '*.wav'))
+    clip_wavs = [os.path.relpath(path, data_dir) for path in clip_wavs]
+    df_clip_wavs = df['clip'].apply(lambda path: os.path.relpath(path, data_dir))
     for clip_wav in tqdm(clip_wavs):
-        if clip_wav not in df['file_name']:
-            breakpoint()#os.remove(clip_wav)
+        if clip_wav not in df_clip_wavs:
+            os.remove(clip_wav)
 
 # ---- #
 # main #
