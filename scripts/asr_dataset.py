@@ -181,7 +181,7 @@ def infer_vad(args) -> int:
     Add column indicating number of ms of detected speech.
     """
     ds = load_from_disk(args.input)
-    pipe=pyannote_pipeline(args.model)
+    pipe=pyannote_pipeline.from_pretrained(args.model)
     pipe.to(torch.device(args.device))
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
