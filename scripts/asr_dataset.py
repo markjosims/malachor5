@@ -156,7 +156,7 @@ def infer_asr(args) -> int:
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
         out={}
-        out[args.model] = result['text']
+        out[args.model] = [item['text'] for item in result]
         out['audio'] = [audio['path'] for audio in row['audio']]
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size)
     ds.to_csv(args.output)
