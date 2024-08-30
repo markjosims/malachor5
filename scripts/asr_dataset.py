@@ -192,10 +192,8 @@ def infer_vad(args) -> int:
         )
         out={}
         # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
-        sec = result.chart()[0][1]
-        ms = int(sec*1000)
         model_col = args.model.split(sep='/')[-1]
-        out[model_col]=ms
+        out[model_col]=result.to_lab()
         out['audio'] = row['audio']['path']
     ds=ds.map(map_pipe)
     ds.to_csv(args.output)
