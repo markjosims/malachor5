@@ -21,6 +21,7 @@ DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 tqdm.pandas()
 
 def init_parser() -> ArgumentParser:
+    # TODO: some command arguments are very wet. Make them DRY.
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', default=GDRIVE_DIR)
     parser.add_argument('--output', '-o')
@@ -82,7 +83,16 @@ def init_parser() -> ArgumentParser:
     )
     infer_allosaurus_parser.set_defaults(func=infer_allosaurus)
 
-
+    clap_ipa_sim_parser = commands.add_parser('clap_ipa_sim', help=clap_ipa_sim.__doc__)
+    clap_ipa_sim_parser.add_argument(
+        '--device',
+        '-D',
+        type=lambda s: int(s) if s!='cpu' else s,
+        default=DEVICE
+    )
+    clap_ipa_sim_parser.add_argument(
+        '--batch_size', '-b', type=int, default=32,
+    )
 
     return parser
 
@@ -363,6 +373,16 @@ def infer_allosaurus(args):
         return out
     ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
+    return 0
+
+def clap_ipa_sim(args) -> int:
+    """
+    Computes speech and text embeddings for audio dataset.
+    Saves cosine similarity scores to `clap_ipa_sim.csv`,
+    speech embeddings to `clap_ipa_acoustic_embeds.pt`
+    and text embeddings to `clap_ipa_text_embeds.pt`,
+    all in output dir.
+    """
     return 0
 
 # ---- #
