@@ -188,6 +188,41 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
 
+# ----------------------- #
+# Detect clipping helpers #
+# ----------------------- #
+
+def get_clipped_segments(np_array: np.ndarray) -> Tuple[List[Tuple[int, int]], int]:
+    """
+    Given numpy array representing audio samples
+    return a list of tuples containing beginning and end indices of clipped segments,
+    and an integer indicating the percentage of samples which are clipped.
+    """
+    nmax = max(np_array)
+    nmin = min(np_array)
+
+    clipped_segments = []
+    clipped_samples = 0
+    inside_clip = False
+    clip_start = 0
+    clip_end = 0
+
+    for i, sample in enumerate(np_array):
+        if (sample <= nmin + 1) or (sample >= nmax - 1):  # sample equal to or extremely close to max or min
+            if not inside_clip:
+                inside_clip = True  # declare we are inside clipped segment
+                clip_start = i  # this is the first clipped sample
+
+        elif inside_clip:
+            inside_clip = False  # not longer inside clipped segment
+            clip_end = i-1  # previous sample is end of segment
+            clipped_segment = (clip_start, clip_end)  # save segment as tuple
+            clipped_samples += clip_end-clip_start+1 # save number of samples in segment
+            clipped_segments.append(clipped_segment)  # store tuple in list of clipped segments
+
+    percent_clipped = clipped_samples / len(np_array)
+    return clipped_segments, percent_clipped
+
 # --------------- #
 # Command methods #
 # --------------- #
