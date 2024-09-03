@@ -102,6 +102,9 @@ def init_parser() -> ArgumentParser:
     )
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
+    detect_clipping_parser = commands.add_parser('detect_clipping', help=detect_clipping.__doc__)
+    detect_clipping_parser.set_defaults(func=detect_clipping)
+
     return parser
 
 # -------------- #
@@ -452,6 +455,9 @@ def clap_ipa_sim(args) -> int:
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
     torch.save(phone_embed, phone_embed_path)
     
+    return 0
+
+def detect_clipping(args) -> int:
     return 0
 
 # ---- #
