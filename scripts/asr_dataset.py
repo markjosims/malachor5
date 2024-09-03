@@ -197,6 +197,7 @@ def get_clipped_segments(np_array: np.ndarray) -> Tuple[List[Tuple[int, int]], i
     Given numpy array representing audio samples
     return a list of tuples containing beginning and end indices of clipped segments,
     and an integer indicating the percentage of samples which are clipped.
+    Taken from https://github.com/papercup-open-source/tutorials/tree/master/declipping on 7 November 2023.
     """
     nmax = max(np_array)
     nmin = min(np_array)
