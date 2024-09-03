@@ -393,7 +393,9 @@ def clap_ipa_sim(args) -> int:
     """
     # Code taken in part from https://github.com/lingjzhu/clap-ipa
     # TODO: allow choosing model size
+    print("Loading clap-ipa speech encoder...")
     speech_encoder = SpeechEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-speech')
+    print("Loading clap-ipa phone encoder...")
     phone_encoder = PhoneEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-phone')
     phone_encoder.eval().to(args.device)
     speech_encoder.eval().to(args.device)
