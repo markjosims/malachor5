@@ -1,6 +1,6 @@
 from glob import glob
 from pympi import Elan
-from typing import Optional, Sequence, List, Tuple
+from typing import Optional, Sequence, List, Tuple, Dict, Union
 from argparse import ArgumentParser, Namespace
 import pandas as pd
 import os
@@ -192,7 +192,7 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
 # Detect clipping helpers #
 # ----------------------- #
 
-def get_clipped_segments(np_array: np.ndarray) -> Tuple[List[Tuple[int, int]], int]:
+def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int, int]], int]]:
     """
     Given numpy array representing audio samples
     return a list of tuples containing beginning and end indices of clipped segments,
