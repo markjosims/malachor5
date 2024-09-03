@@ -506,7 +506,7 @@ def detect_clipping(args) -> int:
     """
     ds = load_from_disk(args.input)
     def map_get_clipped_segments(row):
-        clipped_dict = get_clipped_segments(row)
+        clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
     ds = ds.map(map_get_clipped_segments, remove_columns=ds['train'].column_names)
