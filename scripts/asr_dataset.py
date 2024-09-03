@@ -94,6 +94,7 @@ def init_parser() -> ArgumentParser:
     clap_ipa_sim_parser.add_argument(
         '--batch_size', '-b', type=int, default=32,
     )
+    clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
     return parser
 
