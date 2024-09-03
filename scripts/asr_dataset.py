@@ -488,11 +488,11 @@ def clap_ipa_sim(args) -> int:
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
     sim_df.to_csv(sim_csv_path, index=False)
 
-    speech_embed=torch.concat(ds['speech_embed'], dim=0)
+    speech_embed=torch.concat(ds['train']['speech_embed'], dim=0)
     speech_embed_path=os.path.join(args.output, 'clap_ipa_speech_embeds.pt')
     torch.save(speech_embed, speech_embed_path)
 
-    phone_embed=torch.concat(ds['phone_embed'], dim=0)
+    phone_embed=torch.concat(ds['train']['phone_embed'], dim=0)
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
     torch.save(phone_embed, phone_embed_path)
     
