@@ -94,6 +94,12 @@ def init_parser() -> ArgumentParser:
     clap_ipa_sim_parser.add_argument(
         '--batch_size', '-b', type=int, default=32,
     )
+    clap_ipa_sim_parser.add_argument(
+        '--model_size',
+        '-m',
+        choices=['tiny', 'base', 'small'],
+        default='small'
+    )
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
     return parser
@@ -387,8 +393,8 @@ def clap_ipa_sim(args) -> int:
     """
     # Code taken in part from https://github.com/lingjzhu/clap-ipa
     # TODO: allow choosing model size
-    speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-tiny-speech')
-    phone_encoder = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-tiny-phone')
+    speech_encoder = SpeechEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-speech')
+    phone_encoder = PhoneEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-phone')
     phone_encoder.eval().to(args.device)
     speech_encoder.eval().to(args.device)
 
