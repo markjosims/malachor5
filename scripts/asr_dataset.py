@@ -392,7 +392,8 @@ def clap_ipa_sim(args) -> int:
     all in output dir.
     """
     # Code taken in part from https://github.com/lingjzhu/clap-ipa
-    # TODO: allow choosing model size
+    # TODO: make different functions for speech embeddings, phone emebeddings
+    # and cos similarity for more efficient computation
     print("Loading clap-ipa speech encoder...")
     speech_encoder = SpeechEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-speech')
     print("Loading clap-ipa phone encoder...")
