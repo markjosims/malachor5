@@ -9,12 +9,13 @@ import numpy as np
 import soundfile
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio
-from transformers import pipeline
+from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
 from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
+from clap.encoders import SpeechEncoder, PhoneEncoder
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
@@ -379,10 +380,51 @@ def clap_ipa_sim(args) -> int:
     """
     Computes speech and text embeddings for audio dataset.
     Saves cosine similarity scores to `clap_ipa_sim.csv`,
-    speech embeddings to `clap_ipa_acoustic_embeds.pt`
-    and text embeddings to `clap_ipa_text_embeds.pt`,
+    speech embeddings to `clap_ipa_speech_embeds.pt`
+    and phone embeddings to `clap_ipa_phone_embeds.pt`,
     all in output dir.
     """
+    # Code taken in part from https://github.com/lingjzhu/clap-ipa
+    # TODO: allow choosing model size
+    speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-tiny-speech')
+    phone_encoder = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-tiny-phone')
+    phone_encoder.eval().to(args.device)
+    speech_encoder.eval().to(args.device)
+
+    tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')
+    processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
+
+    ds = load_from_disk(args.input)
+    def map_charsiu(row):
+        audio_arrays = [audio['array'] for audio in row['audio']]
+        audio_paths = [audio['path'] for audio in row['audio']]
+        audio_input = processor(audio_arrays)
+        ipa_input = tokenizer(row['transcriptions'])
+
+        with torch.no_grad():
+            speech_embed = speech_encoder(audio_input)
+            phone_embed = phone_encoder(ipa_input)
+        similarity = torch.nn.functional.cosine_similarity(speech_embed,phone_embed,dim=-1)
+        return {
+            'speech_embed': speech_embed,
+            'phone_embed': phone_embed,
+            'similarity': similarity,
+            'path':  audio_paths,
+        }
+    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
+
+    sim_df = pd.DataFrame({'path': ds['train']['path'], 'clap_ipa_cos_sim': ds['train']['similarity']})
+    sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
+    sim_df.to_csv(sim_csv_path, index=False)
+
+    speech_embed=torch.concat(ds['speech_embed'], dim=0)
+    speech_embed_path=os.path.join(args.output, 'clap_ipa_speech_embeds.pt')
+    torch.save(speech_embed, speech_embed_path)
+
+    phone_embed=torch.concat(ds['phone_embed'], dim=0)
+    phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
+    torch.save(phone_embed, phone_embed_path)
+    
     return 0
 
 # ---- #
