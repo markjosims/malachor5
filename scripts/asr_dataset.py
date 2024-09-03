@@ -1,6 +1,6 @@
 from glob import glob
 from pympi import Elan
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List, Tuple
 from argparse import ArgumentParser, Namespace
 import pandas as pd
 import os
@@ -16,6 +16,8 @@ import torchaudio
 from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
 from clap.encoders import SpeechEncoder, PhoneEncoder
+from scipy.io.wavfile import read, write
+from scipy.interpolate import interp1d
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
