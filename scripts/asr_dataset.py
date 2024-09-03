@@ -418,6 +418,7 @@ def clap_ipa_sim(args) -> int:
             row['transcription'],
             return_tensors='pt',
             return_token_type_ids=False,
+            padding=True,
         )
         audio_input=audio_input.to(args.device)
         ipa_input=ipa_input.to(args.device)
