@@ -109,9 +109,9 @@ def init_parser() -> ArgumentParser:
 
     return parser
 
-# -------------- #
-# Helper methods #
-# -------------- #
+# ------------------- #
+# ELAN helper methods #
+# ------------------- #
 
 def get_media_path(eaf):
     media_paths = [x['MEDIA_URL'] for x in eaf.media_descriptors]
