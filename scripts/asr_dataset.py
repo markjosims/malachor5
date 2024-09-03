@@ -499,6 +499,18 @@ def clap_ipa_sim(args) -> int:
     return 0
 
 def detect_clipping(args) -> int:
+    """
+    Detect segments of audio clipping for each wavfile in the input dataset.
+    Saves output csv containing indices for clipped segments and the percentage
+    of audio clipping for each record in the dataset.
+    """
+    ds = load_from_disk(args.input)
+    def map_get_clipped_segments(row):
+        clipped_dict = get_clipped_segments(row)
+        clipped_dict['path']=row['audio']['path']
+        return clipped_dict
+    ds = ds.map(map_get_clipped_segments, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
     return 0
 
 # ---- #
