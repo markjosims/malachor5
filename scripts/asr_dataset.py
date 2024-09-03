@@ -412,15 +412,19 @@ def clap_ipa_sim(args) -> int:
             audio_arrays,
             sampling_rate=sampling_rate,
             return_tensors='pt',
+            return_attention_mask=True,
         )
         ipa_input = tokenizer(
             row['transcription'],
             return_tensors='pt',
+            return_token_type_ids=False,
         )
+        audio_input=audio_input.to(args.device)
+        ipa_input=ipa_input.to(args.device)
 
         with torch.no_grad():
-            speech_embed = speech_encoder(audio_input)
-            phone_embed = phone_encoder(ipa_input)
+            speech_embed = speech_encoder(**audio_input)
+            phone_embed = phone_encoder(**ipa_input)
         similarity = torch.nn.functional.cosine_similarity(speech_embed,phone_embed,dim=-1)
         return {
             'speech_embed': speech_embed,
