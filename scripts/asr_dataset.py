@@ -424,8 +424,8 @@ def clap_ipa_sim(args) -> int:
         ipa_input=ipa_input.to(args.device)
 
         with torch.no_grad():
-            speech_embed = speech_encoder(**audio_input)['pooler_output']
-            phone_embed = phone_encoder(**ipa_input)['pooler_output']
+            speech_embed = speech_encoder(**audio_input)['pooler_output'].to('cpu')
+            phone_embed = phone_encoder(**ipa_input)['pooler_output'].to('cpu')
         similarity = torch.nn.functional.cosine_similarity(speech_embed,phone_embed,dim=-1)
         return {
             'speech_embed': speech_embed,
