@@ -407,7 +407,11 @@ def clap_ipa_sim(args) -> int:
     def map_charsiu(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
-        audio_input = processor(audio_arrays)
+        sampling_rate = row['audio'][0]['sampling_rate']
+        audio_input = processor(
+            audio_arrays,
+            sampling_rate=sampling_rate,
+        )
         ipa_input = tokenizer(row['transcription'])
 
         with torch.no_grad():
