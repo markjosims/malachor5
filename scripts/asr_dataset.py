@@ -411,8 +411,12 @@ def clap_ipa_sim(args) -> int:
         audio_input = processor(
             audio_arrays,
             sampling_rate=sampling_rate,
+            return_tensors='pt',
         )
-        ipa_input = tokenizer(row['transcription'])
+        ipa_input = tokenizer(
+            row['transcription'],
+            return_tensors='pt',
+        )
 
         with torch.no_grad():
             speech_embed = speech_encoder(audio_input)
