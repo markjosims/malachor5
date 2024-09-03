@@ -222,7 +222,10 @@ def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int
             clipped_segments.append(clipped_segment)  # store tuple in list of clipped segments
 
     percent_clipped = clipped_samples / len(np_array)
-    return clipped_segments, percent_clipped
+    return {
+        'clipped_segments': clipped_segments,
+        'percent_clipped': percent_clipped,
+    }
 
 # --------------- #
 # Command methods #
