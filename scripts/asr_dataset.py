@@ -13,9 +13,8 @@ from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
-from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
-from clap.encoders import SpeechEncoder, PhoneEncoder
+# TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
@@ -462,6 +461,7 @@ def infer_allosaurus(args):
     """
     Load in HF audio dataset and run Allosaurus on each row.
     """
+    from allosaurus.app import read_recognizer
     ds=load_from_disk(args.input)
     config=Namespace(
         model=args.model,
@@ -499,6 +499,7 @@ def clap_ipa_sim(args) -> int:
     and phone embeddings to `clap_ipa_phone_embeds.pt`,
     all in output dir.
     """
+    from clap.encoders import SpeechEncoder, PhoneEncoder
     # Code taken in part from https://github.com/lingjzhu/clap-ipa
     # TODO: make different functions for speech embeddings, phone emebeddings
     # and cos similarity for more efficient computation
