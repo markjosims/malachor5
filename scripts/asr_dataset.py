@@ -582,7 +582,7 @@ def calculate_snr(args):
     Calculate WADA SNR for each audio record in the input dataset
     and saves to output .csv file.
     """
-    ds = load_from_disk(args.dataset)
+    ds = load_from_disk(args.input)
     def map_snr(row):
         path=row['audio']['path']
         array=row['audio']['array']
