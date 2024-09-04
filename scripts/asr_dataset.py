@@ -14,8 +14,9 @@ from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
 from allosaurus.app import read_recognizer
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, TemporaryFile
 from clap.encoders import SpeechEncoder, PhoneEncoder
+import snreval
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
