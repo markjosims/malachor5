@@ -22,6 +22,7 @@ DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 tqdm.pandas()
 
 def init_parser() -> ArgumentParser:
+    device_type = lambda s: int(s) if s!='cpu' else s
     # TODO: some command arguments are very wet. Make them DRY.
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', default=GDRIVE_DIR)
@@ -62,18 +63,13 @@ def init_parser() -> ArgumentParser:
 
     infer_asr_parser = commands.add_parser('infer_asr', help=infer_asr.__doc__)
     infer_asr_parser.add_argument('--model', '-m', default='openai/whisper-large-v3')
-    infer_asr_parser.add_argument(
-        '--device',
-        '-D',
-        type=lambda s: int(s) if s!='cpu' else s,
-        default=DEVICE
-    )
+    infer_vad_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
     infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
     infer_vad_parser.add_argument('--model', '-m', default='pyannoate/speaker-diarization-3.1')
-    infer_vad_parser.add_argument('--device', '-D', default=DEVICE)
+    infer_vad_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
     infer_vad_parser.set_defaults(func=infer_vad)
 
     infer_allosaurus_parser = commands.add_parser('infer_allosaurus', help=infer_allosaurus.__doc__)
@@ -83,9 +79,9 @@ def init_parser() -> ArgumentParser:
     infer_allosaurus_parser.add_argument(
         '--device',
         '-D',
-        type=int,
+        type=lambda s: -1 if s=='cpu' else int(s),
         # allosaurus uses -1 for 'cpu'
-        default=DEVICE if DEVICE is int else -1,
+        default=DEVICE,
     )
     infer_allosaurus_parser.set_defaults(func=infer_allosaurus)
 
@@ -93,7 +89,7 @@ def init_parser() -> ArgumentParser:
     clap_ipa_sim_parser.add_argument(
         '--device',
         '-D',
-        type=lambda s: int(s) if s!='cpu' else s,
+        type=device_type,
         default=DEVICE
     )
     clap_ipa_sim_parser.add_argument(
