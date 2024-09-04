@@ -376,15 +376,25 @@ def infer_vad(args) -> int:
     """
     ds = load_from_disk(args.input)
     pipe=pyannote_pipeline.from_pretrained(args.model)
+    drz='diarization' in args.model
     pipe.to(torch.device(args.device))
     def map_pipe(row):
-        result = pipe(
-            {
-                'waveform': torch.tensor(row['audio']['array']).unsqueeze(0).to(args.device).float(),
-                'sample_rate': row['audio']['sampling_rate'],
-            },
-            num_speakers=1,
-        )
+        if drz:
+            # only pass num_speakers if using a diarization model
+            result = pipe(
+                {
+                    'waveform': torch.tensor(row['audio']['array']).unsqueeze(0).to(args.device).float(),
+                    'sample_rate': row['audio']['sampling_rate'],
+                },
+                num_speakers=1,
+            )
+        else:
+            result = pipe(
+                {
+                    'waveform': torch.tensor(row['audio']['array']).unsqueeze(0).to(args.device).float(),
+                    'sample_rate': row['audio']['sampling_rate'],
+                },
+            )
         out={}
         # item.chart() returns list of shape [('SPEAKER_00', num_sec)]
         model_col = args.model.split(sep='/')[-1]
