@@ -15,7 +15,7 @@ import torch
 import torchaudio
 from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
-from clap.encoders import SpeechEncoder, PhoneEncoder # type: ignore
+from clap.encoders import SpeechEncoder, PhoneEncoder
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
