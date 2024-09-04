@@ -107,6 +107,9 @@ def init_parser() -> ArgumentParser:
     detect_clipping_parser = commands.add_parser('detect_clipping', help=detect_clipping.__doc__)
     detect_clipping_parser.set_defaults(func=detect_clipping)
 
+    snr_parser = commands.add_parser('snr', help=calculate_snr.__doc__)
+    snr_parser.set_defaults(func=calculate_snr)
+
     return parser
 
 # ------------------- #
