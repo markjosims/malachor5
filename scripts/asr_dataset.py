@@ -1,6 +1,6 @@
 from glob import glob
 from pympi import Elan
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List, Tuple, Dict, Union
 from argparse import ArgumentParser, Namespace
 import pandas as pd
 import os
@@ -16,6 +16,8 @@ import torchaudio
 from allosaurus.app import read_recognizer
 from tempfile import TemporaryDirectory
 from clap.encoders import SpeechEncoder, PhoneEncoder
+from scipy.io.wavfile import read, write
+from scipy.interpolate import interp1d
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
@@ -95,12 +97,22 @@ def init_parser() -> ArgumentParser:
     clap_ipa_sim_parser.add_argument(
         '--batch_size', '-b', type=int, default=32,
     )
+    clap_ipa_sim_parser.add_argument(
+        '--model_size',
+        '-m',
+        choices=['tiny', 'base', 'small'],
+        default='small'
+    )
+    clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
+
+    detect_clipping_parser = commands.add_parser('detect_clipping', help=detect_clipping.__doc__)
+    detect_clipping_parser.set_defaults(func=detect_clipping)
 
     return parser
 
-# -------------- #
-# Helper methods #
-# -------------- #
+# ------------------- #
+# ELAN helper methods #
+# ------------------- #
 
 def get_media_path(eaf):
     media_paths = [x['MEDIA_URL'] for x in eaf.media_descriptors]
@@ -176,6 +188,45 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     glob_str = os.path.join(clip_dir, glob_basename)
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
+
+# ----------------------- #
+# Detect clipping helpers #
+# ----------------------- #
+
+def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int, int]], int]]:
+    """
+    Given numpy array representing audio samples
+    return a list of tuples containing beginning and end indices of clipped segments,
+    and an integer indicating the percentage of samples which are clipped.
+    Taken from https://github.com/papercup-open-source/tutorials/tree/master/declipping on 7 November 2023.
+    """
+    nmax = max(np_array)
+    nmin = min(np_array)
+
+    clipped_segments = []
+    clipped_samples = 0
+    inside_clip = False
+    clip_start = 0
+    clip_end = 0
+
+    for i, sample in enumerate(np_array):
+        if (sample <= nmin + 1) or (sample >= nmax - 1):  # sample equal to or extremely close to max or min
+            if not inside_clip:
+                inside_clip = True  # declare we are inside clipped segment
+                clip_start = i  # this is the first clipped sample
+
+        elif inside_clip:
+            inside_clip = False  # not longer inside clipped segment
+            clip_end = i-1  # previous sample is end of segment
+            clipped_segment = (clip_start, clip_end)  # save segment as tuple
+            clipped_samples += clip_end-clip_start+1 # save number of samples in segment
+            clipped_segments.append(clipped_segment)  # store tuple in list of clipped segments
+
+    percent_clipped = clipped_samples / len(np_array)
+    return {
+        'clipped_segments': clipped_segments,
+        'percent_clipped': percent_clipped,
+    }
 
 # --------------- #
 # Command methods #
@@ -386,9 +437,12 @@ def clap_ipa_sim(args) -> int:
     all in output dir.
     """
     # Code taken in part from https://github.com/lingjzhu/clap-ipa
-    # TODO: allow choosing model size
-    speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-tiny-speech')
-    phone_encoder = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-tiny-phone')
+    # TODO: make different functions for speech embeddings, phone emebeddings
+    # and cos similarity for more efficient computation
+    print("Loading clap-ipa speech encoder...")
+    speech_encoder = SpeechEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-speech')
+    print("Loading clap-ipa phone encoder...")
+    phone_encoder = PhoneEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-phone')
     phone_encoder.eval().to(args.device)
     speech_encoder.eval().to(args.device)
 
@@ -399,13 +453,30 @@ def clap_ipa_sim(args) -> int:
     def map_charsiu(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
-        audio_input = processor(audio_arrays)
-        ipa_input = tokenizer(row['transcriptions'])
+        sampling_rate = row['audio'][0]['sampling_rate']
+        audio_input = processor(
+            audio_arrays,
+            sampling_rate=sampling_rate,
+            return_tensors='pt',
+            return_attention_mask=True,
+        )
+        ipa_input = tokenizer(
+            row['transcription'],
+            return_tensors='pt',
+            return_token_type_ids=False,
+            padding=True,
+        )
+        audio_input=audio_input.to(args.device)
+        ipa_input=ipa_input.to(args.device)
 
         with torch.no_grad():
-            speech_embed = speech_encoder(audio_input)
-            phone_embed = phone_encoder(ipa_input)
+            speech_embed = speech_encoder(**audio_input)['pooler_output'].to('cpu')
+            phone_embed = phone_encoder(**ipa_input)['pooler_output'].to('cpu')
         similarity = torch.nn.functional.cosine_similarity(speech_embed,phone_embed,dim=-1)
+
+        del audio_input
+        del ipa_input
+
         return {
             'speech_embed': speech_embed,
             'phone_embed': phone_embed,
@@ -418,14 +489,29 @@ def clap_ipa_sim(args) -> int:
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
     sim_df.to_csv(sim_csv_path, index=False)
 
-    speech_embed=torch.concat(ds['speech_embed'], dim=0)
+    speech_embed=torch.concat(ds['train']['speech_embed'], dim=0)
     speech_embed_path=os.path.join(args.output, 'clap_ipa_speech_embeds.pt')
     torch.save(speech_embed, speech_embed_path)
 
-    phone_embed=torch.concat(ds['phone_embed'], dim=0)
+    phone_embed=torch.concat(ds['train']['phone_embed'], dim=0)
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
     torch.save(phone_embed, phone_embed_path)
     
+    return 0
+
+def detect_clipping(args) -> int:
+    """
+    Detect segments of audio clipping for each wavfile in the input dataset.
+    Saves output csv containing indices for clipped segments and the percentage
+    of audio clipping for each record in the dataset.
+    """
+    ds = load_from_disk(args.input)
+    def map_get_clipped_segments(row):
+        clipped_dict = get_clipped_segments(row['audio']['array'])
+        clipped_dict['path']=row['audio']['path']
+        return clipped_dict
+    ds = ds.map(map_get_clipped_segments, remove_columns=ds['train'].column_names)
+    ds['train'].to_csv(args.output)
     return 0
 
 # ---- #
