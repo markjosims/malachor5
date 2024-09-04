@@ -590,7 +590,7 @@ def calculate_snr(args):
         wada = wada_snr(array)
         return {'path': path, 'wada_snr': wada}
     ds = ds.map(map_snr, remove_columns=ds['train'].column_names)
-    ds.to_csv(args.output)
+    ds['train'].to_csv(args.output)
 
 # ---- #
 # main #
