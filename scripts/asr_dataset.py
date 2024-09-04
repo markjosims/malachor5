@@ -65,7 +65,7 @@ def init_parser() -> ArgumentParser:
 
     infer_asr_parser = commands.add_parser('infer_asr', help=infer_asr.__doc__)
     infer_asr_parser.add_argument('--model', '-m', default='openai/whisper-large-v3')
-    infer_vad_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
+    infer_asr_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.set_defaults(func=infer_asr)
 
