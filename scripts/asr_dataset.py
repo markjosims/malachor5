@@ -14,9 +14,8 @@ from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
 from allosaurus.app import read_recognizer
-from tempfile import TemporaryDirectory, TemporaryFile
+from tempfile import TemporaryDirectory
 from clap.encoders import SpeechEncoder, PhoneEncoder
-import snreval
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
@@ -525,6 +524,14 @@ def detect_clipping(args) -> int:
     ds = ds.map(map_get_clipped_segments, remove_columns=ds['train'].column_names)
     ds['train'].to_csv(args.output)
     return 0
+
+def calculate_snr(args):
+    wavs = glob(os.path.join(args.input, '*.wav'))
+    with TemporaryDirectory() as dir:
+        wavlist_fp = os.path.join(dir, 'wavlist.txt')
+        with open(wavlist_fp, 'w') as f:
+            f.writelines(wavs)
+        result = SNREval("")
 
 # ---- #
 # main #
