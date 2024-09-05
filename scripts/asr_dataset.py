@@ -8,7 +8,7 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
-from datasets import load_dataset, load_from_disk, Audio
+from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
@@ -190,6 +190,7 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
 
+
 # ------------------------- #
 # Signal processing helpers #
 # ------------------------- #
@@ -228,6 +229,23 @@ def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int
         'clipped_segments': clipped_segments,
         'percent_clipped': percent_clipped,
     }
+
+# --------------- #
+# Dataset helpers #
+# --------------- #
+
+def load_dataset_safe(dataset: str, split: Optional[str]=None) -> Union[Dataset, DatasetDict]:
+    """
+    If dataset points to a path on disk, load using `load_from_disk`,
+    otherwise use `load_dataset` (to load from HF hub or local cache).
+    """
+    if os.path.exists(dataset):
+        dataset=load_from_disk(dataset)
+        if split:
+            return dataset[split]
+        return dataset
+    dataset = load_dataset(dataset, split=split)
+    return dataset
 
 # --------------- #
 # Command methods #
