@@ -385,8 +385,8 @@ def infer_asr(args) -> int:
         out[model_col] = [item['text'] for item in result]
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
-    ds['train'].to_csv(args.output)
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
     return 0
 
 def infer_vad(args) -> int:
@@ -421,8 +421,8 @@ def infer_vad(args) -> int:
         out[model_col]=result.to_lab().replace('\n', ';')
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, remove_columns=ds['train'].column_names)
-    ds['train'].to_csv(args.output)
+    ds=ds.map(map_pipe, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
     return 0
 
 def infer_allosaurus(args):
@@ -455,8 +455,8 @@ def infer_allosaurus(args):
             'allosaurus': result,
         }
         return out
-    ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
-    ds['train'].to_csv(args.output)
+    ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
     return 0
 
 def clap_ipa_sim(args) -> int:
@@ -515,17 +515,17 @@ def clap_ipa_sim(args) -> int:
             'similarity': similarity,
             'path':  audio_paths,
         }
-    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=ds['train'].column_names)
+    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
 
-    sim_df = pd.DataFrame({'path': ds['train']['path'], 'clap_ipa_cos_sim': ds['train']['similarity']})
+    sim_df = pd.DataFrame({'path': ds['path'], 'clap_ipa_cos_sim': ds['similarity']})
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
     sim_df.to_csv(sim_csv_path, index=False)
 
-    speech_embed=torch.concat(ds['train']['speech_embed'], dim=0)
+    speech_embed=torch.concat(ds['speech_embed'], dim=0)
     speech_embed_path=os.path.join(args.output, 'clap_ipa_speech_embeds.pt')
     torch.save(speech_embed, speech_embed_path)
 
-    phone_embed=torch.concat(ds['train']['phone_embed'], dim=0)
+    phone_embed=torch.concat(ds['phone_embed'], dim=0)
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
     torch.save(phone_embed, phone_embed_path)
     
@@ -542,8 +542,8 @@ def detect_clipping(args) -> int:
         clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
-    ds = ds.map(map_get_clipped_segments, remove_columns=ds['train'].column_names)
-    ds['train'].to_csv(args.output)
+    ds = ds.map(map_get_clipped_segments, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
     return 0
 
 def calculate_snr(args):
@@ -567,8 +567,8 @@ def calculate_snr(args):
         wada = eng.wada_snr(array, sampling_rate)
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
-    ds = ds.map(map_snr, remove_columns=ds['train'].column_names)
-    ds['train'].to_csv(args.output)
+    ds = ds.map(map_snr, remove_columns=ds.column_names)
+    ds.to_csv(args.output)
 
 # ---- #
 # main #
