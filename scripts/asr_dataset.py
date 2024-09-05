@@ -556,7 +556,7 @@ def calculate_snr(args):
     eng = engine.start_matlab()
     # look for SNREVAL matlab code at directory specified by SNREVAL_DIR env variable
     # if not specified, default to value in SNREVAL_DIR constant
-    eng.add_path(os.environ.get('SNREVAL_DIR', SNREVAL_DIR))
+    eng.addpath(os.environ.get('SNREVAL_DIR', SNREVAL_DIR))
 
     ds = load_from_disk(args.input)
     def map_snr(row):
