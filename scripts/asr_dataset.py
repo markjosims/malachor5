@@ -28,6 +28,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--input', '-i', default=GDRIVE_DIR)
     parser.add_argument('--output', '-o')
     parser.add_argument('--logfile', '-l', default='error.txt')
+    parser.add_argument('--split', '-s', default='train')
     parser.set_defaults(func=empty_command)
 
     commands=parser.add_subparsers(help='Command to run')
@@ -375,7 +376,7 @@ def infer_asr(args) -> int:
     Run ASR using HF pipeline on `audio` column in input dataset.
     Save output csv with results in column named after model checkpoint specified.
     """
-    ds = load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
@@ -393,7 +394,7 @@ def infer_vad(args) -> int:
     Run VAD using PyAnnote speaker diarization set to detect one speaker.
     Add column indicating number of ms of detected speech.
     """
-    ds = load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     pipe=pyannote_pipeline.from_pretrained(args.model)
     drz='diarization' in args.model
     pipe.to(torch.device(args.device))
@@ -429,7 +430,7 @@ def infer_allosaurus(args):
     Load in HF audio dataset and run Allosaurus on each row.
     """
     from allosaurus.app import read_recognizer
-    ds=load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     config=Namespace(
         model=args.model,
         device_id=args.device,
@@ -480,7 +481,7 @@ def clap_ipa_sim(args) -> int:
     tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
 
-    ds = load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     def map_charsiu(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
@@ -536,7 +537,7 @@ def detect_clipping(args) -> int:
     Saves output csv containing indices for clipped segments and the percentage
     of audio clipping for each record in the dataset.
     """
-    ds = load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     def map_get_clipped_segments(row):
         clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
@@ -558,7 +559,7 @@ def calculate_snr(args):
     # if not specified, default to value in SNREVAL_DIR constant
     eng.addpath(os.environ.get('SNREVAL_DIR', SNREVAL_DIR))
 
-    ds = load_from_disk(args.input)
+    ds = load_dataset_safe(args.input, args.split)
     def map_snr(row):
         path=row['audio']['path']
         array=row['audio']['array']
