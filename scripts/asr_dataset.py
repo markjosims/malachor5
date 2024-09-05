@@ -236,17 +236,19 @@ def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int
 # Dataset helpers #
 # --------------- #
 
-def load_dataset_safe(dataset: str, split: Optional[str]=None) -> Union[Dataset, DatasetDict]:
+def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     """
     If dataset points to a path on disk, load using `load_from_disk`,
     otherwise use `load_dataset` (to load from HF hub or local cache).
     """
-    if os.path.exists(dataset):
-        dataset=load_from_disk(dataset)
-        if split:
-            return dataset[split]
+    if os.path.exists(args.input):
+        dataset=load_from_disk(args.input)
+        if args.split:
+            return dataset[args.split]
         return dataset
-    dataset = load_dataset(dataset, split=split)
+    if 'fleurs' in args.input:
+        return load_dataset(args.input, args.fleurs_lang, split=args.split)
+    dataset = load_dataset(args.input, split=args.split)
     return dataset
 
 # --------------- #
@@ -377,7 +379,7 @@ def infer_asr(args) -> int:
     Run ASR using HF pipeline on `audio` column in input dataset.
     Save output csv with results in column named after model checkpoint specified.
     """
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
@@ -395,7 +397,7 @@ def infer_vad(args) -> int:
     Run VAD using PyAnnote speaker diarization set to detect one speaker.
     Add column indicating number of ms of detected speech.
     """
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     pipe=pyannote_pipeline.from_pretrained(args.model)
     drz='diarization' in args.model
     pipe.to(torch.device(args.device))
@@ -431,7 +433,7 @@ def infer_allosaurus(args):
     Load in HF audio dataset and run Allosaurus on each row.
     """
     from allosaurus.app import read_recognizer
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     config=Namespace(
         model=args.model,
         device_id=args.device,
@@ -482,7 +484,7 @@ def clap_ipa_sim(args) -> int:
     tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
 
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     def map_charsiu(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
@@ -538,7 +540,7 @@ def detect_clipping(args) -> int:
     Saves output csv containing indices for clipped segments and the percentage
     of audio clipping for each record in the dataset.
     """
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     def map_get_clipped_segments(row):
         clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
@@ -560,7 +562,7 @@ def calculate_snr(args):
     # if not specified, default to value in SNREVAL_DIR constant
     eng.addpath(os.environ.get('SNREVAL_DIR', SNREVAL_DIR))
 
-    ds = load_dataset_safe(args.input, args.split)
+    ds = load_dataset_safe(args)
     def map_snr(row):
         path=row['audio']['path']
         array=row['audio']['array']
