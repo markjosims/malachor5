@@ -29,6 +29,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o')
     parser.add_argument('--logfile', '-l', default='error.txt')
     parser.add_argument('--split', '-s', default='train')
+    parser.add_argument('--fleurs_lang', default='all')
     parser.set_defaults(func=empty_command)
 
     commands=parser.add_subparsers(help='Command to run')
