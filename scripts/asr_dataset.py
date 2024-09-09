@@ -248,7 +248,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
             return dataset[args.split]
         return dataset
     if 'fleurs' in args.input:
-        return load_dataset(args.input, args.fleurs_lang, split=args.split)
+        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=args.stream)
     dataset = load_dataset(args.input, split=args.split)
     return dataset
 
