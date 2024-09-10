@@ -266,8 +266,10 @@ def save_dataset_safe(args, dataset):
         return
     
     rows = []
-    for row in tqdm(dataset):
+    for i, row in tqdm(enumerate(dataset)):
         rows.append(row)
+        if i == args.num_records-1:
+            break
     df = pd.DataFrame(rows)
     df.to_csv(args.output, index=False)
     
