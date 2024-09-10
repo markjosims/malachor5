@@ -11,7 +11,6 @@ from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 import torch
-import torchaudio
 from tempfile import TemporaryDirectory
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
@@ -435,6 +434,7 @@ def infer_allosaurus(args):
     Load in HF audio dataset and run Allosaurus on each row.
     """
     from allosaurus.app import read_recognizer
+    import torchaudio
     ds = load_dataset_safe(args)
     config=Namespace(
         model=args.model,
