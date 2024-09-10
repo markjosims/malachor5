@@ -1,6 +1,9 @@
 torch
+torchaudio
 transformers
 datasets
 tqdm
 pandas
 pympi-ling
+librosa
+pyannote.audio
