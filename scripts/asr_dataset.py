@@ -30,6 +30,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--logfile', '-l', default='error.txt')
     parser.add_argument('--split', '-s', default='train')
     parser.add_argument('--fleurs_lang', default='all')
+    parser.add_argument('--num_records', '-n', type=int)
     parser.set_defaults(func=empty_command)
 
     commands=parser.add_subparsers(help='Command to run')
@@ -243,12 +244,17 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     """
     if os.path.exists(args.input):
         dataset=load_from_disk(args.input)
+        if args.split and args.num_records:
+            return dataset[args.split][:args.num_records]
         if args.split:
             return dataset[args.split]
-        return dataset
+        return dataset    
+
     if 'fleurs' in args.input:
-        return load_dataset(args.input, args.fleurs_lang, split=args.split)
+        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=True)
     dataset = load_dataset(args.input, split=args.split)
+    if (args.num_records) and (not args.stream) and (args.split):
+        dataset = dataset[:args.num_records]
     return dataset
 
 # --------------- #
@@ -571,7 +577,11 @@ def calculate_snr(args):
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
     ds = ds.map(map_snr, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    ds_list = []
+    for row in tqdm(ds):
+        ds_list.append(row)
+    df=pd.DataFrame(ds_list)
+    df.to_csv(args.output, index=False)
 
 # ---- #
 # main #
