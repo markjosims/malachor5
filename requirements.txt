@@ -7,3 +7,4 @@ pandas
 pympi-ling
 librosa
 pyannote.audio
+matlab
