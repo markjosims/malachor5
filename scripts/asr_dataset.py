@@ -8,11 +8,9 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
-from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict
+from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, IterableDataset
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
-from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
-import torchaudio
 from tempfile import TemporaryDirectory
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
@@ -31,6 +29,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--split', '-s', default='train')
     parser.add_argument('--fleurs_lang', default='all')
     parser.add_argument('--num_records', '-n', type=int)
+    parser.add_argument('--stream', action='store_true')
     parser.set_defaults(func=empty_command)
 
     commands=parser.add_subparsers(help='Command to run')
@@ -251,12 +250,27 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         return dataset    
 
     if 'fleurs' in args.input:
-        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=True)
+        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=args.stream, trust_remote_code=True)
     dataset = load_dataset(args.input, split=args.split)
     if (args.num_records) and (not args.stream) and (args.split):
         dataset = dataset[:args.num_records]
     return dataset
 
+def save_dataset_safe(args, dataset):
+    """
+    If dataset is IterableDataset, first cast to list of rows then to pandas.Dataframe 
+    before saving to .csv. Otherwise, call `Dataset.to_csv`.
+    """
+    if type(dataset) is Dataset:
+        dataset.to_csv(args.output)
+        return
+    
+    rows = []
+    for row in tqdm(dataset):
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df.to_csv(args.output, index=False)
+    
 # --------------- #
 # Command methods #
 # --------------- #
@@ -395,7 +409,7 @@ def infer_asr(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def infer_vad(args) -> int:
@@ -403,8 +417,10 @@ def infer_vad(args) -> int:
     Run VAD using PyAnnote speaker diarization set to detect one speaker.
     Add column indicating number of ms of detected speech.
     """
+    from pyannote.audio import Pipeline
+
     ds = load_dataset_safe(args)
-    pipe=pyannote_pipeline.from_pretrained(args.model)
+    pipe=Pipeline.from_pretrained(args.model)
     drz='diarization' in args.model
     pipe.to(torch.device(args.device))
     def map_pipe(row):
@@ -431,7 +447,7 @@ def infer_vad(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def infer_allosaurus(args):
@@ -439,6 +455,7 @@ def infer_allosaurus(args):
     Load in HF audio dataset and run Allosaurus on each row.
     """
     from allosaurus.app import read_recognizer
+    import torchaudio
     ds = load_dataset_safe(args)
     config=Namespace(
         model=args.model,
@@ -465,7 +482,7 @@ def infer_allosaurus(args):
         }
         return out
     ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def clap_ipa_sim(args) -> int:
@@ -552,7 +569,7 @@ def detect_clipping(args) -> int:
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
     ds = ds.map(map_get_clipped_segments, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def calculate_snr(args):
@@ -563,6 +580,7 @@ def calculate_snr(args):
     Downloaded 9 Sep 2024
     """
     from matlab import engine
+    print("Loading matlab engine...")
     eng = engine.start_matlab()
     # look for SNREVAL matlab code at directory specified by SNREVAL_DIR env variable
     # if not specified, default to value in SNREVAL_DIR constant
@@ -577,11 +595,7 @@ def calculate_snr(args):
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
     ds = ds.map(map_snr, remove_columns=ds.column_names)
-    ds_list = []
-    for row in tqdm(ds):
-        ds_list.append(row)
-    df=pd.DataFrame(ds_list)
-    df.to_csv(args.output, index=False)
+    save_dataset_safe(args, ds)
 
 # ---- #
 # main #
