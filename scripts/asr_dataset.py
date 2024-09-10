@@ -260,7 +260,7 @@ def save_dataset_safe(args, dataset):
         return
     
     rows = []
-    for row in dataset:
+    for row in tqdm(dataset):
         rows.append(row)
     df = pd.DataFrame(rows)
     df.to_csv(args.output, index=False)
