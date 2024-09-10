@@ -559,6 +559,7 @@ def calculate_snr(args):
     Downloaded 9 Sep 2024
     """
     from matlab import engine
+    print("Loading matlab engine...")
     eng = engine.start_matlab()
     # look for SNREVAL matlab code at directory specified by SNREVAL_DIR env variable
     # if not specified, default to value in SNREVAL_DIR constant
