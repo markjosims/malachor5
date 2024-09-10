@@ -10,7 +10,6 @@ import soundfile
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
-from pyannote.audio import Pipeline as pyannote_pipeline
 import torch
 import torchaudio
 from tempfile import TemporaryDirectory
@@ -398,8 +397,10 @@ def infer_vad(args) -> int:
     Run VAD using PyAnnote speaker diarization set to detect one speaker.
     Add column indicating number of ms of detected speech.
     """
+    from pyannote.audio import Pipeline
+
     ds = load_dataset_safe(args)
-    pipe=pyannote_pipeline.from_pretrained(args.model)
+    pipe=Pipeline.from_pretrained(args.model)
     drz='diarization' in args.model
     pipe.to(torch.device(args.device))
     def map_pipe(row):
