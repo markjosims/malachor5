@@ -8,7 +8,7 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
-from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict
+from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, IterableDataset
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 import torch
 from tempfile import TemporaryDirectory
@@ -250,6 +250,21 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     dataset = load_dataset(args.input, split=args.split)
     return dataset
 
+def save_dataset_safe(args, dataset):
+    """
+    If dataset is IterableDataset, first cast to list of rows then to pandas.Dataframe 
+    before saving to .csv. Otherwise, call `Dataset.to_csv`.
+    """
+    if type(dataset) is Dataset:
+        dataset.to_csv(args.output)
+        return
+    
+    rows = []
+    for row in dataset:
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df.to_csv(args.output, index=False)
+    
 # --------------- #
 # Command methods #
 # --------------- #
@@ -388,7 +403,7 @@ def infer_asr(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def infer_vad(args) -> int:
@@ -426,7 +441,7 @@ def infer_vad(args) -> int:
         out['path'] = row['audio']['path']
         return out
     ds=ds.map(map_pipe, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def infer_allosaurus(args):
@@ -461,7 +476,7 @@ def infer_allosaurus(args):
         }
         return out
     ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def clap_ipa_sim(args) -> int:
@@ -548,7 +563,7 @@ def detect_clipping(args) -> int:
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
     ds = ds.map(map_get_clipped_segments, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
     return 0
 
 def calculate_snr(args):
@@ -574,7 +589,7 @@ def calculate_snr(args):
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
     ds = ds.map(map_snr, remove_columns=ds.column_names)
-    ds.to_csv(args.output)
+    save_dataset_safe(args, ds)
 
 # ---- #
 # main #
