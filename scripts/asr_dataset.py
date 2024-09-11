@@ -106,7 +106,7 @@ def init_parser() -> ArgumentParser:
         choices=['tiny', 'base', 'small'],
         default='small'
     )
-    clap_ipa_sim_parser = add_string_norm_args(clap_ipa_text_sim_parser)
+    clap_ipa_sim_parser = add_string_norm_args(clap_ipa_sim_parser)
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
     clap_ipa_text_sim_parser = commands.add_parser('clap_ipa_text_sim', help=clap_ipa_sim.__doc__)
