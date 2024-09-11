@@ -13,6 +13,7 @@ from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 import torch
 from tempfile import TemporaryDirectory
 import csv
+from unidecode import unidecode
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -105,6 +106,7 @@ def init_parser() -> ArgumentParser:
         choices=['tiny', 'base', 'small'],
         default='small'
     )
+    clap_ipa_sim_parser = add_string_norm_args(clap_ipa_text_sim_parser)
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
     clap_ipa_text_sim_parser = commands.add_parser('clap_ipa_text_sim', help=clap_ipa_sim.__doc__)
@@ -123,6 +125,7 @@ def init_parser() -> ArgumentParser:
         choices=['tiny', 'base', 'small'],
         default='small'
     )
+    clap_ipa_text_sim_parser = add_string_norm_args(clap_ipa_text_sim_parser)
     clap_ipa_text_sim_parser.set_defaults(func=clap_ipa_text_sim)
 
 
@@ -132,6 +135,16 @@ def init_parser() -> ArgumentParser:
     snr_parser = commands.add_parser('snr', help=calculate_snr.__doc__)
     snr_parser.set_defaults(func=calculate_snr)
 
+    return parser
+
+# -------------- #
+# Parser helpers #
+# -------------- #
+
+def add_string_norm_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--no_tone', action='store_true')
+    parser.add_argument('--ascii_only', action='store_true')
+    parser.add_argument('--no_space', action='store_true')
     return parser
 
 # ------------------- #
@@ -298,6 +311,37 @@ def save_dataset_safe(args, dataset):
             if args.num_records and (i == args.num_records-1):
                 break
             writer.writerow(row)
+
+# -------------- #
+# String helpers #
+# -------------- #
+
+def normalize_str(s: Union[str, List[str]], args) -> str:
+    """
+    Perform normalizations on str `s` depending on options in `args`.
+    If `args.no_tone`, remove tone diacritics but keep other non-ascii characters.
+    If `args.ascii_only`, use `unidecode` to remove or change all non-ascii characters.
+    If `args.no_space`, remove spaces.
+    """ 
+    if type(s) is list:
+        return [normalize_str(x, args) for x in s]
+
+    if args.no_diac:
+        tone_markers = {
+            'grave': "\u0300",
+            'macrn': "\u0304",
+            'acute': "\u0301",
+            'circm': "\u0302",
+            'caron': "\u030C",
+        }
+        for c in tone_markers.keys():
+            s = s.replace(c, '')
+    if args.ascii_only:
+        s = unidecode(s)
+    if args.no_space:
+        s = ''.join(s.split())
+    return s
+        
     
 # --------------- #
 # Command methods #
@@ -550,7 +594,7 @@ def clap_ipa_sim(args) -> int:
             return_attention_mask=True,
         )
         ipa_input = tokenizer(
-            row['transcription'],
+            normalize_str(row['transcription']),
             return_tensors='pt',
             return_token_type_ids=False,
             padding=True,
@@ -600,23 +644,19 @@ def clap_ipa_text_sim(args) -> int:
     phone_encoder.eval().to(args.device)
 
     tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')
+    process_str = lambda s: tokenizer(
+            normalize_str(s, args),
+            return_tensors='pt',
+            return_token_type_ids=False,
+            padding=True,
+    )
 
     df = pd.read_csv(args.input)
     def map_clapipa(batch):
-        col1_input = tokenizer(
-            batch[args.col1],
-            return_tensors='pt',
-            return_token_type_ids=False,
-            padding=True,
-        )
+        col1_input = process_str(batch[args.col1])
         col1_input=col1_input.to(args.device)
 
-        col2_input = tokenizer(
-            batch[args.col2],
-            return_tensors='pt',
-            return_token_type_ids=False,
-            padding=True,
-        )
+        col2_input = process_str(batch[args.col2])
         col2_input=col2_input.to(args.device)
 
         with torch.no_grad():
