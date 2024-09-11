@@ -12,6 +12,7 @@ from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, 
 from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
 import torch
 from tempfile import TemporaryDirectory
+import csv
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -105,6 +106,25 @@ def init_parser() -> ArgumentParser:
         default='small'
     )
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
+
+    clap_ipa_text_sim_parser = commands.add_parser('clap_ipa_text_sim', help=clap_ipa_sim.__doc__)
+    clap_ipa_text_sim_parser.add_argument(
+        '--device',
+        '-D',
+        type=device_type,
+        default=DEVICE
+    )
+    clap_ipa_text_sim_parser.add_argument(
+        '--batch_size', '-b', type=int, default=32,
+    )
+    clap_ipa_text_sim_parser.add_argument(
+        '--model_size',
+        '-m',
+        choices=['tiny', 'base', 'small'],
+        default='small'
+    )
+    clap_ipa_text_sim_parser.set_defaults(func=clap_ipa_text_sim)
+
 
     detect_clipping_parser = commands.add_parser('detect_clipping', help=detect_clipping.__doc__)
     detect_clipping_parser.set_defaults(func=detect_clipping)
@@ -266,13 +286,18 @@ def save_dataset_safe(args, dataset):
         dataset.to_csv(args.output)
         return
     
-    rows = []
-    for i, row in tqdm(enumerate(dataset), total=args.num_records):
-        rows.append(row)
-        if i == args.num_records-1:
-            break
-    df = pd.DataFrame(rows)
-    df.to_csv(args.output, index=False)
+    # IterableDataset
+
+    with open(args.output, 'w') as f:
+        first_row = next(iter(dataset))
+        writer = csv.DictWriter(f, fieldnames=first_row.keys())
+        writer.writeheader()
+        writer.writerow(first_row)
+
+        for i, row in tqdm(enumerate(dataset), total=args.num_records-1):
+            if args.num_records and (i == args.num_records-1):
+                break
+            writer.writerow(row)
     
 # --------------- #
 # Command methods #
@@ -562,6 +587,13 @@ def clap_ipa_sim(args) -> int:
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
     torch.save(phone_embed, phone_embed_path)
     
+    return 0
+
+def clap_ipa_text_sim(args) -> int:
+    """
+    Expects a csv file as input. Calculates cosine similarity of phone embeddings
+    for --col1 and --col2 and outputs to a csv file.
+    """
     return 0
 
 def detect_clipping(args) -> int:
