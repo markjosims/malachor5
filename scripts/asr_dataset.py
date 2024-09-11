@@ -668,7 +668,7 @@ def clap_ipa_text_sim(args) -> int:
 
         return similarity
 
-    dl = torch.utils.data.DataLoader(df, batch_size=args.batch_size)
+    dl = torch.utils.data.DataLoader(df.to_dict('records'), batch_size=args.batch_size)
     sim = []
     for batch in dl:
         sim.extend(map_clapipa(batch))
