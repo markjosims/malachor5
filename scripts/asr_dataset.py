@@ -267,7 +267,7 @@ def save_dataset_safe(args, dataset):
         return
     
     rows = []
-    for i, row in tqdm(enumerate(dataset)):
+    for i, row in tqdm(enumerate(dataset), total=args.num_records):
         rows.append(row)
         if i == args.num_records-1:
             break
