@@ -30,6 +30,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--fleurs_lang', default='all')
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--stream', action='store_true')
+    parser.add_argument('--keep_cols', action='store_true', help='If true, only remove `audio` col from original dataset.')
     parser.set_defaults(func=empty_command)
 
     commands=parser.add_subparsers(help='Command to run')
@@ -410,7 +411,8 @@ def infer_asr(args) -> int:
         out[model_col] = [item['text'] for item in result]
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
 
@@ -448,7 +450,8 @@ def infer_vad(args) -> int:
         out[model_col]=result.to_lab().replace('\n', ';')
         out['path'] = row['audio']['path']
         return out
-    ds=ds.map(map_pipe, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds=ds.map(map_pipe, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
 
@@ -483,7 +486,8 @@ def infer_allosaurus(args):
             'allosaurus': result,
         }
         return out
-    ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
 
@@ -543,7 +547,8 @@ def clap_ipa_sim(args) -> int:
             'similarity': similarity,
             'path':  audio_paths,
         }
-    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
 
     sim_df = pd.DataFrame({'path': ds['path'], 'clap_ipa_cos_sim': ds['similarity']})
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
@@ -570,7 +575,8 @@ def detect_clipping(args) -> int:
         clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
-    ds = ds.map(map_get_clipped_segments, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds = ds.map(map_get_clipped_segments, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
 
@@ -596,7 +602,8 @@ def calculate_snr(args):
         wada = eng.wada_snr(array, sampling_rate)
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
-    ds = ds.map(map_snr, remove_columns=ds.column_names)
+    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    ds = ds.map(map_snr, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
 
 # ---- #
