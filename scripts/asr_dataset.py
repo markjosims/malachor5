@@ -653,7 +653,7 @@ def clap_ipa_text_sim(args) -> int:
             padding=True,
     )
 
-    df = pd.read_csv(args.input)
+    df = pd.read_csv(args.input, keep_default_na=False)
     def map_clapipa(batch):
         col1_input = process_str(batch[args.col1])
         col1_input=col1_input.to(args.device)
