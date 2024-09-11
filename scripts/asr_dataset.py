@@ -672,6 +672,7 @@ def clap_ipa_text_sim(args) -> int:
     sim = []
     for batch in tqdm(dl):
         sim.extend(map_clapipa(batch))
+    df[f'clapipa-{args.col1}-{args.col2}'] = sim
     df.to_csv(args.output)
     return 0
 
