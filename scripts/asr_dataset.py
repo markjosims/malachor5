@@ -596,7 +596,7 @@ def clap_ipa_sim(args) -> int:
             return_attention_mask=True,
         )
         ipa_input = tokenizer(
-            normalize_str(row['transcription']),
+            normalize_str(row['transcription'], args),
             return_tensors='pt',
             return_token_type_ids=False,
             padding=True,
