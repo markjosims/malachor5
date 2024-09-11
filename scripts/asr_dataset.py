@@ -125,6 +125,8 @@ def init_parser() -> ArgumentParser:
         choices=['tiny', 'base', 'small'],
         default='small'
     )
+    clap_ipa_text_sim_parser.add_argument('--col1')
+    clap_ipa_text_sim_parser.add_argument('--col2')
     clap_ipa_text_sim_parser = add_string_norm_args(clap_ipa_text_sim_parser)
     clap_ipa_text_sim_parser.set_defaults(func=clap_ipa_text_sim)
 
