@@ -328,7 +328,7 @@ def normalize_str(s: Union[str, List[str]], args) -> str:
     if type(s) is list:
         return [normalize_str(x, args) for x in s]
 
-    if args.no_diac:
+    if args.no_tone:
         tone_markers = {
             'grave': "\u0300",
             'macrn': "\u0304",
