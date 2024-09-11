@@ -539,7 +539,7 @@ def clap_ipa_sim(args) -> int:
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
 
     ds = load_dataset_safe(args)
-    def map_charsiu(row):
+    def map_clapipa(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
         sampling_rate = row['audio'][0]['sampling_rate']
@@ -573,7 +573,7 @@ def clap_ipa_sim(args) -> int:
             'path':  audio_paths,
         }
     remove_columns = 'audio' if args.keep_cols else ds.column_names
-    ds = ds.map(map_charsiu, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
+    ds = ds.map(map_clapipa, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
 
     sim_df = pd.DataFrame({'path': ds['path'], 'clap_ipa_cos_sim': ds['similarity']})
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
