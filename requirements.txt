@@ -8,3 +8,4 @@ pympi-ling
 librosa
 pyannote.audio
 matlab
+unidecode
