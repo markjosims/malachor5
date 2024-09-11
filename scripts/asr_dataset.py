@@ -670,7 +670,7 @@ def clap_ipa_text_sim(args) -> int:
 
     dl = torch.utils.data.DataLoader(df.to_dict('records'), batch_size=args.batch_size)
     sim = []
-    for batch in dl:
+    for batch in tqdm(dl):
         sim.extend(map_clapipa(batch))
     df.to_csv(args.output)
     return 0
