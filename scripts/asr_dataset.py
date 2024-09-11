@@ -250,7 +250,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         return dataset    
 
     if 'fleurs' in args.input:
-        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=args.stream, trust_remote_code=True)
+        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=args.stream)
     dataset = load_dataset(args.input, split=args.split)
     if (args.num_records) and (not args.stream) and (args.split):
         dataset = dataset[:args.num_records]
