@@ -594,6 +594,43 @@ def clap_ipa_text_sim(args) -> int:
     Expects a csv file as input. Calculates cosine similarity of phone embeddings
     for --col1 and --col2 and outputs to a csv file.
     """
+    from clap.encoders import PhoneEncoder
+    print("Loading clap-ipa phone encoder...")
+    phone_encoder = PhoneEncoder.from_pretrained(f'anyspeech/clap-ipa-{args.model_size}-phone')
+    phone_encoder.eval().to(args.device)
+
+    tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')
+
+    df = pd.read_csv(args.input)
+    def map_clapipa(batch):
+        col1_input = tokenizer(
+            batch[args.col1],
+            return_tensors='pt',
+            return_token_type_ids=False,
+            padding=True,
+        )
+        col1_input=col1_input.to(args.device)
+
+        col2_input = tokenizer(
+            batch[args.col2],
+            return_tensors='pt',
+            return_token_type_ids=False,
+            padding=True,
+        )
+        col2_input=col2_input.to(args.device)
+
+        with torch.no_grad():
+            col1_embed = phone_encoder(**col1_input)['pooler_output'].to('cpu')
+            col2_embed = phone_encoder(**col2_input)['pooler_output'].to('cpu')
+        similarity = torch.nn.functional.cosine_similarity(col1_embed,col2_embed,dim=-1)
+
+        return similarity
+
+    dl = torch.utils.data.DataLoader(df, batch_size=args.batch_size)
+    sim = []
+    for batch in dl:
+        sim.extend(map_clapipa(batch))
+    df.to_csv(args.output)
     return 0
 
 def detect_clipping(args) -> int:
