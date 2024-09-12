@@ -14,6 +14,7 @@ import torch
 from tempfile import TemporaryDirectory
 import csv
 from unidecode import unidecode
+import json
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -106,6 +107,8 @@ def init_parser() -> ArgumentParser:
         choices=['tiny', 'base', 'small'],
         default='small'
     )
+    clap_ipa_sim_parser.add_argument('--g2p', action='store_true')
+    clap_ipa_sim_parser.add_argument('--script')
     clap_ipa_sim_parser = add_string_norm_args(clap_ipa_sim_parser)
     clap_ipa_sim_parser.set_defaults(func=clap_ipa_sim)
 
@@ -318,7 +321,7 @@ def save_dataset_safe(args, dataset):
 # String helpers #
 # -------------- #
 
-def normalize_str(s: Union[str, List[str]], args) -> str:
+def normalize_str(s: Union[str, List[str]], args) -> Union[str, List[str]]:
     """
     Perform normalizations on str `s` depending on options in `args`.
     If `args.no_tone`, remove tone diacritics but keep other non-ascii characters.
@@ -343,7 +346,22 @@ def normalize_str(s: Union[str, List[str]], args) -> str:
     if args.no_space:
         s = ''.join(s.split())
     return s
-        
+
+def get_epitran(fleurs_lang_tag, script: Optional[str]=None):
+    """
+    Instantiate and return an Epitran transliteration object
+    for the given `fleurs_lang`.
+    """
+    import epitran
+    with open('../meta/language_codes.json') as f:
+        lang_codes = json.load(f)
+    lang_dict = [d for d in lang_codes if d['fleurs']==fleurs_lang_tag][0]
+    iso3 = lang_dict['iso3']
+    if not script:
+        script=lang_dict['fleurs_script']
+    
+    return epitran.Epitran(f"{iso3}-{script}")
+
     
 # --------------- #
 # Command methods #
@@ -587,6 +605,21 @@ def clap_ipa_sim(args) -> int:
     ds = load_dataset_safe(args)
     phone_embeds = []
     speech_embeds = []
+
+    if args.g2p:
+        epitran_obj = get_epitran(args.fleurs_lang, args.script)
+
+    def process_str(s):
+        s = normalize_str(s, args)
+        if args.g2p:
+            s = epitran_obj.transliterate(s)
+        return tokenizer(
+            s,
+            return_tensors='pt',
+            return_token_type_ids=False,
+            padding=True,
+        )
+
     def map_clapipa(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
@@ -597,12 +630,7 @@ def clap_ipa_sim(args) -> int:
             return_tensors='pt',
             return_attention_mask=True,
         )
-        ipa_input = tokenizer(
-            normalize_str(row['transcription'], args),
-            return_tensors='pt',
-            return_token_type_ids=False,
-            padding=True,
-        )
+        ipa_input = process_str(row['transcription'])
         audio_input=audio_input.to(args.device)
         ipa_input=ipa_input.to(args.device)
 
