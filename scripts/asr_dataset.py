@@ -611,6 +611,7 @@ def clap_ipa_sim(args) -> int:
     speech_embeds = []
 
     if args.g2p:
+        print("Loading Epitran G2P...")
         epitran_obj = get_epitran(args.fleurs_lang, args.script)
 
     def process_str(s):
