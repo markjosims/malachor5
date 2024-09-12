@@ -614,12 +614,12 @@ def clap_ipa_sim(args) -> int:
         print("Loading Epitran G2P...")
         epitran_obj = get_epitran(args.fleurs_lang, args.script)
 
-    def process_str(s):
+    def process_str(s_list):
         if args.g2p:
-            s = epitran_obj.transliterate(s)
-        s = normalize_str(s, args)
+            s_list = [epitran_obj.transliterate(s) for s in s_list]
+        s_list = normalize_str(s_list, args)
         return tokenizer(
-            s,
+            s_list,
             return_tensors='pt',
             return_token_type_ids=False,
             padding=True,
