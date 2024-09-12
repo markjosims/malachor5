@@ -357,7 +357,7 @@ def get_epitran(fleurs_lang_tag, script: Optional[str]=None):
     for the given `fleurs_lang`.
     """
     import epitran
-    with open('../meta/language_codes.json') as f:
+    with open('meta/language_codes.json') as f:
         lang_codes = json.load(f)
     lang_dict = [d for d in lang_codes if d['fleurs']==fleurs_lang_tag][0]
     iso3 = lang_dict['iso3']
