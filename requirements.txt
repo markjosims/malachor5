@@ -9,3 +9,4 @@ librosa
 pyannote.audio
 matlab
 unidecode
+speechbrain
