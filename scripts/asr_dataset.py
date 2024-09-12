@@ -656,7 +656,8 @@ def clap_ipa_sim(args) -> int:
         }
     remove_columns = 'audio' if args.keep_cols else ds.column_names
     ds = ds.map(map_clapipa, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
-    save_dataset_safe(args, ds)
+    csv_path = os.path.join(args.output, 'clap_ipa_sim.csv')
+    save_dataset_safe(args, ds, output_path=csv_path)
 
     # convert tensor lists into tensor matrices and save
     speech_embeds=torch.concat(speech_embeds, dim=0)
