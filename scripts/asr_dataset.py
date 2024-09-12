@@ -585,6 +585,8 @@ def clap_ipa_sim(args) -> int:
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
 
     ds = load_dataset_safe(args)
+    phone_embeds = []
+    speech_embeds = []
     def map_clapipa(row):
         audio_arrays = [audio['array'] for audio in row['audio']]
         audio_paths = [audio['path'] for audio in row['audio']]
@@ -612,9 +614,10 @@ def clap_ipa_sim(args) -> int:
         del audio_input
         del ipa_input
 
+        phone_embeds.append(phone_embed)
+        speech_embeds.append(speech_embed)
+
         return {
-            'speech_embed': speech_embed,
-            'phone_embed': phone_embed,
             'similarity': similarity,
             'path':  audio_paths,
         }
@@ -625,13 +628,14 @@ def clap_ipa_sim(args) -> int:
     sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
     sim_df.to_csv(sim_csv_path, index=False)
 
-    speech_embed=torch.concat(ds['speech_embed'], dim=0)
+    # convert tensor lists into tensor matrices and save
+    speech_embeds=torch.concat(speech_embeds, dim=0)
     speech_embed_path=os.path.join(args.output, 'clap_ipa_speech_embeds.pt')
-    torch.save(speech_embed, speech_embed_path)
+    torch.save(speech_embeds, speech_embed_path)
 
-    phone_embed=torch.concat(ds['phone_embed'], dim=0)
+    phone_embeds=torch.concat(phone_embeds, dim=0)
     phone_embed_path=os.path.join(args.output, 'clap_ipa_phone_embeds.pt')
-    torch.save(phone_embed, phone_embed_path)
+    torch.save(phone_embeds, phone_embed_path)
     
     return 0
 
