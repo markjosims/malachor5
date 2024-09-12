@@ -1,83 +1,583 @@
-{"english": "en_us",
- "german": "de_de",
- "spanish": "es_419",
- "russian": "ru_ru",
- "korean": "ko_kr",
- "french": "fr_fr",
- "japanese": "ja_jp",
- "portuguese": "pt_br",
- "turkish": "tr_tr",
- "polish": "pl_pl",
- "catalan": "ca_es",
- "dutch": "nl_nl",
- "arabic": "ar_eg",
- "swedish": "sv_se",
- "italian": "it_it",
- "indonesian": "id_id",
- "hindi": "hi_in",
- "finnish": "fi_fi",
- "vietnamese": "vi_vn",
- "hebrew": "he_il",
- "ukrainian": "uk_ua",
- "greek": "el_gr",
- "malay": "ms_my",
- "czech": "cs_cz",
- "romanian": "ro_ro",
- "danish": "da_dk",
- "hungarian": "hu_hu",
- "tamil": "ta_in",
- "norwegian": "nb_no",
- "thai": "th_th",
- "urdu": "ur_pk",
- "croatian": "hr_hr",
- "bulgarian": "bg_bg",
- "lithuanian": "lt_lt",
- "maori": "mi_nz",
- "malayalam": "ml_in",
- "welsh": "cy_gb",
- "slovak": "sk_sk",
- "telugu": "te_in",
- "persian": "fa_ir",
- "latvian": "lv_lv",
- "bengali": "bn_in",
- "serbian": "sr_rs",
- "azerbaijani": "az_az",
- "slovenian": "sl_si",
- "kannada": "kn_in",
- "estonian": "et_ee",
- "macedonian": "mk_mk",
- "icelandic": "is_is",
- "armenian": "hy_am",
- "nepali": "ne_np",
- "mongolian": "mn_mn",
- "bosnian": "bs_ba",
- "kazakh": "kk_kz",
- "swahili": "sw_ke",
- "galician": "gl_es",
- "marathi": "mr_in",
- "punjabi": "pa_in",
- "khmer": "km_kh",
- "shona": "sn_zw",
- "yoruba": "yo_ng",
- "somali": "so_so",
- "afrikaans": "af_za",
- "occitan": "oc_fr",
- "georgian": "ka_ge",
- "belarusian": "be_by",
- "tajik": "tg_tj",
- "sindhi": "sd_in",
- "gujarati": "gu_in",
- "amharic": "am_et",
- "lao": "lo_la",
- "uzbek": "uz_uz",
- "pashto": "ps_af",
- "maltese": "mt_mt",
- "luxembourgish": "lb_lu",
- "assamese": "as_in",
- "lingala": "ln_cd",
- "hausa": "ha_ng",
- "javanese": "jv_id",
- "chinese": "cmn_hans",
- "cantonese": "yue_hant",
- "tagalog": "fil",
- "myanmar": "my"}
+[
+  {
+    "iso2": "en",
+    "iso3": "eng",
+    "whisper": "english",
+    "fleurs": "en_us",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "de",
+    "iso3": "deu",
+    "whisper": "german",
+    "fleurs": "de_de",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "es",
+    "iso3": "spa",
+    "whisper": "spanish",
+    "fleurs": "es_419",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ru",
+    "iso3": "rus",
+    "whisper": "russian",
+    "fleurs": "ru_ru",
+    "fleurs_script": "Cyrl"
+  },
+  {
+    "iso2": "ko",
+    "iso3": "kor",
+    "whisper": "korean",
+    "fleurs": "ko_kr",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "fr",
+    "iso3": "fra",
+    "whisper": "french",
+    "fleurs": "fr_fr",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ja",
+    "iso3": "jpn",
+    "whisper": "japanese",
+    "fleurs": "ja_jp",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "pt",
+    "iso3": "por",
+    "whisper": "portuguese",
+    "fleurs": "pt_br",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "tr",
+    "iso3": "tur",
+    "whisper": "turkish",
+    "fleurs": "tr_tr",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "pl",
+    "iso3": "pol",
+    "whisper": "polish",
+    "fleurs": "pl_pl",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ca",
+    "iso3": "cat",
+    "whisper": "catalan",
+    "fleurs": "ca_es",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "nl",
+    "iso3": "nld",
+    "whisper": "dutch",
+    "fleurs": "nl_nl",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ar",
+    "iso3": "ara",
+    "whisper": "arabic",
+    "fleurs": "ar_eg",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sv",
+    "iso3": "swe",
+    "whisper": "swedish",
+    "fleurs": "sv_se",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "it",
+    "iso3": "ita",
+    "whisper": "italian",
+    "fleurs": "it_it",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "id",
+    "iso3": "ind",
+    "whisper": "indonesian",
+    "fleurs": "id_id",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "hi",
+    "iso3": "hin",
+    "whisper": "hindi",
+    "fleurs": "hi_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "fi",
+    "iso3": "fin",
+    "whisper": "finnish",
+    "fleurs": "fi_fi",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "vi",
+    "iso3": "vie",
+    "whisper": "vietnamese",
+    "fleurs": "vi_vn",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "he",
+    "iso3": "heb",
+    "whisper": "hebrew",
+    "fleurs": "he_il",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "uk",
+    "iso3": "ukr",
+    "whisper": "ukrainian",
+    "fleurs": "uk_ua",
+    "fleurs_script": "Cyrl"
+  },
+  {
+    "iso2": "el",
+    "iso3": "ell",
+    "whisper": "greek",
+    "fleurs": "el_gr",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ms",
+    "iso3": "msa",
+    "whisper": "malay",
+    "fleurs": "ms_my",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "cs",
+    "iso3": "ces",
+    "whisper": "czech",
+    "fleurs": "cs_cz",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ro",
+    "iso3": "ron",
+    "whisper": "romanian",
+    "fleurs": "ro_ro",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "da",
+    "iso3": "dan",
+    "whisper": "danish",
+    "fleurs": "da_dk",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "hu",
+    "iso3": "hun",
+    "whisper": "hungarian",
+    "fleurs": "hu_hu",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ta",
+    "iso3": "tam",
+    "whisper": "tamil",
+    "fleurs": "ta_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "no",
+    "iso3": "nor",
+    "whisper": "norwegian",
+    "fleurs": "nb_no",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "th",
+    "iso3": "tha",
+    "whisper": "thai",
+    "fleurs": "th_th",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ur",
+    "iso3": "urd",
+    "whisper": "urdu",
+    "fleurs": "ur_pk",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "hr",
+    "iso3": "hrv",
+    "whisper": "croatian",
+    "fleurs": "hr_hr",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "bg",
+    "iso3": "bul",
+    "whisper": "bulgarian",
+    "fleurs": "bg_bg",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "lt",
+    "iso3": "lit",
+    "whisper": "lithuanian",
+    "fleurs": "lt_lt",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "mi",
+    "iso3": "mri",
+    "whisper": "maori",
+    "fleurs": "mi_nz",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ml",
+    "iso3": "mal",
+    "whisper": "malayalam",
+    "fleurs": "ml_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "cy",
+    "iso3": "cym",
+    "whisper": "welsh",
+    "fleurs": "cy_gb",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "sk",
+    "iso3": "slk",
+    "whisper": "slovak",
+    "fleurs": "sk_sk",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "te",
+    "iso3": "tel",
+    "whisper": "telugu",
+    "fleurs": "te_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "fa",
+    "iso3": "fas",
+    "whisper": "persian",
+    "fleurs": "fa_ir",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "lv",
+    "iso3": "lav",
+    "whisper": "latvian",
+    "fleurs": "lv_lv",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "bn",
+    "iso3": "ben",
+    "whisper": "bengali",
+    "fleurs": "bn_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sr",
+    "iso3": "srp",
+    "whisper": "serbian",
+    "fleurs": "sr_rs",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "az",
+    "iso3": "aze",
+    "whisper": "azerbaijani",
+    "fleurs": "az_az",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sl",
+    "iso3": "slv",
+    "whisper": "slovenian",
+    "fleurs": "sl_si",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "kn",
+    "iso3": "kan",
+    "whisper": "kannada",
+    "fleurs": "kn_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "et",
+    "iso3": "est",
+    "whisper": "estonian",
+    "fleurs": "et_ee",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "mk",
+    "iso3": "mkd",
+    "whisper": "macedonian",
+    "fleurs": "mk_mk",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "is",
+    "iso3": "isl",
+    "whisper": "icelandic",
+    "fleurs": "is_is",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "hy",
+    "iso3": "hye",
+    "whisper": "armenian",
+    "fleurs": "hy_am",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ne",
+    "iso3": "nep",
+    "whisper": "nepali",
+    "fleurs": "ne_np",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "mn",
+    "iso3": "mon",
+    "whisper": "mongolian",
+    "fleurs": "mn_mn",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "bs",
+    "iso3": "bos",
+    "whisper": "bosnian",
+    "fleurs": "bs_ba",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "kk",
+    "iso3": "kaz",
+    "whisper": "kazakh",
+    "fleurs": "kk_kz",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sw",
+    "iso3": "swa",
+    "whisper": "swahili",
+    "fleurs": "sw_ke",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "gl",
+    "iso3": "glg",
+    "whisper": "galician",
+    "fleurs": "gl_es",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "mr",
+    "iso3": "mar",
+    "whisper": "marathi",
+    "fleurs": "mr_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "pa",
+    "iso3": "pan",
+    "whisper": "punjabi",
+    "fleurs": "pa_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "km",
+    "iso3": "khm",
+    "whisper": "khmer",
+    "fleurs": "km_kh",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sn",
+    "iso3": "sna",
+    "whisper": "shona",
+    "fleurs": "sn_zw",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "yo",
+    "iso3": "yor",
+    "whisper": "yoruba",
+    "fleurs": "yo_ng",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "so",
+    "iso3": "som",
+    "whisper": "somali",
+    "fleurs": "so_so",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "af",
+    "iso3": "afr",
+    "whisper": "afrikaans",
+    "fleurs": "af_za",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "oc",
+    "iso3": "oci",
+    "whisper": "occitan",
+    "fleurs": "oc_fr",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "ka",
+    "iso3": "kat",
+    "whisper": "georgian",
+    "fleurs": "ka_ge",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "be",
+    "iso3": "bel",
+    "whisper": "belarusian",
+    "fleurs": "be_by",
+    "fleurs_script": "Cyrl"
+  },
+  {
+    "iso2": "tg",
+    "iso3": "tgk",
+    "whisper": "tajik",
+    "fleurs": "tg_tj",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "sd",
+    "iso3": "snd",
+    "whisper": "sindhi",
+    "fleurs": "sd_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "gu",
+    "iso3": "guj",
+    "whisper": "gujarati",
+    "fleurs": "gu_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "am",
+    "iso3": "amh",
+    "whisper": "amharic",
+    "fleurs": "am_et",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "lo",
+    "iso3": "lao",
+    "whisper": "lao",
+    "fleurs": "lo_la",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "uz",
+    "iso3": "uzb",
+    "whisper": "uzbek",
+    "fleurs": "uz_uz",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ps",
+    "iso3": "pus",
+    "whisper": "pashto",
+    "fleurs": "ps_af",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "mt",
+    "iso3": "mlt",
+    "whisper": "maltese",
+    "fleurs": "mt_mt",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "lb",
+    "iso3": "ltz",
+    "whisper": "luxembourgish",
+    "fleurs": "lb_lu",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "as",
+    "iso3": "asm",
+    "whisper": "assamese",
+    "fleurs": "as_in",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ln",
+    "iso3": "lin",
+    "whisper": "lingala",
+    "fleurs": "ln_cd",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "ha",
+    "iso3": "hau",
+    "whisper": "hausa",
+    "fleurs": "ha_ng",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "jv",
+    "iso3": "jav",
+    "whisper": "javanese",
+    "fleurs": "jv_id",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "zh",
+    "iso3": "zho",
+    "whisper": "chinese",
+    "fleurs": "cmn_hans",
+    "fleurs_script": "Hans"
+  },
+  {
+    "iso2": "yue",
+    "iso3": "yue",
+    "whisper": "cantonese",
+    "fleurs": "yue_hant",
+    "fleurs_script": ""
+  },
+  {
+    "iso2": "tl",
+    "iso3": "tgl",
+    "whisper": "tagalog",
+    "fleurs": "fil",
+    "fleurs_script": "Latn"
+  },
+  {
+    "iso2": "my",
+    "iso3": "mya",
+    "whisper": "myanmar",
+    "fleurs": "my",
+    "fleurs_script": ""
+  }
+]

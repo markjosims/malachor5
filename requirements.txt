@@ -10,3 +10,4 @@ pyannote.audio
 matlab
 unidecode
 speechbrain
+epitran
