@@ -615,9 +615,9 @@ def clap_ipa_sim(args) -> int:
         epitran_obj = get_epitran(args.fleurs_lang, args.script)
 
     def process_str(s):
-        s = normalize_str(s, args)
         if args.g2p:
             s = epitran_obj.transliterate(s)
+        s = normalize_str(s, args)
         return tokenizer(
             s,
             return_tensors='pt',
