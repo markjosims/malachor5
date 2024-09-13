@@ -32,7 +32,7 @@
     "iso3": "kor",
     "whisper": "korean",
     "fleurs": "ko_kr",
-    "fleurs_script": ""
+    "fleurs_script": "Hang"
   },
   {
     "iso2": "fr",
@@ -88,7 +88,7 @@
     "iso3": "ara",
     "whisper": "arabic",
     "fleurs": "ar_eg",
-    "fleurs_script": ""
+    "fleurs_script": "Arab"
   },
   {
     "iso2": "sv",
@@ -116,7 +116,7 @@
     "iso3": "hin",
     "whisper": "hindi",
     "fleurs": "hi_in",
-    "fleurs_script": ""
+    "fleurs_script": "Deva"
   },
   {
     "iso2": "fi",
@@ -193,7 +193,7 @@
     "iso3": "tam",
     "whisper": "tamil",
     "fleurs": "ta_in",
-    "fleurs_script": ""
+    "fleurs_script": "Taml"
   },
   {
     "iso2": "no",
@@ -207,14 +207,14 @@
     "iso3": "tha",
     "whisper": "thai",
     "fleurs": "th_th",
-    "fleurs_script": ""
+    "fleurs_script": "Thai"
   },
   {
     "iso2": "ur",
     "iso3": "urd",
     "whisper": "urdu",
     "fleurs": "ur_pk",
-    "fleurs_script": ""
+    "fleurs_script": "Arab"
   },
   {
     "iso2": "hr",
@@ -242,7 +242,7 @@
     "iso3": "mri",
     "whisper": "maori",
     "fleurs": "mi_nz",
-    "fleurs_script": ""
+    "fleurs_script": "Latin"
   },
   {
     "iso2": "ml",
@@ -270,14 +270,14 @@
     "iso3": "tel",
     "whisper": "telugu",
     "fleurs": "te_in",
-    "fleurs_script": ""
+    "fleurs_script": "Telu"
   },
   {
     "iso2": "fa",
     "iso3": "fas",
     "whisper": "persian",
     "fleurs": "fa_ir",
-    "fleurs_script": ""
+    "fleurs_script": "Arab"
   },
   {
     "iso2": "lv",
@@ -291,7 +291,7 @@
     "iso3": "ben",
     "whisper": "bengali",
     "fleurs": "bn_in",
-    "fleurs_script": ""
+    "fleurs_script": "Beng"
   },
   {
     "iso2": "sr",
@@ -361,7 +361,7 @@
     "iso3": "mon",
     "whisper": "mongolian",
     "fleurs": "mn_mn",
-    "fleurs_script": ""
+    "fleurs_script": "Cyrl"
   },
   {
     "iso2": "bs",
@@ -396,28 +396,28 @@
     "iso3": "mar",
     "whisper": "marathi",
     "fleurs": "mr_in",
-    "fleurs_script": ""
+    "fleurs_script": "Deva"
   },
   {
     "iso2": "pa",
     "iso3": "pan",
     "whisper": "punjabi",
     "fleurs": "pa_in",
-    "fleurs_script": ""
+    "fleurs_script": "Guru"
   },
   {
     "iso2": "km",
     "iso3": "khm",
     "whisper": "khmer",
     "fleurs": "km_kh",
-    "fleurs_script": ""
+    "fleurs_script": "Khmr"
   },
   {
     "iso2": "sn",
     "iso3": "sna",
     "whisper": "shona",
     "fleurs": "sn_zw",
-    "fleurs_script": ""
+    "fleurs_script": "Latn"
   },
   {
     "iso2": "yo",
@@ -431,7 +431,7 @@
     "iso3": "som",
     "whisper": "somali",
     "fleurs": "so_so",
-    "fleurs_script": ""
+    "fleurs_script": "Latn"
   },
   {
     "iso2": "af",
@@ -466,7 +466,7 @@
     "iso3": "tgk",
     "whisper": "tajik",
     "fleurs": "tg_tj",
-    "fleurs_script": ""
+    "fleurs_script": "Cyrl"
   },
   {
     "iso2": "sd",
@@ -487,7 +487,7 @@
     "iso3": "amh",
     "whisper": "amharic",
     "fleurs": "am_et",
-    "fleurs_script": ""
+    "fleurs_script": "Ethi"
   },
   {
     "iso2": "lo",
@@ -578,6 +578,6 @@
     "iso3": "mya",
     "whisper": "myanmar",
     "fleurs": "my",
-    "fleurs_script": ""
+    "fleurs_script": "Mymr"
   }
 ]

@@ -295,18 +295,22 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         dataset = dataset[:args.num_records]
     return dataset
 
-def save_dataset_safe(args, dataset):
+def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
     """
     If dataset is IterableDataset, first cast to list of rows then to pandas.Dataframe 
     before saving to .csv. Otherwise, call `Dataset.to_csv`.
+    Default to saving csv to path specified in `args.output`.
+    Pass `output_path` arg to override this.
     """
+    output_path = output_path or args.output
+
     if type(dataset) is Dataset:
-        dataset.to_csv(args.output)
+        dataset.to_csv(output_path)
         return
     
     # IterableDataset
 
-    with open(args.output, 'w') as f:
+    with open(output_path, 'w') as f:
         first_row = next(iter(dataset))
         writer = csv.DictWriter(f, fieldnames=first_row.keys())
         writer.writeheader()
@@ -353,7 +357,7 @@ def get_epitran(fleurs_lang_tag, script: Optional[str]=None):
     for the given `fleurs_lang`.
     """
     import epitran
-    with open('../meta/language_codes.json') as f:
+    with open('meta/language_codes.json') as f:
         lang_codes = json.load(f)
     lang_dict = [d for d in lang_codes if d['fleurs']==fleurs_lang_tag][0]
     iso3 = lang_dict['iso3']
@@ -607,14 +611,15 @@ def clap_ipa_sim(args) -> int:
     speech_embeds = []
 
     if args.g2p:
+        print("Loading Epitran G2P...")
         epitran_obj = get_epitran(args.fleurs_lang, args.script)
 
-    def process_str(s):
-        s = normalize_str(s, args)
+    def process_str(s_list):
         if args.g2p:
-            s = epitran_obj.transliterate(s)
+            s_list = [epitran_obj.transliterate(s) for s in s_list]
+        s_list = normalize_str(s_list, args)
         return tokenizer(
-            s,
+            s_list,
             return_tensors='pt',
             return_token_type_ids=False,
             padding=True,
@@ -651,10 +656,8 @@ def clap_ipa_sim(args) -> int:
         }
     remove_columns = 'audio' if args.keep_cols else ds.column_names
     ds = ds.map(map_clapipa, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
-
-    sim_df = pd.DataFrame({'path': ds['path'], 'clap_ipa_cos_sim': ds['similarity']})
-    sim_csv_path=os.path.join(args.output, 'clip_ipa_sim.csv')
-    sim_df.to_csv(sim_csv_path, index=False)
+    csv_path = os.path.join(args.output, 'clap_ipa_sim.csv')
+    save_dataset_safe(args, ds, output_path=csv_path)
 
     # convert tensor lists into tensor matrices and save
     speech_embeds=torch.concat(speech_embeds, dim=0)
