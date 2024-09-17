@@ -18,12 +18,12 @@ import json
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
-DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 SNREVAL_DIR = '/Users/markjos/projects/snreval'
+DEVICE = 0 if torch.cuda.is_available() else 'cpu'
+device_type = lambda s: int(s) if s!='cpu' else s
 tqdm.pandas()
 
 def init_parser() -> ArgumentParser:
-    device_type = lambda s: int(s) if s!='cpu' else s
     # TODO: some command arguments are very wet. Make them DRY.
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', default=GDRIVE_DIR)
