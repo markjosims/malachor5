@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from typing import Sequence, Optional, Dict, Any
 from asr_dataset import load_dataset_safe, DEVICE, device_type
 from transformers import WhisperProcessor
+from datasets import Audio
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -62,7 +63,23 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
 # dataset preprocessing #
 # --------------------- #
 
+def load_and_prepare_dataset(args):
+    ds = load_dataset_safe(args)
+    processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
+    if ds[0]["audio"]["sampling_rate"]!=16_000:
+        ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
+    ds = ds.map(
+        lambda b: prepare_dataset(b, processor),
+        batched=True,
+        remove_columns=ds['train'].column_names
+    )
+    return ds
 
+def prepare_dataset(batch, processor):
+    audio = batch["audio"]
+    batch["input_features"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
+    batch["labels"] = processor(batch["sentence"]).input_ids
+    return batch
 
 # ---- #
 # main #
