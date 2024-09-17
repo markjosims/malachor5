@@ -1,5 +1,10 @@
+# Finetune Whisper model on a new dataset using HF
+# Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
+
 from argparse import ArgumentParser
 from typing import Sequence, Optional, Dict, Any
+from asr_dataset import load_dataset_safe, DEVICE, device_type
+from transformers import WhisperProcessor
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -18,6 +23,10 @@ DEFAULT_HYPERPARAMS = {
     'report_to': 'tensorboard',
     'debug': 'underflow_overflow',
 }
+HYPERPARAM_ABBREVIATIONS = {
+    'per_device_train_batch_size': 'b',
+    'num_train_epochs': 'e',
+}
 
 # ---------------- #
 # Argparse methods #
@@ -27,7 +36,11 @@ def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--dataset', '-d')
     parser.add_argument('--model', '-m')
-    add_hyperparameter_args(parser)
+    parser.add_argument('--num_rows', '-n', type=int)
+    parser.add_argument('--split', '-s', default='train')
+    parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
+    parser.add_argument('--language', '-l')
+    parser = add_hyperparameter_args(parser)
     return parser
 
 def add_hyperparameter_args(parser: ArgumentParser) -> None:
@@ -35,15 +48,21 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         'hyperparameters',
         description='Hyperparameter values for training'
     )
-    add_args_from_dict(DEFAULT_HYPERPARAMS, hyper_args)
-
-def add_args_from_dict(args_dict: Dict[str, Any], arg_group: ArgumentParser) -> None:
-    add_arg = lambda *args, **kwargs: arg_group.add_argument(*args, **kwargs)
-    for k, v in args_dict.items():
+    for k, v in DEFAULT_HYPERPARAMS.items():
+        flags=['--'+k,]
+        if k in HYPERPARAM_ABBREVIATIONS:
+            flags.append('-'+HYPERPARAM_ABBREVIATIONS[k])
         if type(v) is bool:
-            add_arg('--'+k, default=v, action='store_true')
+            hyper_args.add_argument('--'+k, default=v, action='store_true')
         else:
-            add_arg('--'+k, type=type(v), default=v)
+            hyper_args.add_argument('--'+k, type=type(v), default=v)
+    return parser
+
+# --------------------- #
+# dataset preprocessing #
+# --------------------- #
+
+
 
 # ---- #
 # main #
