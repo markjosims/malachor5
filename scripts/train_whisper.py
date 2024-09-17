@@ -4,7 +4,7 @@
 from argparse import ArgumentParser
 from typing import Sequence, Optional, Dict, Any
 from asr_dataset import load_dataset_safe, DEVICE, device_type
-from transformers import WhisperProcessor
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from datasets import Audio
 
 DEFAULT_HYPERPARAMS = {
@@ -80,6 +80,17 @@ def prepare_dataset(batch, processor):
     batch["input_features"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
     batch["labels"] = processor(batch["sentence"]).input_ids
     return batch
+
+# ----------------- #
+# model preparation #
+# ----------------- #
+
+def load_whisper_model(args) -> WhisperForConditionalGeneration:
+    model = WhisperForConditionalGeneration.from_pretrained(args.model)
+    model.generation_config.language = args.language
+    model.generation_config.task = "transcribe"
+    model.generation_config.forced_decoder_ids = None
+    return model
 
 # ---- #
 # main #
