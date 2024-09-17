@@ -43,7 +43,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--dataset', '-d')
     parser.add_argument('--output', '-o')
     parser.add_argument('--model', '-m')
-    parser.add_argument('--num_rows', '-n', type=int)
+    parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--split', '-s', default='train')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l')
