@@ -12,6 +12,8 @@ import os
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
 
 with open('meta/language_codes.json') as f:
+    # TODO: this is now a list of objects, not a single object
+    # make changes accordingly
     LANGUAGE_CODES = json.load(f)
 
 def collate_hf_dataset(batch, proc, device):
