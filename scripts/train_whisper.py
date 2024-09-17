@@ -71,7 +71,7 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
     processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
-    if ds[0]["audio"]["sampling_rate"]!=16_000:
+    if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
