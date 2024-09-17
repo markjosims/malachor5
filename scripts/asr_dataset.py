@@ -284,18 +284,19 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         dataset_path=args.dataset
     else:
         dataset_path=args.input
+    split=getattr(args, 'split', None)
     if os.path.exists(dataset_path):
         dataset=load_from_disk(dataset_path)
-        if args.split and args.num_records:
-            return dataset[args.split][:args.num_records]
-        if args.split:
-            return dataset[args.split]
+        if split and args.num_records:
+            return dataset[split][:args.num_records]
+        if split:
+            return dataset[split]
         return dataset    
 
     if 'fleurs' in dataset_path:
-        return load_dataset(dataset_path, args.fleurs_lang, split=args.split, streaming=args.stream)
-    dataset = load_dataset(dataset_path, split=args.split)
-    if (args.num_records) and (not args.stream) and (args.split):
+        return load_dataset(dataset_path, args.fleurs_lang, split=split, streaming=args.stream)
+    dataset = load_dataset(dataset_path, split=split)
+    if (args.num_records) and (not args.stream) and (split):
         dataset = dataset[:args.num_records]
     return dataset
 
