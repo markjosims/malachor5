@@ -176,12 +176,18 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     parser=init_parser()
     args=parser.parse_args(argv)
 
+    print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
+    print("Loading model...")
     model = load_whisper_model(args)
+    print("Making data collator...")
     data_collator = load_data_collator(model, processor)
+    print("Defining training args...")
     training_args = get_training_args(args)
+    print("Defining metrics...")
     compute_metrics = lambda pred: compute_wer(pred, processor.tokenizer)
 
+    print("Training!")
     trainer = Seq2SeqTrainer(
         args=training_args,
         model=model,
