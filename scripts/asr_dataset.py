@@ -280,17 +280,21 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     If dataset points to a path on disk, load using `load_from_disk`,
     otherwise use `load_dataset` (to load from HF hub or local cache).
     """
-    if os.path.exists(args.input):
-        dataset=load_from_disk(args.input)
+    if hasattr(args, 'dataset'):
+        dataset_path=args.dataset
+    else:
+        dataset_path=args.input
+    if os.path.exists(dataset_path):
+        dataset=load_from_disk(dataset_path)
         if args.split and args.num_records:
             return dataset[args.split][:args.num_records]
         if args.split:
             return dataset[args.split]
         return dataset    
 
-    if 'fleurs' in args.input:
-        return load_dataset(args.input, args.fleurs_lang, split=args.split, streaming=args.stream)
-    dataset = load_dataset(args.input, split=args.split)
+    if 'fleurs' in dataset_path:
+        return load_dataset(dataset_path, args.fleurs_lang, split=args.split, streaming=args.stream)
+    dataset = load_dataset(dataset_path, split=args.split)
     if (args.num_records) and (not args.stream) and (args.split):
         dataset = dataset[:args.num_records]
     return dataset
