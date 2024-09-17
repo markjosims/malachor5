@@ -179,10 +179,19 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     ds, processor = load_and_prepare_dataset(args)
     model = load_whisper_model(args)
     data_collator = load_data_collator(model, processor)
-    training_args=get_training_args(args)
-    compute_metrics=lambda pred: compute_wer(pred, processor.tokenizer)
+    training_args = get_training_args(args)
+    compute_metrics = lambda pred: compute_wer(pred, processor.tokenizer)
 
-    trainer= 
+    trainer = Seq2SeqTrainer(
+        args=training_args,
+        model=model,
+        train_dataset=ds["train"],
+        eval_dataset=ds["validation"],
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+        tokenizer=processor.feature_extractor,
+    )
+    trainer.train()
 
     return 0
 
