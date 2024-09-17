@@ -4,7 +4,7 @@
 from argparse import ArgumentParser
 from typing import Sequence, Optional, Dict, Any, List, Union
 from asr_dataset import load_dataset_safe, DEVICE, device_type
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
+from transformers import WhisperProcessor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
 from datasets import Audio
 import torch
 from dataclasses import dataclass
@@ -128,7 +128,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # evaluation methods #
 # ------------------ #
 
-def compute_metrics(pred, tokenizer):
+def compute_wer(pred, tokenizer):
     pred_ids = pred.predictions
     label_ids = pred.label_ids
 
@@ -155,6 +155,18 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
     model.generation_config.forced_decoder_ids = None
     return model
 
+# ------------- #
+# training args #
+# ------------- #
+
+def get_training_args(args):
+    arg_dict={k: getattr(args, k) for k in DEFAULT_HYPERPARAMS.keys()}
+    training_args = Seq2SeqTrainingArguments(
+        output_dir=args.output,
+        **arg_dict,
+    )
+    return training_args
+
 # ---- #
 # main #
 # ---- #
@@ -166,8 +178,10 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     ds, processor = load_and_prepare_dataset(args)
     model = load_whisper_model(args)
     data_collator = load_data_collator(model, processor)
+    training_args=get_training_args(args)
+    compute_metrics=lambda pred: compute_wer(pred, processor.tokenizer)
 
-
+    trainer= 
 
     return 0
 
