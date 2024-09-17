@@ -12,8 +12,6 @@ import os
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
 
 with open('meta/language_codes.json') as f:
-    # TODO: this is now a list of objects, not a single object
-    # make changes accordingly
     LANGUAGE_CODES = json.load(f)
 
 def collate_hf_dataset(batch, proc, device):
@@ -35,7 +33,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     if language:
         ds = load_dataset(
             args.dataset,
-            LANGUAGE_CODES[language],
+            language,
             split=split_str,
             streaming=True,
         )
@@ -104,7 +102,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     args = parser.parse_args(argv)
     args.device = torch.device(args.device)
     if args.language == ['all']:
-        args.language = LANGUAGE_CODES.keys()
+        args.language = [lang['fleurs'] for lang in LANGUAGE_CODES]
     model = WhisperEncoder.from_pretrained(args.model)
     model = model.to(args.device)
 
@@ -113,7 +111,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         for language in tqdm(args.language):
             print("Calculating embeddings for language", language, "from dataset", args.dataset)
             embeds = whisper_embeddings(args, model=model, language=language)
-            embeds_path = f"{args.dataset.split('/')[-1]}-{LANGUAGE_CODES[language]}-{args.split}.pt"
+            embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
             if args.output:
                 embeds_path = os.path.join(args.output, embeds_path)
             torch.save(embeds, embeds_path)
