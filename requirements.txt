@@ -11,3 +11,4 @@ matlab
 unidecode
 speechbrain
 epitran
+evaluate
