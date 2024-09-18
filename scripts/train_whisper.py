@@ -85,7 +85,7 @@ def prepare_dataset(batch, processor):
     label = batch["transcription"]
     sampling_rate = batch["audio"][0]["sampling_rate"]
     batch["input_features"] = processor(arrays, sampling_rate=sampling_rate).input_features
-    batch["labels"] = processor(label).input_ids
+    batch["labels"] = processor.tokenizer(label).input_ids
     return batch
 
 # ------------- #
