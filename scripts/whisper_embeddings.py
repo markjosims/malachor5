@@ -1,8 +1,8 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Generator
 from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
-from datasets import load_dataset, load_from_disk, Audio
+from datasets import load_dataset, load_from_disk, Audio, Dataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch
@@ -21,33 +21,39 @@ def collate_hf_dataset(batch, proc, device):
         sampling_rate=16_000,
     ).to(device)
 
+def dataset_generator(dataset: Dataset, num_records: int=int('inf')) -> Generator:
+    """
+    For progress bars to work with the HuggingFace pipeline,
+    the dataset must be wrapped in an iterable class,
+    with the Pipeline object handling batching.
+    Break iterating when `num_records` reached, if specified.
+    """
+    for i, row in enumerate(dataset):
+        if i==num_records:
+            break
+        yield row
+
 def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     local = os.path.exists(args.dataset)
     proc = WhisperProcessor.from_pretrained(args.model, language=language)
 
-    # number of records taken indicated in split str for `load_dataset` method
-    split_str = args.split
-    if args.num_samples:
-        split_str = split_str+f'[:{args.num_samples}]'
     # load dataset
     if language:
         ds = load_dataset(
             args.dataset,
             language,
-            split=split_str,
+            split=args.split,
             streaming=True,
         )
     elif local:
         try:
-            # BUG: can't use `split` kwarg for `load_from_disk`
-            # TODO: implement slicing in this case
             ds = load_from_disk(args.dataset)[args.split]
         except FileNotFoundError:
-            ds = load_dataset(args.dataset, split=split_str)
+            ds = load_dataset(args.dataset, split=args.split)
     else:
         ds = load_dataset(
             args.dataset,
-            split=split_str,
+            split=args.split,
             streaming=True,
         )
 
@@ -55,8 +61,11 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     print("Resampling to 16_000Hz")
     ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
 
+    # wrap in generator
+    ds_gen = dataset_generator(ds, args.num_records)
+
     return DataLoader(
-        ds,
+        ds_gen,
         batch_size=args.batch_size,
         collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
     )
@@ -89,7 +98,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--dataset', '-d', default='google/fleurs')
     parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--split', '-s', default='test')
-    parser.add_argument('--num_samples', '-n', type=int)
+    parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--output', '-o')
     parser.add_argument('--average', '-a', action='store_true')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
