@@ -81,9 +81,9 @@ def load_and_prepare_dataset(args):
     return ds, processor
 
 def prepare_dataset(batch, processor):
-    audio = [row["audio"] for row in batch]
-    label = [row["transcription"] for row in batch]
-    batch["input_features"] = processor(audio, sampling_rate=audio[0]["sampling_rate"]).input_features
+    arrays = [row["array"] for row in batch["audio"]]
+    label = batch["transcription"]
+    batch["input_features"] = processor(arrays, sampling_rate=arrays[0]["sampling_rate"]).input_features
     batch["labels"] = processor(label).input_ids
     return batch
 
