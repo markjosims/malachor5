@@ -76,6 +76,7 @@ def load_and_prepare_dataset(args):
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
         batched=True,
+        batch_size=100,
         remove_columns=ds['train'].column_names
     )
     return ds, processor
