@@ -101,12 +101,14 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
     args.device = torch.device(args.device)
-    if args.language == ['all']:
-        args.language = [lang['fleurs'] for lang in LANGUAGE_CODES]
+    if args.language == ['all'] and 'fleurs' in args.dataset:
+        args.language = [lang['fleurs'] for lang in LANGUAGE_CODES if 'fleurs' in lang]
+    elif args.language == ['all'] and 'common_voice' in args.dataset:
+        args.language = [lang['commonvoice_code'] for lang in LANGUAGE_CODES if 'commonvoice_code' in lang]
     model = WhisperEncoder.from_pretrained(args.model)
     model = model.to(args.device)
 
-    # for FLEURS dataset load each language individually
+    # for multilingual dataset load each language individually
     if args.language:
         for language in tqdm(args.language):
             print("Calculating embeddings for language", language, "from dataset", args.dataset)
