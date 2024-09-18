@@ -97,6 +97,7 @@ def load_data_collator(model, processor):
         processor=processor,
         decoder_start_token_id=model.config.decoder_start_token_id,
     )
+    return data_collator
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
