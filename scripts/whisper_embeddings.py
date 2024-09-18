@@ -21,17 +21,21 @@ def collate_hf_dataset(batch, proc, device):
         sampling_rate=16_000,
     ).to(device)
 
-def dataset_generator(dataset: Dataset, num_records: int=-1) -> Generator:
-    """
-    For progress bars to work with the HuggingFace pipeline,
-    the dataset must be wrapped in an iterable class,
-    with the Pipeline object handling batching.
-    Break iterating when `num_records` reached, if specified.
-    """
-    for i, row in enumerate(dataset):
-        if i==num_records:
-            break
-        yield row
+
+class DatasetGenerator:
+    def __init__(self, dataset, num_records=0):
+        self.dataset=dataset
+        self.num_records=num_records or len(dataset)
+    
+    def __iter__(self):
+        for i, row in enumerate(self.dataset):
+            if i==self.num_records:
+                break
+            yield row
+
+    def __len__(self):
+        return self.num_records
+
 
 def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     local = os.path.exists(args.dataset)
@@ -62,7 +66,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
 
     # wrap in generator
-    ds_gen = dataset_generator(ds, args.num_records)
+    ds_gen = DatasetGenerator(ds, args.num_records)
 
     return DataLoader(
         ds_gen,
