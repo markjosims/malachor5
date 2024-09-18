@@ -27,7 +27,7 @@ DEFAULT_HYPERPARAMS = {
     'learning_rate': 3e-4,
     'warmup_steps': 500,
     'report_to': 'tensorboard',
-    'debug': 'underflow_overflow',
+    # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
