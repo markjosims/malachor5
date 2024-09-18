@@ -28,7 +28,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     # number of records taken indicated in split str for `load_dataset` method
     split_str = args.split
     if args.num_samples:
-        args.split = split_str+f'[:{args.num_samples}]'
+        split_str = split_str+f'[:{args.num_samples}]'
     # load dataset
     if language:
         ds = load_dataset(
@@ -44,17 +44,16 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
             ds = load_from_disk(args.dataset)[args.split]
         except FileNotFoundError:
             ds = load_dataset(args.dataset, split=split_str)
-        # for local datasets, check if we need to resample
-        sampling_rate = ds[0]['audio']['sampling_rate']
-        if sampling_rate != 16_000:
-            print("Resampling to 16_000Hz")
-            ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
     else:
         ds = load_dataset(
             args.dataset,
             split=split_str,
             streaming=True,
         )
+
+    # resample even if not needed, since checking a streamed dataset is complicated
+    print("Resampling to 16_000Hz")
+    ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
 
     return DataLoader(
         ds,
