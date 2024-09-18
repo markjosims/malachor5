@@ -2,7 +2,7 @@ from typing import Optional, Sequence, Generator
 from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
-from datasets import load_dataset, load_from_disk, Audio, Dataset
+from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch
@@ -22,7 +22,7 @@ def collate_hf_dataset(batch, proc, device):
     ).to(device)
 
 
-class DatasetGenerator:
+class DatasetGenerator(IterableDataset):
     def __init__(self, dataset, num_records=0):
         self.dataset=dataset
         self.num_records=num_records or len(dataset)
