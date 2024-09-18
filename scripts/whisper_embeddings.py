@@ -21,7 +21,7 @@ def collate_hf_dataset(batch, proc, device):
         sampling_rate=16_000,
     ).to(device)
 
-def dataset_generator(dataset: Dataset, num_records: int=int('inf')) -> Generator:
+def dataset_generator(dataset: Dataset, num_records: int=-1) -> Generator:
     """
     For progress bars to work with the HuggingFace pipeline,
     the dataset must be wrapped in an iterable class,
