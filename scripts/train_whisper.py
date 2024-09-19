@@ -9,6 +9,7 @@ from datasets import Audio
 import torch
 from dataclasses import dataclass
 import evaluate
+import os
 
 wer = evaluate.load("wer")
 
@@ -74,11 +75,13 @@ def load_and_prepare_dataset(args):
     processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
     if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
+    ds_cache_file=os.path.join(args.dataset, "processed.cache")
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
         batched=True,
         batch_size=100,
-        remove_columns=ds['train'].column_names
+        remove_columns=ds['train'].column_names,
+        cache_file_name=ds_cache_file,
     )
     return ds, processor
 
