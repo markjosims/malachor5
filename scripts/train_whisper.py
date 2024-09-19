@@ -60,9 +60,9 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         if k in HYPERPARAM_ABBREVIATIONS:
             flags.append('-'+HYPERPARAM_ABBREVIATIONS[k])
         if type(v) is bool:
-            hyper_args.add_argument('--'+k, default=v, action='store_true')
+            hyper_args.add_argument(*flags, default=v, action='store_true')
         else:
-            hyper_args.add_argument('--'+k, type=type(v), default=v)
+            hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
 
 # --------------------- #
