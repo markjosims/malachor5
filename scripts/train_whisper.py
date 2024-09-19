@@ -86,13 +86,13 @@ def load_and_prepare_dataset(args):
     )
     return ds, processor
 
-def prepare_dataset(batch, processor):
-    arrays = [row["array"] for row in batch["audio"]]
-    label = batch["transcription"]
-    sampling_rate = batch["audio"][0]["sampling_rate"]
-    batch["input_features"] = processor(arrays, sampling_rate=sampling_rate).input_features
-    batch["labels"] = processor.tokenizer(label).input_ids
-    return batch
+def prepare_dataset(row, processor):
+    wav=row["audio"]["array"]
+    sr=row["audio"]["sampling_rate"]
+    label = row["transcription"]
+    row["input_features"] = processor(wav, sampling_rate=sr).input_features
+    row["labels"] = processor.tokenizer(label).input_ids
+    return row
 
 # ------------- #
 # data collator #
