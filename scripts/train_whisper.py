@@ -80,7 +80,7 @@ def load_and_prepare_dataset(args):
         ds_cache_files[split]=os.path.join(args.dataset, split+'-cache.arrow')
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
-        num_proc=8,
+        num_proc=4,
         remove_columns=ds['train'].column_names,
         cache_file_names=ds_cache_files,
     )
