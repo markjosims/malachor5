@@ -32,6 +32,7 @@ DEFAULT_HYPERPARAMS = {
 HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
     'num_train_epochs': 'e',
+    'gradient_accumulation_steps': 'g',
 }
 
 # ---------------- #
