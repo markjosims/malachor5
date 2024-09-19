@@ -75,13 +75,15 @@ def load_and_prepare_dataset(args):
     processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
     if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
-    ds_cache_file=os.path.join(args.dataset, "processed.cache")
+    ds_cache_files={}
+    for split in ds:
+        ds_cache_files[split]=os.path.join(args.dataset, split+'-cache.arrow')
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
         batched=True,
         batch_size=100,
         remove_columns=ds['train'].column_names,
-        cache_file_name=ds_cache_file,
+        cache_file_names=ds_cache_files,
     )
     return ds, processor
 
