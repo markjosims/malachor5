@@ -73,10 +73,15 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     # wrap in generator
     ds_gen = DatasetGenerator(ds, args.num_records)
 
+    if args.model_type == 'whisper':
+        collate_fn = lambda batch: collate_whisper(batch, proc, args.device)
+    else:
+        collate_fn = collate_sb
+
     return DataLoader(
         ds_gen,
         batch_size=args.batch_size,
-        collate_fn=lambda batch: collate_whisper(batch, proc, args.device),
+        collate_fn=collate_fn,
     )
 
 # --------------------- #
