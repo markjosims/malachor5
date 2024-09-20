@@ -6,7 +6,7 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from sli import sb_model, sb_embeddings, collate_sb
+from sli import sb_model, collate_sb
 import torch
 import json
 import os
@@ -116,16 +116,26 @@ def whisper_embeddings(args, language: Optional[str]=None, model: Optional[Whisp
     
     hidden_states = torch.concat(hidden_states, dim=0)
     # make embedding by averaging activations across timestamps
-    embeds = torch.mean(hidden_states, dim=1)
+    embeds_tensor = torch.mean(hidden_states, dim=1)
     del hidden_states
     # optionally average across all records
     if args.average:
-        embeds = torch.mean(embeds, dim=0)
-    return embeds
+        embeds_tensor = torch.mean(embeds_tensor, dim=0)
+    return embeds_tensor
 
 def sb_embeddings(args, language: Optional[str]=None, model: Optional[EncoderClassifier]=None) -> torch.Tensor:
     if not model:
         model=sb_model(args)
+    dataloader = get_dataloader(args, language)
+    embeds = []
+    for batch in tqdm(dataloader):
+        batch_embeds = model.encode_batch(batch).cpu()
+        embeds.append(batch_embeds)
+    embeds_tensor = torch.concat(embeds)
+    # optionally average across all records
+    if args.average:
+        embeds_tensor = torch.mean(embeds_tensor, dim=0)
+    return embeds_tensor
 
 # ---- #
 # Main #
