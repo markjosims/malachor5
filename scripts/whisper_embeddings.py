@@ -166,19 +166,23 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         args.language = [lang['commonvoice_code'] for lang in LANGUAGE_CODES if 'commonvoice_code' in lang]
 
     model = load_model(args)
+    if args.model_type=='whisper':
+        embed_funct=whisper_embeddings
+    else: # args.model_type=='sb'
+        embed_funct=sb_embeddings
 
     # for multilingual dataset load each language individually
     if args.language:
         for language in tqdm(args.language):
             print("Calculating embeddings for language", language, "from dataset", args.dataset)
-            embeds = whisper_embeddings(args, model=model, language=language)
+            embeds = embed_funct(args, model=model, language=language)
             embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
             if args.output:
                 embeds_path = os.path.join(args.output, embeds_path)
             torch.save(embeds, embeds_path)
     # otherwise assume monolingual dataset, e.g. Tira ASR corpus
     else:
-        embeds = whisper_embeddings(args, model=model)
+        embeds = embed_funct(args, model=model)
         embeds_path = f"{args.dataset.split('/')[-1]}-{args.split}.pt"
         if args.output:
             embeds_path = os.path.join(args.output, embeds_path)
