@@ -14,6 +14,10 @@ DEVICE = 0 if torch.cuda.is_available() else "cpu"
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
 
+# --------------- #
+# Dataset methods #
+# --------------- #
+
 def collate_hf_dataset(batch, proc, device):
     return proc(
         [row['audio']['array'] for row in batch],
@@ -74,6 +78,10 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
         collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
     )
 
+# ----------------- #
+# Embedding methods #
+# ----------------- #
+
 def whisper_embeddings(args, language: Optional[str]=None, model: Optional[WhisperEncoder]=None) -> torch.Tensor:
     if not model:
         model = WhisperEncoder.from_pretrained(args.model)
@@ -94,6 +102,9 @@ def whisper_embeddings(args, language: Optional[str]=None, model: Optional[Whisp
         embeds = torch.mean(embeds, dim=0)
     return embeds
 
+# ---- #
+# Main #
+# ---- #
 
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
