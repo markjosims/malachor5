@@ -144,6 +144,7 @@ def sb_embeddings(args, language: Optional[str]=None, model: Optional[EncoderCla
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--model', '-m', default="openai/whisper-large-v3")
+    parser.add_argument('--sb_savedir')
     # TODO: implement choosing Encoder vs Decoder
     parser.add_argument('--dataset', '-d', default='google/fleurs')
     parser.add_argument('--language', '-l', nargs='+')
