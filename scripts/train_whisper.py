@@ -16,6 +16,7 @@ wer = evaluate.load("wer")
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
     'per_device_train_batch_size': 8,
+    'per_device_eval_batch_size': 8,
     'gradient_accumulation_steps': 1,
     'evaluation_strategy': "epoch",
     'save_strategy': "epoch",
@@ -32,6 +33,7 @@ DEFAULT_HYPERPARAMS = {
 }
 HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
+    'per_device_eval_batch_size': 'B',
     'num_train_epochs': 'e',
     'gradient_accumulation_steps': 'g',
 }
