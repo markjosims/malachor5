@@ -2,9 +2,11 @@ from typing import Optional, Sequence, Generator
 from argparse import ArgumentParser
 from transformers.models.whisper.modeling_whisper import WhisperEncoder
 from transformers import WhisperProcessor
+from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from sli import sb_model, sb_embeddings
 import torch
 import json
 import os
@@ -102,6 +104,10 @@ def whisper_embeddings(args, language: Optional[str]=None, model: Optional[Whisp
         embeds = torch.mean(embeds, dim=0)
     return embeds
 
+def sb_embeddings(args, language: Optional[str]=None, model: Optional[EncoderClassifier]=None) -> torch.Tensor:
+    if not model:
+        model=sb_model(args)
+
 # ---- #
 # Main #
 # ---- #
@@ -128,6 +134,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         args.language = [lang['fleurs'] for lang in LANGUAGE_CODES if 'fleurs' in lang]
     elif args.language == ['all'] and 'common_voice' in args.dataset:
         args.language = [lang['commonvoice_code'] for lang in LANGUAGE_CODES if 'commonvoice_code' in lang]
+
     model = WhisperEncoder.from_pretrained(args.model)
     model = model.to(args.device)
 
