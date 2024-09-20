@@ -85,10 +85,12 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
 
 def load_model(args):
     if ('openai' in args.model) or ('whisper' in args.model):
+        args.model_type='whisper'
         model = WhisperEncoder.from_pretrained(args.model)
         model = model.to(args.device)
         return model
     if ('speechbrain' in args.model):
+        args.model_type='sb'
         return sb_model(args)
     raise ValueError("Model type not recognized.")
 
