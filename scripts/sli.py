@@ -184,9 +184,10 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # Embedding methods #
 # ----------------- #
 
-def sb_embeddings(args, dataset) -> torch.Tensor:
-    print(f"Loading SpeechBrain model {args.model} for extracting embeddings.")
-    model = sb_model(args)
+def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
+    if model is None:
+        print(f"Loading SpeechBrain model {args.model} for extracting embeddings.")
+        model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
     embeddings = []
