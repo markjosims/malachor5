@@ -69,8 +69,12 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     print("Resampling to 16_000Hz")
     ds = ds.cast_column('audio', Audio(sampling_rate=16_000))
 
-    # wrap in generator
-    ds_gen = DatasetGenerator(ds, args.num_records)
+    # wrap in generator if iterable
+    if type(ds) is IterableDataset:
+        ds = DatasetGenerator(ds, args.num_records)
+    # otherwise, if num_records is specified, slice
+    elif args.num_records:
+        ds=ds[:args.num_records]
 
     if args.model_type == 'whisper':
         proc = WhisperProcessor.from_pretrained(args.model, language=language)
@@ -79,7 +83,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
         collate_fn = collate_sb
 
     return DataLoader(
-        ds_gen,
+        ds,
         batch_size=args.batch_size,
         collate_fn=collate_fn,
     )
