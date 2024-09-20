@@ -80,6 +80,19 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
         collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
     )
 
+# --------------------- #
+# Model loading methods #
+# --------------------- #
+
+def load_model(args):
+    if ('openai' in args.model) or ('whisper' in args.model):
+        model = WhisperEncoder.from_pretrained(args.model)
+        model = model.to(args.device)
+        return model
+    if ('speechbrain' in args.model):
+        return sb_model(args)
+    raise ValueError("Model type not recognized.")
+
 # ----------------- #
 # Embedding methods #
 # ----------------- #
@@ -135,8 +148,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     elif args.language == ['all'] and 'common_voice' in args.dataset:
         args.language = [lang['commonvoice_code'] for lang in LANGUAGE_CODES if 'commonvoice_code' in lang]
 
-    model = WhisperEncoder.from_pretrained(args.model)
-    model = model.to(args.device)
+    model = load_model(args)
 
     # for multilingual dataset load each language individually
     if args.language:
