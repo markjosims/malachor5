@@ -6,7 +6,7 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from sli import sb_model, sb_embeddings
+from sli import sb_model, sb_embeddings, collate_sb
 import torch
 import json
 import os
@@ -20,13 +20,12 @@ with open('meta/language_codes.json') as f:
 # Dataset methods #
 # --------------- #
 
-def collate_hf_dataset(batch, proc, device):
+def collate_whisper(batch, proc, device):
     return proc(
         [row['audio']['array'] for row in batch],
         return_tensors='pt',
         sampling_rate=16_000,
     ).to(device)
-
 
 class DatasetGenerator(IterableDataset):
     def __init__(self, dataset, num_records=0):
@@ -77,7 +76,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     return DataLoader(
         ds_gen,
         batch_size=args.batch_size,
-        collate_fn=lambda batch: collate_hf_dataset(batch, proc, args.device),
+        collate_fn=lambda batch: collate_whisper(batch, proc, args.device),
     )
 
 # --------------------- #
