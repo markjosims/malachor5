@@ -44,7 +44,6 @@ class DatasetGenerator(IterableDataset):
 
 def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     local = os.path.exists(args.dataset)
-    proc = WhisperProcessor.from_pretrained(args.model, language=language)
 
     # load dataset
     if language:
@@ -74,6 +73,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
     ds_gen = DatasetGenerator(ds, args.num_records)
 
     if args.model_type == 'whisper':
+        proc = WhisperProcessor.from_pretrained(args.model, language=language)
         collate_fn = lambda batch: collate_whisper(batch, proc, args.device)
     else:
         collate_fn = collate_sb
