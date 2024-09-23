@@ -219,7 +219,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Defining training args...")
     training_args = get_training_args(args)
     print("Defining metrics...")
-    compute_metrics = lambda pred: compute_wer(pred, processor.tokenizer)
+    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer)
 
     print("Training!")
     trainer = Seq2SeqTrainer(
