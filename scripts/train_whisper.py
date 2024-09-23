@@ -168,7 +168,7 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
     model.generation_config.language = args.language
     model.generation_config.task = "transcribe"
     model.generation_config.forced_decoder_ids = None
-    if args.peft_model == 'LoRA':
+    if args.peft_type == 'LoRA':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
         config = LoraConfig(
