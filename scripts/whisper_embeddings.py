@@ -184,7 +184,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
                 continue
             
             try:
-                tqdm.write("Calculating embeddings for language", language, "from dataset", args.dataset)
+                tqdm.write(f"Calculating embeddings for language {language}, from dataset, {args.dataset}")
                 embeds = embed_funct(args, model=model, language=language)
                 if args.output:
                     embeds_path = os.path.join(args.output, embeds_path)
