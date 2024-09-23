@@ -52,6 +52,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l')
     parser.add_argument('--peft_type', choices=['LoRA'])
+    parser.add_argument('--load_ds_cache', '-c', action='store_true')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -87,6 +88,7 @@ def load_and_prepare_dataset(args):
         num_proc=4,
         remove_columns=ds['train'].column_names,
         cache_file_names=ds_cache_files,
+        load_from_cache_file=args.load_ds_cache,
     )
     return ds, processor
 
