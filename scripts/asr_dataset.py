@@ -291,6 +291,9 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
             return dataset[split][:args.num_records]
         if split:
             return dataset[split]
+        if args.num_records:
+            for split in dataset:
+                dataset[split]=dataset[split].select(args.num_records)
         return dataset    
 
     if 'fleurs' in dataset_path:
