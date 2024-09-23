@@ -8,6 +8,7 @@ from transformers import WhisperProcessor, WhisperForConditionalGeneration, Seq2
 from datasets import Audio
 import torch
 from dataclasses import dataclass
+from peft import LoraConfig, get_peft_model
 from jiwer import wer, cer
 
 import os
@@ -168,7 +169,18 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
     model.generation_config.task = "transcribe"
     model.generation_config.forced_decoder_ids = None
     if args.peft_model == 'LoRA':
-        ...
+        print("Wrapping model with LoRA...")
+        # TODO add LoRA args to CLI
+        config = LoraConfig(
+            r=32,
+            lora_alpha=64,
+            target_modules=["q_proj", "v_proj"],
+            lora_dropout=0.05,
+            bias="none",
+        )
+
+        model = get_peft_model(model, config)
+        model.print_trainable_parameters()
     return model
 
 # ------------- #
