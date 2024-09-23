@@ -88,7 +88,7 @@ def load_and_prepare_dataset(args):
         num_proc=4,
         remove_columns=ds['train'].column_names,
         cache_file_names=ds_cache_files,
-        load_from_cache_file=args.load_ds_cache,
+        load_from_cache_file=bool(args.load_ds_cache),
     )
     return ds, processor
 
