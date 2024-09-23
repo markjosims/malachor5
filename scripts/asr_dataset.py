@@ -288,7 +288,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     if os.path.exists(dataset_path):
         dataset=load_from_disk(dataset_path)
         if split and args.num_records:
-            return dataset[split][:args.num_records]
+            return dataset[split].select(range(args.num_records))
         if split:
             return dataset[split]
         if args.num_records:
@@ -300,7 +300,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         return load_dataset(dataset_path, args.fleurs_lang, split=split, streaming=args.stream)
     dataset = load_dataset(dataset_path, split=split)
     if (args.num_records) and (not args.stream) and (split):
-        dataset = dataset[:args.num_records]
+        dataset = dataset.select(range(args.num_records))
     return dataset
 
 def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
