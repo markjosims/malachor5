@@ -191,7 +191,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
                 torch.save(embeds, embeds_path)
             except Exception as e:
                 tqdm.write(f"Error when calculating embeddings for language {language}, skipping")
-                tqdm.write(e)
+                tqdm.write(str(e))
     # otherwise assume monolingual dataset, e.g. Tira ASR corpus
     else:
         embeds = embed_funct(args, model=model)
