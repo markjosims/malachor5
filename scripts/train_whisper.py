@@ -96,9 +96,9 @@ def prepare_dataset(row, processor):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
     label = row["transcription"]
-    row["input_features"] = processor(wav, sampling_rate=sr).input_features[0]
+    row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='pt').input_features[0]
     row["input_length"] = len(wav)/sr
-    row["labels"] = processor.tokenizer(label).input_ids
+    row["labels"] = processor.tokenizer(label, return_tensors='pt').input_ids
     return row
 
 # ------------- #
