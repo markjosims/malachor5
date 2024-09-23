@@ -5,7 +5,7 @@ from transformers import WhisperProcessor
 from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
-import tqdm
+from tqdm import tqdm
 from sli import sb_model, collate_sb
 import torch
 import json
@@ -114,7 +114,7 @@ def whisper_embeddings(args, language: Optional[str]=None, model: Optional[Whisp
     dataloader = get_dataloader(args, language)
     hidden_states = []
     with torch.no_grad():
-        for batch in tqdm.tqdm(dataloader):
+        for batch in tqdm(dataloader):
             batch_embeds = model(batch['input_features'])['last_hidden_state']
             hidden_states.append(batch_embeds.to('cpu'))
     
@@ -132,7 +132,7 @@ def sb_embeddings(args, language: Optional[str]=None, model: Optional[EncoderCla
         model=sb_model(args)
     dataloader = get_dataloader(args, language)
     embeds = []
-    for batch in tqdm.tqdm(dataloader):
+    for batch in tqdm(dataloader):
         batch_embeds = model.encode_batch(batch).cpu()
         embeds.append(batch_embeds)
     embeds_tensor = torch.concat(embeds)
@@ -177,7 +177,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # for multilingual dataset load each language individually
     if args.language:
-        for language in tqdm.tqdm(args.language):
+        for language in tqdm(args.language):
             embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
             if os.path.exists(embeds_path):
                 tqdm.write(f"PyTorch file already found at {embeds_path} for language {language}, skipping")
