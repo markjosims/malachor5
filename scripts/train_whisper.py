@@ -152,10 +152,10 @@ def compute_wer_cer(pred, tokenizer):
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    wer = wer(label_str, pred_str)
-    cer = cer(label_str, pred_str)
+    batch_wer = wer(label_str, pred_str)
+    batch_cer = cer(label_str, pred_str)
 
-    return {"wer": wer, "cer": cer}
+    return {"wer": batch_wer, "cer": batch_cer}
 
 
 # ----------------- #
