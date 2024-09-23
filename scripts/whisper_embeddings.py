@@ -178,9 +178,13 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     # for multilingual dataset load each language individually
     if args.language:
         for language in tqdm(args.language):
+            embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
+            if os.path.exists(embeds_path):
+                print(f"PyTorch file already found at {embeds_path} for language {language}, skipping")
+                continue
+
             print("Calculating embeddings for language", language, "from dataset", args.dataset)
             embeds = embed_funct(args, model=model, language=language)
-            embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
             if args.output:
                 embeds_path = os.path.join(args.output, embeds_path)
             torch.save(embeds, embeds_path)
