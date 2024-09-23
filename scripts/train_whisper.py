@@ -8,10 +8,9 @@ from transformers import WhisperProcessor, WhisperForConditionalGeneration, Seq2
 from datasets import Audio
 import torch
 from dataclasses import dataclass
-import evaluate
-import os
+from jiwer import wer, cer
 
-wer = evaluate.load("wer")
+import os
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -51,6 +50,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l')
+    parser.add_argument('--peft_type', choices=['LoRA'])
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -94,7 +94,7 @@ def prepare_dataset(row, processor):
     sr=row["audio"]["sampling_rate"]
     label = row["transcription"]
     row["input_features"] = processor(wav, sampling_rate=sr).input_features[0]
-    row["input_length"] = wav/sr
+    row["input_length"] = len(wav)/sr
     row["labels"] = processor.tokenizer(label).input_ids
     return row
 
@@ -141,7 +141,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # evaluation methods #
 # ------------------ #
 
-def compute_wer(pred, tokenizer):
+def compute_wer_cer(pred, tokenizer):
     pred_ids = pred.predictions
     label_ids = pred.label_ids
 
@@ -152,9 +152,10 @@ def compute_wer(pred, tokenizer):
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    wer = 100 * wer.compute(predictions=pred_str, references=label_str)
+    wer = wer(label_str, pred_str)
+    cer = cer(label_str, pred_str)
 
-    return {"wer": wer}
+    return {"wer": wer, "cer": cer}
 
 
 # ----------------- #
@@ -166,6 +167,8 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
     model.generation_config.language = args.language
     model.generation_config.task = "transcribe"
     model.generation_config.forced_decoder_ids = None
+    if args.peft_model == 'LoRA':
+        ...
     return model
 
 # ------------- #
