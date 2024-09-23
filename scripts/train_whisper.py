@@ -191,6 +191,10 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
 
 def get_training_args(args):
     arg_dict={k: getattr(args, k) for k in DEFAULT_HYPERPARAMS.keys()}
+    if args.peft_type=='LoRA':
+        arg_dict['remove_unused_columns']=False
+        arg_dict['label_names']=["labels"]
+
     training_args = Seq2SeqTrainingArguments(
         output_dir=args.output,
         **arg_dict,
