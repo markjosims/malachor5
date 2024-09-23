@@ -12,3 +12,5 @@ unidecode
 speechbrain
 epitran
 evaluate
+peft
+jiwer
