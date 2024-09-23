@@ -180,14 +180,18 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         for language in tqdm(args.language):
             embeds_path = f"{args.dataset.split('/')[-1]}-{language}-{args.split}.pt"
             if os.path.exists(embeds_path):
-                print(f"PyTorch file already found at {embeds_path} for language {language}, skipping")
+                tqdm.write(f"PyTorch file already found at {embeds_path} for language {language}, skipping")
                 continue
-
-            print("Calculating embeddings for language", language, "from dataset", args.dataset)
-            embeds = embed_funct(args, model=model, language=language)
-            if args.output:
-                embeds_path = os.path.join(args.output, embeds_path)
-            torch.save(embeds, embeds_path)
+            
+            try:
+                tqdm.write("Calculating embeddings for language", language, "from dataset", args.dataset)
+                embeds = embed_funct(args, model=model, language=language)
+                if args.output:
+                    embeds_path = os.path.join(args.output, embeds_path)
+                torch.save(embeds, embeds_path)
+            except Exception as e:
+                tqdm.write(f"Error when calculating embeddings for language {language}, skipping")
+                tqdm.write(e)
     # otherwise assume monolingual dataset, e.g. Tira ASR corpus
     else:
         embeds = embed_funct(args, model=model)
