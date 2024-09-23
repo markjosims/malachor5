@@ -23,7 +23,7 @@ DEFAULT_HYPERPARAMS = {
     'evaluation_strategy': "epoch",
     'save_strategy': "epoch",
     'num_train_epochs': 4,
-    'gradient_checkpointing': True,
+    'gradient_checkpointing': False,
     'fp16': False,
     'save_steps': 5000,
     'eval_steps': 5000,
