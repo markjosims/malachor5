@@ -150,7 +150,7 @@ def compute_wer_cer(pred, tokenizer):
     predictions = pred.predictions
     if type(predictions) is tuple:
         # got logits instead of ids, decode greedily
-        pred_ids = np.argmax(predictions, axis=-1)
+        pred_ids = np.argmax(predictions[0], axis=-1)
     else:
         # assume pred.predictions is the ids otherwise
         pred_ids = predictions
