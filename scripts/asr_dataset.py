@@ -416,7 +416,7 @@ def find_least_similar_embedding(embeds: torch.Tensor, mask: torch.Tensor) -> Tu
     Identify the least similar embedding to all others,
     then add it to the mask.
     """
-    embed_sim = sim_to_mean(embeds)
+    embed_sim = sim_to_mean(embeds, mask)
     # set masked elements to inf so they wont be minimum
     embed_sim[~mask]=float('inf')
     least_similar_idx = torch.argmin(embed_sim).item()
