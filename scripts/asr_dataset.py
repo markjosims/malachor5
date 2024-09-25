@@ -393,6 +393,55 @@ def get_epitran(fleurs_lang_tag, script: Optional[str]=None):
     
     return epitran.Epitran(f"{iso3}-{script}")
 
+# ------------------------- #
+# Cosine similarity helpers #
+# ------------------------- #
+
+def sim_to_mean(embeds: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    """
+    `embeds` is a k*d matrix (k embeddings of length d).
+    Return a vector of length k where each element is the similarity of
+    the k'^th embedding to the average of all embeddings,
+    excluding masked embeddings.
+    """
+    mean_embed = torch.mean(embeds[mask], dim=0)
+    mean_embed = mean_embed.expand(embeds.shape)
+    cos_sim = torch.nn.functional.cosine_similarity(embeds, mean_embed)
+    return cos_sim
+
+def find_least_similar_embedding(embeds: torch.Tensor, mask: torch.Tensor) -> Tuple[int, torch.Tensor]:
+    """
+    `embeds` is a k*d matrix (k embeddings of length d).
+    Identify the least similar embedding to all others,
+    then add it to the mask.
+    """
+    embed_sim = sim_to_mean(embeds)
+    # set masked elements to inf so they wont be minimum
+    embed_sim[~mask]=float('inf')
+    least_similar_idx = torch.argmin(embed_sim).item()
+    # update mask
+    mask[least_similar_idx]=False
+    return least_similar_idx, mask
+
+def partition_embeddings(embeds: torch.Tensor, split_ratio: float=0.5) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Split embeddings maximizing cosine distance between partitions,
+    and return indices for each partition.
+    """
+    num_embeds = embeds.shape[0]
+    mask = torch.ones(num_embeds, dtype=bool)
+    splitsize = int(num_embeds*split_ratio)
+    remain_splitsize = num_embeds-splitsize
+    major_splitsize = max(splitsize, remain_splitsize)
+    while len(embeds[mask]) > major_splitsize:
+        _, mask = find_least_similar_embedding(embeds, mask)
+    
+    major_split_idcs = mask.nonzero().squeeze()
+    minor_split_idcs = (~mask).nonzero().squeeze()
+
+    if split_ratio >=0.5:
+        return major_split_idcs, minor_split_idcs
+    return minor_split_idcs, major_split_idcs
     
 # --------------- #
 # Command methods #
@@ -785,8 +834,25 @@ def split_dataset(args):
     Load embeddings from `args.input` that correspond to rows
     the dataset specified in `args.dataset`. Create a train-test-val split
     that maximizes cosine distance between each partition.
-    Save indices to a `.json` file specified in `args.output`.
+    Save dataset to path specified in `args.output`.
     """
+    ds = load_dataset_safe(args)
+    train_size, val_size, test_size = args.splitsize
+    embeds = torch.load(args.input)
+
+    train, val_test = partition_embeddings(embeds, split_ratio=train_size)
+    val_subidcs, test_subidcs = partition_embeddings(embeds[val_test], split_ratio=val_size/(val_size+test_size))
+    val = val_test[val_subidcs]
+    test = val_test[test_subidcs]
+
+    ds=DatasetDict({
+        'train': ds.select(train),
+        'validation': ds.select(val),
+        'test': ds.select(test)
+    })
+
+    ds.save_to_disk(args.output)
+
     return 0    
 
 # ---- #
