@@ -285,12 +285,15 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     else:
         dataset_path=args.input
     split=getattr(args, 'split', None)
+    make_split=getattr(args, 'make_split', False)
     if os.path.exists(dataset_path):
         dataset=load_from_disk(dataset_path)
         if split and args.num_records:
             return dataset[split].select(range(args.num_records))
         if split:
             return dataset[split]
+        if make_split:
+            dataset=make_ds_split(dataset)
         if args.num_records:
             for split in dataset:
                 dataset[split]=dataset[split].select(range(args.num_records))
@@ -301,6 +304,18 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     dataset = load_dataset(dataset_path, split=split)
     if (args.num_records) and (not args.stream) and (split):
         dataset = dataset.select(range(args.num_records))
+    return dataset
+
+def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
+    """
+    Make an ad-hoc train-val split.
+    Assume dataset only has `train`.
+    Select the first `percent_val` records to go into the validation split.
+    """
+    num_records = len(dataset['train'])
+    num_val=int(percent_val*num_records)
+    dataset['validation']=dataset['train'].select(range(num_val))
+    dataset['train']=dataset['train'].select(range(num_val, num_records))
     return dataset
 
 def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
