@@ -143,6 +143,7 @@ def init_parser() -> ArgumentParser:
     split_ds_parser = commands.add_parser('split_dataset', help=split_dataset.__doc__)
     split_ds_parser.add_argument('--dataset', '-d')
     split_ds_parser.add_argument('--splitsize', nargs=3, default=[0.8, 0.1, 0.1])
+    split_ds_parser.set_defaults(func=split_dataset)
 
     return parser
 
