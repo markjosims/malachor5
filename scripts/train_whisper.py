@@ -7,6 +7,7 @@ from asr_dataset import load_dataset_safe, DEVICE, device_type
 from transformers import WhisperProcessor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
 from datasets import Audio
 import torch
+import numpy as np
 from dataclasses import dataclass
 from peft import LoraConfig, get_peft_model
 from jiwer import wer, cer
@@ -146,7 +147,13 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # ------------------ #
 
 def compute_wer_cer(pred, tokenizer):
-    pred_ids = pred.predictions
+    predictions = pred.predictions
+    if type(predictions) is tuple:
+        # got logits instead of ids, decode greedily
+        pred_ids = np.argmax(predictions[0], axis=-1)
+    else:
+        # assume pred.predictions is the ids otherwise
+        pred_ids = predictions
     label_ids = pred.label_ids
 
     # replace -100 with the pad_token_id
