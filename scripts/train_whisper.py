@@ -71,7 +71,8 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         if type(v) is bool:
             hyper_args.add_argument(*flags, default=v, action='store_true')
         else:
-            hyper_args.add_argument(*flags, type=type(v), default=v)
+            type_funct = None if v.lower()=='none' else type(v)
+            hyper_args.add_argument(*flags, type=type_funct, default=v)
     return parser
 
 # --------------------- #
