@@ -21,7 +21,7 @@ DEFAULT_HYPERPARAMS = {
     'per_device_eval_batch_size': 8,
     'gradient_accumulation_steps': 1,
     'eval_accumulation_steps': 16,
-    'evaluation_strategy': "epoch",
+    'eval_strategy': "epoch",
     'save_strategy': "epoch",
     'num_train_epochs': 4,
     'gradient_checkpointing': False,
