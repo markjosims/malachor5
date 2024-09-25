@@ -101,7 +101,7 @@ def prepare_dataset(row, processor):
     label = row["transcription"]
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
-    row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids
+    row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
 
 # ------------- #
