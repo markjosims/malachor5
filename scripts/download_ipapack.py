@@ -1,7 +1,7 @@
 from huggingface_hub import snapshot_download
 import os
 
-DATASET_DIR = os.environ.get('DATASET_DIR', '/usr/markjos/datasets')
+DATASET_DIR = os.environ.get('DATASETS', '/usr/markjos/datasets')
 
 def main():
     datasets = [
