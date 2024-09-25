@@ -140,6 +140,10 @@ def init_parser() -> ArgumentParser:
     snr_parser = commands.add_parser('snr', help=calculate_snr.__doc__)
     snr_parser.set_defaults(func=calculate_snr)
 
+    split_ds_parser = commands.add_parser('split_dataset', help=split_dataset.__doc__)
+    split_ds_parser.add_argument('--dataset', '-d')
+    split_ds_parser.add_argument('--splitsize', nargs=3, default=[0.8, 0.1, 0.1])
+
     return parser
 
 # -------------- #
@@ -775,6 +779,15 @@ def calculate_snr(args):
     remove_columns = 'audio' if args.keep_cols else ds.column_names
     ds = ds.map(map_snr, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
+
+def split_dataset(args):
+    """
+    Load embeddings from `args.input` that correspond to rows
+    the dataset specified in `args.dataset`. Create a train-test-val split
+    that maximizes cosine distance between each partition.
+    Save indices to a `.json` file specified in `args.output`.
+    """
+    return 0    
 
 # ---- #
 # main #
