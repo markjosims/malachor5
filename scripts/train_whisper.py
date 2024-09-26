@@ -147,14 +147,24 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # evaluation methods #
 # ------------------ #
 
+def preprocess_logits_for_metrics(logits, labels):
+    """
+    Original Trainer may have a memory leak. 
+    This is a workaround to avoid storing too many tensors that are not needed.
+    Taken from https://discuss.huggingface.co/t/cuda-out-of-memory-when-using-trainer-with-compute-metrics/2941/13
+    on 25 Sep 2024
+    """
+    pred_ids = torch.argmax(logits[0], dim=-1)
+    return pred_ids, labels
+
 def compute_wer_cer(pred, tokenizer):
     predictions = pred.predictions
-    if type(predictions) is tuple:
-        # got logits instead of ids, decode greedily
-        pred_ids = np.argmax(predictions[0], axis=-1)
-    else:
-        # assume pred.predictions is the ids otherwise
-        pred_ids = predictions
+    # if type(predictions) is tuple:
+    #     # got logits instead of ids, decode greedily
+    #     pred_ids = np.argmax(predictions[0], axis=-1)
+    # else:
+    #     # assume pred.predictions is the ids otherwise
+    pred_ids = predictions[0]
     label_ids = pred.label_ids
 
     # replace -100 with the pad_token_id
@@ -242,6 +252,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=processor.feature_extractor,
+        preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
     trainer.train()
 
