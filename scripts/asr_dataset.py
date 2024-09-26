@@ -582,7 +582,7 @@ def infer_asr(args) -> int:
     if args.language:
         language_prompts={}
         tokenizer=AutoTokenizer.from_pretrained(args.model)
-        for language in args.language:
+        for language in tqdm(args.language, desc='Getting language prompt tokens...'):
             lang_prompt = tokenizer.get_decoder_prompt_ids(
                 language=language,
                 task="transcribe"
@@ -591,7 +591,7 @@ def infer_asr(args) -> int:
     def map_pipe(row):
         out={}
         if args.language:
-            for language in tqdm(args.language):
+            for language in tqdm(args.language, desc='Transcribing batch for specified languages...'):
                 result = pipe(
                     [audio['array'] for audio in row['audio']],
                     generate_kwargs={'forced_decoder_ids': language_prompts[language]},
