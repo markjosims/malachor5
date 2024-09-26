@@ -71,11 +71,7 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         if type(v) is bool:
             hyper_args.add_argument(*flags, default=v, action='store_true')
         else:
-            if type(v) is str:
-                type_funct=str
-            else:
-                type_funct = lambda argval: None if int(argval)==0 else type(v)(argval)
-            hyper_args.add_argument(*flags, type=type_funct, default=v)
+            hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
 
 # --------------------- #
@@ -204,6 +200,10 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
 
 def get_training_args(args):
     arg_dict={k: getattr(args, k) for k in DEFAULT_HYPERPARAMS.keys()}
+    for k, v in arg_dict.items():
+        # -1 passed to CLI indicates arg value should be None
+        if v==-1:
+            arg_dict[k]=None
     if args.peft_type=='LoRA':
         arg_dict['remove_unused_columns']=False
         arg_dict['label_names']=["labels"]
