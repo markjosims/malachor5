@@ -9,7 +9,7 @@ import numpy as np
 import soundfile
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, IterableDataset
-from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer
+from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer, AutoTokenizer
 import torch
 from tempfile import TemporaryDirectory
 import csv
@@ -71,6 +71,7 @@ def init_parser() -> ArgumentParser:
     infer_asr_parser.add_argument('--model', '-m', default='openai/whisper-large-v3')
     infer_asr_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
+    infer_asr_parser.add_argument('--language', '-l', nargs='+')
     infer_asr_parser.set_defaults(func=infer_asr)
 
     infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
@@ -575,12 +576,31 @@ def infer_asr(args) -> int:
     ds = load_dataset_safe(args)
     pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
     if args.language=='all':
-        args.language=[]
+        with open('meta/language_codes.json') as f:
+            language_codes=json.load(f)
+        args.language=[lang['whisper'] for lang in language_codes if 'whisper' in lang]
+    if args.language:
+        language_prompts={}
+        tokenizer=AutoTokenizer.from_pretrained(args.model)
+        for language in args.language:
+            lang_prompt = tokenizer.get_decoder_prompt_ids(
+                language=language,
+                task="transcribe"
+            )
+            language_prompts[language]=lang_prompt
     def map_pipe(row):
-        result = pipe([audio['array'] for audio in row['audio']])
         out={}
-        model_col = args.model.split(sep='/')[-1]
-        out[model_col] = [item['text'] for item in result]
+        if args.language:
+            for language in tqdm(args.language):
+                result = pipe(
+                    [audio['array'] for audio in row['audio']],
+                    generate_kwargs={'forced_decoder_ids': language_prompts[language]},
+                )
+                out[language] = [item['text'] for item in result]
+        else:
+            result = pipe([audio['array'] for audio in row['audio']])
+            model_col = args.model.split(sep='/')[-1]
+            out[model_col] = [item['text'] for item in result]
         out['path'] = row['audio']['path']
         return out
     remove_columns = 'audio' if args.keep_cols else ds.column_names
