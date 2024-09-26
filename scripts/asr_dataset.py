@@ -574,7 +574,12 @@ def infer_asr(args) -> int:
     Save output csv with results in column named after model checkpoint specified.
     """
     ds = load_dataset_safe(args)
-    pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    pipe=pipeline(
+        'automatic-speech-recognition',
+        args.model,
+        device=args.device,
+        batch_size=args.batch_size,
+    )
     if args.language==['all']:
         with open('meta/language_codes.json') as f:
             language_codes=json.load(f)
