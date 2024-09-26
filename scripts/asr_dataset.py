@@ -606,7 +606,7 @@ def infer_asr(args) -> int:
             result = pipe([audio['array'] for audio in row['audio']])
             model_col = args.model.split(sep='/')[-1]
             out[model_col] = [item['text'] for item in result]
-        out['path'] = row['audio']['path']
+        out['path'] = [audio['path'] for audio in row['audio']]
         return out
     remove_columns = 'audio' if args.keep_cols else ds.column_names
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
