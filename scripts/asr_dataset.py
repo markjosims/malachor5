@@ -574,6 +574,8 @@ def infer_asr(args) -> int:
     """
     ds = load_dataset_safe(args)
     pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
+    if args.language=='all':
+        args.language=[]
     def map_pipe(row):
         result = pipe([audio['array'] for audio in row['audio']])
         out={}
