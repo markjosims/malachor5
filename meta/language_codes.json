@@ -717,7 +717,7 @@
   {
     "iso2": "yue",
     "iso3": "yue",
-    "whisper": "cantonese",
+    "whisper-v3": "cantonese",
     "fleurs": "yue_hant",
     "fleurs_script": "",
     "commonvoice_code": "yue",
