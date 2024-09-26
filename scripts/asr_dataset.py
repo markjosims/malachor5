@@ -575,7 +575,7 @@ def infer_asr(args) -> int:
     """
     ds = load_dataset_safe(args)
     pipe=pipeline('automatic-speech-recognition', args.model, device=args.device)
-    if args.language=='all':
+    if args.language==['all']:
         with open('meta/language_codes.json') as f:
             language_codes=json.load(f)
         args.language=[lang['whisper'] for lang in language_codes if 'whisper' in lang]
