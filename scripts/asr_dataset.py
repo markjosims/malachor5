@@ -593,20 +593,20 @@ def infer_asr(args) -> int:
                 task="transcribe"
             )
             language_prompts[language]=lang_prompt
-    def map_pipe(row):
+    def map_pipe(batch):
         out={}
         if args.language:
             for language in tqdm(args.language, desc='Transcribing batch for specified languages...'):
                 result = pipe(
-                    [audio['array'] for audio in row['audio']],
+                    [audio['array'] for audio in batch['audio']],
                     generate_kwargs={'forced_decoder_ids': language_prompts[language]},
                 )
                 out[language] = [item['text'] for item in result]
         else:
-            result = pipe([audio['array'] for audio in row['audio']])
+            result = pipe([audio['array'] for audio in batch['audio']])
             model_col = args.model.split(sep='/')[-1]
             out[model_col] = [item['text'] for item in result]
-        out['path'] = [audio['path'] for audio in row['audio']]
+        out['path'] = [audio['path'] for audio in batch['audio']]
         return out
     remove_columns = 'audio' if args.keep_cols else ds.column_names
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
