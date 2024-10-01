@@ -2,6 +2,7 @@ import torch.utils
 from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from speechbrain.inference.classifiers import EncoderClassifier
 from speechbrain.dataio.batch import PaddedBatch
+from sklearn.linear_model import LogisticRegression
 from datasets import load_from_disk, Audio, Dataset
 from datasets.combine import concatenate_datasets
 from typing import Optional, Sequence, Dict, Any, List, List, Generator, Union
@@ -277,6 +278,9 @@ def init_argparser() -> ArgumentParser:
         "--dataset", '-d',
     )
     parser.add_argument(
+        "--embeds_path",
+    )
+    parser.add_argument(
         "--device", '-D', type=int, default=DEVICE,
     )
     parser.add_argument(
@@ -298,7 +302,7 @@ def init_argparser() -> ArgumentParser:
         '--meta_threshold', type=float,
     )
     parser.add_argument(
-        '--output_type', choices=['inference', 'embedding'], default='inference',
+        '--output_type', choices=['inference', 'embedding', 'logreg'], default='inference',
     )
     return parser
 
@@ -359,6 +363,21 @@ def make_embeddings(args, dataset) -> int:
     dataset = dataset.to_pandas()
     dataset.to_csv(args.output+'.csv', index=False)
     return 0
+
+def do_logreg(args, dataset) -> int:
+    if args.embeds_path:
+        embeds = torch.load(args.embeds_path)
+    elif args.inference_api == 'hf':
+        embeds = hf_embeddings(args, dataset)
+        torch.save(embeds, args.output+'.pt')
+    else:
+        embeds = sb_embeddings(args, dataset)
+        torch.save(embeds, args.output+'.pt')
+
+    labels=dataset[]
+    logreg=LogisticRegression()
+    
+
 
 if __name__ == '__main__':
     main()
