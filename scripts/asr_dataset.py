@@ -77,7 +77,7 @@ def init_parser() -> ArgumentParser:
     infer_asr_parser.set_defaults(func=infer_asr)
 
     infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
-    infer_vad_parser.add_argument('--model', '-m', default='pyannoate/speaker-diarization-3.1')
+    infer_vad_parser.add_argument('--model', '-m', default='pyannoate/voice-activity-detection')
     infer_vad_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
     infer_vad_parser.set_defaults(func=infer_vad)
 
