@@ -61,6 +61,7 @@ def init_parser() -> ArgumentParser:
         help=validate_clips.__doc__
     )
     validate_clips_parser.add_argument('--recursive', '-r', action='store_true')
+    validate_clips_parser.add_argument('--is_dataset', action='store_true')
     validate_clips_parser.set_defaults(func=validate_clips)
 
     hf_dataset_parser=commands.add_parser(
@@ -260,6 +261,15 @@ def move_clip_to_split(row, args) -> str:
     new_clip_relpath=os.path.relpath(new_clip_path, args.input)
     shutil.move(clip_path, new_clip_path)
     return new_clip_relpath
+
+def validate_clipfile(f, wav, wav_obj=None):
+    try:
+        if wav_obj is None:
+            wav_obj=soundfile.read(wav, always_2d=True)[0]
+        if len(wav_obj)==0:
+            f.write(f"{wav} is empty.\n")
+    except Exception as e:
+        f.write(f"{wav} could not be opened due to exception {e}.\n")
 
 # ------------------------- #
 # Signal processing helpers #
@@ -556,18 +566,19 @@ def validate_clips(args) -> int:
     Checks every .wav file in input dir can be opened and has non-zero length.
     Saves a list of errors to output file.
     """
+    if args.is_dataset:
+        ds=load_dataset_safe(args)
+        with open(args.output, 'w') as f:
+            ds.map(lambda r: validate_clipfile(f, r['audio']['path'], wav_obj=r['audio']['array']))
+        return 0
     if args.recursive:
         wavs=glob(os.path.join(args.input, '**/*.wav'), recursive=True)
     else:
         wavs=glob(os.path.join(args.input, '*.wav'))
     with open(args.output, 'w') as f:
         for wav in tqdm(wavs, desc='Validating wav files'):
-            try:
-                wav_obj=soundfile.read(wav, always_2d=True)
-                if len(wav_obj[0])==0:
-                    f.write(f"{wav} is empty.\n")
-            except Exception as e:
-                f.write(f"{wav} could not be opened due to exception {e}.\n")
+            validate_clipfile(f, wav)
+    return 0
 
 def make_hf_dataset(args) -> int:
     """
