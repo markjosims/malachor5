@@ -3,7 +3,7 @@ from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2Fe
 from speechbrain.inference.classifiers import EncoderClassifier
 from speechbrain.dataio.batch import PaddedBatch
 from sklearn.linear_model import LogisticRegression
-from datasets import load_from_disk, Audio, Dataset
+from datasets import load_from_disk, Audio, Dataset, DatasetDict
 from datasets.combine import concatenate_datasets
 from typing import Optional, Sequence, Dict, Any, List, List, Generator, Union
 from argparse import ArgumentParser
@@ -192,6 +192,12 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
     if model is None:
         print(f"Loading SpeechBrain model {args.model} for extracting embeddings.")
         model = sb_model(args)
+    if type(dataset) is DatasetDict:
+        embedding_dict={}
+        for split in dataset:
+            embedding_dict[split]=sb_embeddings(args, dataset[split], model)
+        return embedding_dict
+
     dataloader = build_dataloader(dataset, args.batch_size)
 
     embeddings = []
@@ -202,11 +208,19 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
     embedding_tensor = torch.concat(embeddings)
     return embedding_tensor
 
-def hf_embeddings(args, dataset) -> torch.Tensor:
-    print(f"Loading HuggingFace model {args.model} for extracting embeddings.")
-    model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
-    proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
-    model.to(torch.device(args.device))
+def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
+    if model is None:
+        print(f"Loading HuggingFace model {args.model} for extracting embeddings.")
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
+        model.to(torch.device(args.device))
+
+    if type(dataset) is DatasetDict:
+        embedding_dict={}
+        for split in dataset:
+            embedding_dict[split]=hf_embeddings(args, dataset[split], model)
+        return embedding_dict
+
     dataloader = build_dataloader(dataset, args.batch_size)
 
     logits = []
@@ -374,7 +388,9 @@ def do_logreg(args, dataset) -> int:
         embeds = sb_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
 
-    labels=dataset[]
+    train_labels=dataset['train']['text']
+    val_labels=dataset['validation']['text']
+    test_labels=dataset['test']['text']
     logreg=LogisticRegression()
     
 
