@@ -4,6 +4,7 @@ from typing import Optional, Sequence, List, Tuple, Dict, Union
 from argparse import ArgumentParser, Namespace
 import pandas as pd
 import os
+import shutil
 import librosa
 import numpy as np
 import soundfile
@@ -59,6 +60,7 @@ def init_parser() -> ArgumentParser:
         'make_hf_dataset',
         help=make_hf_dataset.__doc__
     )
+    hf_dataset_parser.add_argument('--make_splits', action='store_true')
     hf_dataset_parser.set_defaults(func=make_hf_dataset)
 
     remove_clips_parser=commands.add_parser(
@@ -237,6 +239,20 @@ def check_clips_exist(is_source: pd.Series, wav_source: str, clip_dir: str) -> b
     clip_paths = glob(glob_str)
     return len(clip_paths) == num_source
 
+def move_clip_to_split(row, args) -> str:
+    clip_relpath=row['file_name']
+    clip_path=os.path.join(args.input, clip_relpath)
+    clip_dir=os.path.dirname(clip_path)
+    clip_basename=os.path.basename(clip_path)
+    split=row['split']
+    split_dir = os.path.join(clip_dir, split)
+    if not os.path.isdir(split_dir):
+        os.mkdir(split_dir)
+    
+    new_clip_path=os.path.join(split_dir, clip_basename)
+    new_clip_relpath=os.path.relpath(new_clip_path, args.input)
+    shutil.move(clip_path, new_clip_path)
+    return new_clip_relpath
 
 # ------------------------- #
 # Signal processing helpers #
@@ -544,7 +560,9 @@ def make_hf_dataset(args) -> int:
                 os.path.relpath(s, args.input)
             )
         )
-        df.to_csv(metadata_path, index=False)
+    if args.make_splits:
+        df['file_name']=df.apply(lambda r: move_clip_to_split(r, args), axis=1)
+    df.to_csv(metadata_path, index=False)
     del df
     ds = load_dataset("audiofolder", data_dir=args.input)
     ds = ds.cast_column("audio", Audio(sampling_rate=16_000))
