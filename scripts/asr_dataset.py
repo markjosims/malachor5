@@ -56,6 +56,13 @@ def init_parser() -> ArgumentParser:
     make_clips_parser.add_argument('--check_clips_exist', action='store_true')
     make_clips_parser.set_defaults(func=make_clips)
 
+    validate_clips_parser=commands.add_parser(
+        'validate_clips',
+        help=validate_clips.__doc__
+    )
+    validate_clips_parser.add_argument('--recursive', '-r', action='store_true')
+    validate_clips_parser.set_defaults(func=validate_clips)
+
     hf_dataset_parser=commands.add_parser(
         'make_hf_dataset',
         help=make_hf_dataset.__doc__
@@ -543,6 +550,24 @@ def make_clips(args) -> int:
         )
     df.to_csv(csv_path, index=False)
     return 0
+
+def validate_clips(args) -> int:
+    """
+    Checks every .wav file in input dir can be opened and has non-zero length.
+    Saves a list of errors to output file.
+    """
+    if args.recursive:
+        wavs=glob(os.path.join(args.input, '**/*.wav'), recursive=True)
+    else:
+        wavs=glob(os.path.join(args.input, '*.wav'))
+    with open(args.output, 'w') as f:
+        for wav in tqdm(wavs, desc='Validating wav files'):
+            try:
+                wav_obj=soundfile.read(wav, always_2d=True)
+                if len(wav_obj[0])==0:
+                    f.write(f"{wav} is empty.\n")
+            except Exception as e:
+                f.write(f"{wav} could not be opened due to exception {e}.\n")
 
 def make_hf_dataset(args) -> int:
     """
