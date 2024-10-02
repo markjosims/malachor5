@@ -208,11 +208,11 @@ def ms_to_humantime(ms: int) -> str:
     return timestr
 
 def clip_segment(
-        wav: Optional[np.ndarray],
         start_ms: int,
         end_ms: int,
         wav_basename: str,
         target_dir: str,
+        wav: Optional[np.ndarray]=None,
         sampling_rate: int=16_000,
     ) -> str:
     """
