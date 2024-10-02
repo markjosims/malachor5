@@ -13,6 +13,7 @@ import os
 from tqdm import tqdm
 import pandas as pd
 import json
+import pickle
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -400,15 +401,21 @@ def do_logreg(args, dataset) -> int:
         embeds = sb_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
 
-    train_labels=dataset['train']['text']
-    val_labels=dataset['validation']['text']
-    test_labels=dataset['test']['text']
+    train_labels=dataset['train']['label']
+    test_labels=dataset['test']['label']
 
     train_X=embeds['train']
     test_X=embeds['test']
-    val_X=embeds['validation']
 
     logreg=LogisticRegression().fit(train_X, train_labels)
+    scores=logreg.score(test_X, test_labels)
+    print(scores)
+    
+    with open(args.output, 'wb') as f:
+        pickle.dump(logreg, f)
+    
+    return 0 
+
     
 
 
