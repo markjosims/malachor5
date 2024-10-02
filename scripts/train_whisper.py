@@ -56,6 +56,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--language', '-l')
     parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
+    parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -254,7 +255,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         tokenizer=processor.feature_extractor,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
 
     return 0
 
