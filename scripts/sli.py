@@ -55,7 +55,7 @@ def sb_model(args):
     return model
 
 def load_lr(args) -> LogisticRegression:
-    with open(args.model, 'rb') as f:
+    with open(args.lr_model, 'rb') as f:
         lr = pickle.load(f)
     return lr
 
@@ -308,6 +308,9 @@ def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
     parser.add_argument(
         "--model", '-m',
+    )
+    parser.add_argument(
+        "--lr_model",
     )
     parser.add_argument(
         "--dataset", '-d',
