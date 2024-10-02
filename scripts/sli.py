@@ -336,7 +336,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     # cast 'audio' to Audio obj but keep path as a separate col
     if type(dataset) is DatasetDict:
         for split in dataset:
-            dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset['audio']])
+            dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset[split]['audio']])
     else:
         dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
