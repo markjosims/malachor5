@@ -337,7 +337,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     if type(dataset) is DatasetDict:
         for split in dataset:
             dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset['audio']])
-    dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
+    else:
+        dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
     if args.output_type == 'embedding':
