@@ -308,7 +308,10 @@ def init_argparser() -> ArgumentParser:
         "--split", '-s', choices=['train', 'test', 'validation', 'all'],
     )
     parser.add_argument(
-        '--api', '-a', choices=['hf', 'sb'], default='hf',
+        '--inference_api', '-a', choices=['hf', 'sb', 'lr'], default='hf',
+    )
+    parser.add_argument(
+        '--embed_api', choices=['hf', 'sb'],
     )
     parser.add_argument(
         '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
@@ -344,6 +347,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     if args.output_type == 'embedding':
         return make_embeddings(args, dataset)
+
+    if args.output_type == 'logreg':
+        return do_logreg(args, dataset)
         
     return do_inference(args, dataset)
 
@@ -370,7 +376,7 @@ def do_inference(args, dataset) -> int:
     return 0
 
 def make_embeddings(args, dataset) -> int:
-    if args.inference_api == 'hf':
+    if args.embed_api == 'hf':
         embeds = hf_embeddings(args, dataset)
     else:
         embeds = sb_embeddings(args, dataset)
@@ -394,7 +400,7 @@ def make_embeddings(args, dataset) -> int:
 def do_logreg(args, dataset) -> int:
     if args.embeds_path:
         embeds = torch.load(args.embeds_path)
-    elif args.inference_api == 'hf':
+    elif args.embed_api == 'hf':
         embeds = hf_embeddings(args, dataset)
         torch.save(embeds, args.output+'.pt')
     else:
