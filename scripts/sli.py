@@ -308,7 +308,7 @@ def init_argparser() -> ArgumentParser:
         "--split", '-s', choices=['train', 'test', 'validation', 'all'],
     )
     parser.add_argument(
-        '--inference_api', '-a', choices=['hf', 'sb'], default='hf',
+        '--api', '-a', choices=['hf', 'sb'], default='hf',
     )
     parser.add_argument(
         '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
