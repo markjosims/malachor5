@@ -383,6 +383,13 @@ def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
                 break
             writer.writerow(row)
 
+def get_remove_cols(args, ds):
+    if args.keep_cols:
+        return 'audio'
+    if type(ds) is DatasetDict:
+        return ds.values()[0].column_names
+    return ds.column_names
+
 # -------------- #
 # String helpers #
 # -------------- #
@@ -662,7 +669,7 @@ def infer_asr(args) -> int:
             out[model_col] = [item['text'] for item in result]
         out['path'] = [audio['path'] for audio in batch['audio']]
         return out
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds=ds.map(map_pipe, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
@@ -701,7 +708,7 @@ def infer_vad(args) -> int:
         out[model_col]=result.to_lab().replace('\n', ';')
         out['path'] = row['audio']['path']
         return out
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds=ds.map(map_pipe, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
@@ -737,7 +744,7 @@ def infer_allosaurus(args):
             'allosaurus': result,
         }
         return out
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds=ds.map(map_allosaurus, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
@@ -812,7 +819,7 @@ def clap_ipa_sim(args) -> int:
             'similarity': similarity,
             'path':  audio_paths,
         }
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds = ds.map(map_clapipa, batched=True, batch_size=args.batch_size, remove_columns=remove_columns)
     csv_path = os.path.join(args.output, 'clap_ipa_sim.csv')
     save_dataset_safe(args, ds, output_path=csv_path)
@@ -880,7 +887,7 @@ def detect_clipping(args) -> int:
         clipped_dict = get_clipped_segments(row['audio']['array'])
         clipped_dict['path']=row['audio']['path']
         return clipped_dict
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds = ds.map(map_get_clipped_segments, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
     return 0
@@ -907,7 +914,7 @@ def calculate_snr(args):
         wada = eng.wada_snr(array, sampling_rate)
         nist_stnr = eng.nist_stnr_m(array, sampling_rate)
         return {'path': path, 'wada_snr': wada, 'nist_stnr': nist_stnr}
-    remove_columns = 'audio' if args.keep_cols else ds.column_names
+    remove_columns = get_remove_cols(args, ds)
     ds = ds.map(map_snr, remove_columns=remove_columns)
     save_dataset_safe(args, ds)
 
