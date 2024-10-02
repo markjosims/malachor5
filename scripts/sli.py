@@ -378,8 +378,15 @@ def make_embeddings(args, dataset) -> int:
     # save metadata
     dataset = dataset.remove_columns('audio')
     dataset = dataset.rename_column('audio_path', 'audio')
-    dataset = dataset.to_pandas()
-    dataset.to_csv(args.output+'.csv', index=False)
+    if type(dataset) is DatasetDict:
+        split_dfs=[]
+        for split in dataset:
+            split_df=dataset[split].to_pandas()
+            split_df['split']=split
+        df=pd.concat(split_dfs)
+    else:
+        df = dataset.to_pandas()
+    df.to_csv(args.output+'.csv', index=False)
     return 0
 
 def do_logreg(args, dataset) -> int:
