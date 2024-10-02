@@ -19,9 +19,9 @@ MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
 DEVICE = 0 if torch.cuda.is_available() else -1
 
-# ----------------------- #
-# Data processing methods #
-# ----------------------- #
+# ----------------------------------------- #
+# Data processing and model loading methods #
+# ----------------------------------------- #
 
 def dataset_generator(dataset: Dataset) -> Generator:
     """
@@ -54,6 +54,10 @@ def sb_model(args):
     )
     return model
 
+def load_lr(args) -> LogisticRegression:
+    with open(args.model, 'rb') as f:
+        lr = pickle.load(f)
+    return lr
 
 # ----------------- #
 # Inference methods #
@@ -109,6 +113,13 @@ def infer_sb(args, dataset) -> List[Dict[str, Any]]:
                 prob = log_prob.exp().item()
                 row_obj.append({'label': label, 'score': prob, 'long_label': long_label})
             outputs.append(row_obj)
+    return outputs
+
+def infer_lr(args, dataset):
+    embeds = load_embeddings(args, dataset)
+    lr = load_lr(args)
+    outputs = lr.predict(embeds)
+
     return outputs
 
 # ------------------ #
@@ -280,6 +291,15 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
 
     return logits, hidden_states
 
+def load_embeddings(args, dataset):
+    if args.embeds_path:
+        embeds = torch.load(args.embeds_path)
+    elif args.embed_api == 'hf':
+        embeds = hf_embeddings(args, dataset)
+    else:
+        embeds = sb_embeddings(args, dataset)
+    return embeds
+
 # ---- #
 # Main #
 # ---- #
@@ -356,8 +376,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 def do_inference(args, dataset) -> int:
     if args.inference_api == 'hf':
         output = infer_hf(args, dataset)
-    else:
+    elif args.inference_api == 'sb':
         output = infer_sb(args, dataset)
+    else:
+        # args.inference_api == 'lr'
+        output = infer_lr(args, dataset)
+
 
     # calculate accuracy on output
     dataset = dataset.add_column("output", output)
@@ -374,6 +398,7 @@ def do_inference(args, dataset) -> int:
         json.dump(summary, f, indent=2)
 
     return 0
+
 
 def make_embeddings(args, dataset) -> int:
     if args.embed_api == 'hf':
@@ -398,14 +423,7 @@ def make_embeddings(args, dataset) -> int:
     return 0
 
 def do_logreg(args, dataset) -> int:
-    if args.embeds_path:
-        embeds = torch.load(args.embeds_path)
-    elif args.embed_api == 'hf':
-        embeds = hf_embeddings(args, dataset)
-        torch.save(embeds, args.output+'.pt')
-    else:
-        embeds = sb_embeddings(args, dataset)
-        torch.save(embeds, args.output+'.pt')
+    embeds = load_embeddings(args, dataset)
 
     train_labels=dataset['train']['label']
     test_labels=dataset['test']['label']
