@@ -383,6 +383,7 @@ def make_embeddings(args, dataset) -> int:
         for split in dataset:
             split_df=dataset[split].to_pandas()
             split_df['split']=split
+            split_dfs.append(split_df)
         df=pd.concat(split_dfs)
     else:
         df = dataset.to_pandas()
