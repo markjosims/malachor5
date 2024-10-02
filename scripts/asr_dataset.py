@@ -370,6 +370,16 @@ def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
         dataset.to_csv(output_path)
         return
     
+    if type(dataset) is DatasetDict:
+        split_dfs=[]
+        for split in dataset:
+            split_df=dataset[split].to_pandas()
+            split_df['split']=split
+            split_dfs.append(split_df)
+        df=pd.concat(split_dfs)
+        df.to_csv(output_path, index=False)
+        return
+    
     # IterableDataset
 
     with open(output_path, 'w') as f:
