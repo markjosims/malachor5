@@ -342,6 +342,9 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument(
         '--output_type', choices=['inference', 'embedding', 'logreg'], default='inference',
     )
+    parser.add_argument(
+        '--evaluate', action='store_true',
+    )
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
@@ -382,20 +385,26 @@ def do_inference(args, dataset) -> int:
         # args.inference_api == 'lr'
         output = infer_lr(args, dataset)
 
+    if args.evaluate:
+        # calculate accuracy on output
+        dataset = dataset.add_column("output", output)
+        output_metrics = dataset.map(
+            lambda row: compare_predictions(row, args.meta_threshold),
+            remove_columns=dataset.column_names
+        )
+        output_metrics = output_metrics.to_pandas()
+        summary = get_metric_summary(output_metrics)
 
-    # calculate accuracy on output
+        # save result
+        output_metrics.to_csv(args.output+'.csv', index=False)
+        with open(args.output+'.json', 'w') as f:
+            json.dump(summary, f, indent=2)
+
+        return 0
+    
     dataset = dataset.add_column("output", output)
-    output_metrics = dataset.map(
-        lambda row: compare_predictions(row, args.meta_threshold),
-        remove_columns=dataset.column_names
-    )
-    output_metrics = output_metrics.to_pandas()
-    summary = get_metric_summary(output_metrics)
-
-    # save result
-    output_metrics.to_csv(args.output+'.csv', index=False)
-    with open(args.output+'.json', 'w') as f:
-        json.dump(summary, f, indent=2)
+    dataset = dataset.remove_column("audio")
+    dataset.to_csv(args.output+'.csv')
 
     return 0
 
