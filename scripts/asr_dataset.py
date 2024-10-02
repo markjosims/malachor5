@@ -30,7 +30,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--input', '-i', default=GDRIVE_DIR)
     parser.add_argument('--output', '-o')
     parser.add_argument('--logfile', '-l', default='error.txt')
-    parser.add_argument('--split', '-s', default='train')
+    parser.add_argument('--split', '-s')
     parser.add_argument('--fleurs_lang', default='all')
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--stream', action='store_true')
