@@ -334,6 +334,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     else:
         dataset = load_from_disk(args.dataset)
     # cast 'audio' to Audio obj but keep path as a separate col
+    if type(dataset) is DatasetDict:
+        for split in dataset:
+            dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
     dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
 
@@ -391,7 +394,12 @@ def do_logreg(args, dataset) -> int:
     train_labels=dataset['train']['text']
     val_labels=dataset['validation']['text']
     test_labels=dataset['test']['text']
-    logreg=LogisticRegression()
+
+    train_X=embeds['train']
+    test_X=embeds['test']
+    val_X=embeds['validation']
+
+    logreg=LogisticRegression().fit(train_X, train_labels)
     
 
 
