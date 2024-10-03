@@ -256,6 +256,10 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    save_dir=os.path.join(args.output, 'pretrained')
+    trainer.save_model(save_dir)
+    processor.save_pretrained(save_dir)
+
 
     return 0
 
