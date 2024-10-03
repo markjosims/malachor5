@@ -88,6 +88,7 @@ def init_parser() -> ArgumentParser:
     infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
     infer_vad_parser.add_argument('--model', '-m', default='pyannote/voice-activity-detection')
     infer_vad_parser.add_argument('--device', '-D', type=device_type, default=DEVICE,)
+    infer_vad_parser.add_argument('--peft', action='store_true')
     infer_vad_parser.set_defaults(func=infer_vad)
 
     infer_allosaurus_parser = commands.add_parser('infer_allosaurus', help=infer_allosaurus.__doc__)
