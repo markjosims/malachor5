@@ -646,7 +646,7 @@ def infer_asr(args) -> int:
     Save output csv with results in column named after model checkpoint specified.
     """
     ds = load_dataset_safe(args)
-    model = load_whisper_pipeline(args)
+    pipe = load_whisper_pipeline(args)
     if args.language==['all']:
         with open('meta/language_codes.json') as f:
             language_codes=json.load(f)
