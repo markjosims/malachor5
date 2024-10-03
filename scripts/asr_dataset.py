@@ -667,12 +667,19 @@ def infer_asr(args) -> int:
     def map_pipe(batch):
         out={}
         if args.language:
-            for language in tqdm(args.language, desc='Transcribing batch for specified languages...'):
+            if len(args.language)==1:
                 result = pipe(
-                    [audio['array'] for audio in batch['audio']],
-                    generate_kwargs={'forced_decoder_ids': language_prompts[language]},
+                        [audio['array'] for audio in batch['audio']],
+                        generate_kwargs={'forced_decoder_ids': language_prompts[args.language]},
                 )
-                out[language] = [item['text'] for item in result]
+                out[args.language] = [item['text'] for item in result]
+            else:
+                for language in tqdm(args.language, desc='Transcribing batch for specified languages...'):
+                    result = pipe(
+                        [audio['array'] for audio in batch['audio']],
+                        generate_kwargs={'forced_decoder_ids': language_prompts[language]},
+                    )
+                    out[language] = [item['text'] for item in result]
         else:
             result = pipe([audio['array'] for audio in batch['audio']])
             model_col = args.model.split(sep='/')[-1]
