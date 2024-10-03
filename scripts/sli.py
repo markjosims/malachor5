@@ -406,7 +406,7 @@ def do_inference(args, dataset) -> int:
         return 0
     
     dataset = dataset.add_column("output", output)
-    dataset = dataset.remove_column("audio")
+    dataset = dataset.remove_columns("audio")
     dataset.to_csv(args.output+'.csv')
 
     return 0
