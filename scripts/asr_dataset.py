@@ -668,11 +668,12 @@ def infer_asr(args) -> int:
         out={}
         if args.language:
             if len(args.language)==1:
+                language=args.language[0]
                 result = pipe(
                         [audio['array'] for audio in batch['audio']],
-                        generate_kwargs={'forced_decoder_ids': language_prompts[args.language]},
+                        generate_kwargs={'forced_decoder_ids': language_prompts[language]},
                 )
-                out[args.language] = [item['text'] for item in result]
+                out[language] = [item['text'] for item in result]
             else:
                 for language in tqdm(args.language, desc='Transcribing batch for specified languages...'):
                     result = pipe(
