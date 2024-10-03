@@ -9,20 +9,19 @@ import librosa
 import numpy as np
 import soundfile
 from tqdm import tqdm
-from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, IterableDataset
-from transformers import AutomaticSpeechRecognitionPipeline, AutoProcessor, DebertaV2Tokenizer, AutoTokenizer
+from datasets import load_dataset, Audio, Dataset, DatasetDict
+from transformers import AutoProcessor, DebertaV2Tokenizer, AutoTokenizer
 import torch
 from tempfile import TemporaryDirectory
 import csv
 from unidecode import unidecode
 import json
-from train_whisper import load_whisper_pipeline
+from train_whisper import load_whisper_pipeline, load_dataset_safe, DEVICE, device_type
+
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
 SNREVAL_DIR = '/Users/markjos/projects/snreval'
-DEVICE = 0 if torch.cuda.is_available() else 'cpu'
-device_type = lambda s: int(s) if s!='cpu' else s
 tqdm.pandas()
 
 def init_parser() -> ArgumentParser:
@@ -311,53 +310,6 @@ def get_clipped_segments(np_array: np.ndarray) -> Dict[str, Union[List[Tuple[int
         'clipped_segments': clipped_segments,
         'percent_clipped': percent_clipped,
     }
-
-# --------------- #
-# Dataset helpers #
-# --------------- #
-
-def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
-    """
-    If dataset points to a path on disk, load using `load_from_disk`,
-    otherwise use `load_dataset` (to load from HF hub or local cache).
-    """
-    if hasattr(args, 'dataset'):
-        dataset_path=args.dataset
-    else:
-        dataset_path=args.input
-    split=getattr(args, 'split', None)
-    make_split=getattr(args, 'make_split', False)
-    if os.path.exists(dataset_path):
-        dataset=load_from_disk(dataset_path)
-        if split and args.num_records:
-            return dataset[split].select(range(args.num_records))
-        if split:
-            return dataset[split]
-        if make_split:
-            dataset=make_ds_split(dataset)
-        if args.num_records:
-            for split in dataset:
-                dataset[split]=dataset[split].select(range(args.num_records))
-        return dataset    
-
-    if 'fleurs' in dataset_path:
-        return load_dataset(dataset_path, args.fleurs_lang, split=split, streaming=args.stream)
-    dataset = load_dataset(dataset_path, split=split)
-    if (args.num_records) and (not args.stream) and (split):
-        dataset = dataset.select(range(args.num_records))
-    return dataset
-
-def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
-    """
-    Make an ad-hoc train-val split.
-    Assume dataset only has `train`.
-    Select the first `percent_val` records to go into the validation split.
-    """
-    num_records = len(dataset['train'])
-    num_val=int(percent_val*num_records)
-    dataset['validation']=dataset['train'].select(range(num_val))
-    dataset['train']=dataset['train'].select(range(num_val, num_records))
-    return dataset
 
 def save_dataset_safe(args, dataset, output_path: Optional[str]=None):
     """

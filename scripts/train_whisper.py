@@ -2,12 +2,10 @@
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
 from argparse import ArgumentParser
-from typing import Sequence, Optional, Dict, Any, List, Union, Tuple
-from asr_dataset import load_dataset_safe, DEVICE, device_type
+from typing import Sequence, Optional, Dict, Any, List, Union
 from transformers import WhisperProcessor, WhisperTokenizer, WhisperFeatureExtractor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer, AutomaticSpeechRecognitionPipeline
-from datasets import Audio
+from datasets import Audio, load_dataset, load_from_disk, Dataset, DatasetDict
 import torch
-import numpy as np
 from dataclasses import dataclass
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from jiwer import wer, cer
@@ -40,6 +38,9 @@ HYPERPARAM_ABBREVIATIONS = {
     'num_train_epochs': 'e',
     'gradient_accumulation_steps': 'g',
 }
+
+DEVICE = 0 if torch.cuda.is_available() else 'cpu'
+device_type = lambda s: int(s) if s!='cpu' else s
 
 # ---------------- #
 # Argparse methods #
@@ -78,6 +79,49 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
 # --------------------- #
 # dataset preprocessing #
 # --------------------- #
+
+def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
+    """
+    If dataset points to a path on disk, load using `load_from_disk`,
+    otherwise use `load_dataset` (to load from HF hub or local cache).
+    """
+    if hasattr(args, 'dataset'):
+        dataset_path=args.dataset
+    else:
+        dataset_path=args.input
+    split=getattr(args, 'split', None)
+    make_split=getattr(args, 'make_split', False)
+    if os.path.exists(dataset_path):
+        dataset=load_from_disk(dataset_path)
+        if split and args.num_records:
+            return dataset[split].select(range(args.num_records))
+        if split:
+            return dataset[split]
+        if make_split:
+            dataset=make_ds_split(dataset)
+        if args.num_records:
+            for split in dataset:
+                dataset[split]=dataset[split].select(range(args.num_records))
+        return dataset    
+
+    if 'fleurs' in dataset_path:
+        return load_dataset(dataset_path, args.fleurs_lang, split=split, streaming=args.stream)
+    dataset = load_dataset(dataset_path, split=split)
+    if (args.num_records) and (not args.stream) and (split):
+        dataset = dataset.select(range(args.num_records))
+    return dataset
+
+def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
+    """
+    Make an ad-hoc train-val split.
+    Assume dataset only has `train`.
+    Select the first `percent_val` records to go into the validation split.
+    """
+    num_records = len(dataset['train'])
+    num_val=int(percent_val*num_records)
+    dataset['validation']=dataset['train'].select(range(num_val))
+    dataset['train']=dataset['train'].select(range(num_val, num_records))
+    return dataset
 
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
