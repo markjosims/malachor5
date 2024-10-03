@@ -9,7 +9,7 @@ from datasets import Audio
 import torch
 import numpy as np
 from dataclasses import dataclass
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from jiwer import wer, cer
 from math import ceil
 
@@ -204,6 +204,15 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
         model = get_peft_model(model, config)
         model.print_trainable_parameters()
     return model
+
+def load_peft_model(args) -> WhisperForConditionalGeneration:
+    peft_config = PeftConfig.from_pretrained(args.model)
+    model = WhisperForConditionalGeneration.from_pretrained(
+        peft_config.base_model_name_or_path,
+    )
+    model = PeftModel.from_pretrained(model, args.model)
+    return model
+
 
 # ------------- #
 # training args #
