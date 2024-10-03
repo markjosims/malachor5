@@ -217,7 +217,7 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
         batch_embeds = model.encode_batch(batch).cpu()
         embeddings.append(batch_embeds)
 
-    embedding_tensor = torch.concat(embeddings)
+    embedding_tensor = torch.concat(embeddings).squeeze()
     return embedding_tensor
 
 def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
