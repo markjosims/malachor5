@@ -10,12 +10,13 @@ import numpy as np
 import soundfile
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk, Audio, Dataset, DatasetDict, IterableDataset
-from transformers import pipeline, AutoProcessor, DebertaV2Tokenizer, AutoTokenizer
+from transformers import AutomaticSpeechRecognitionPipeline, AutoProcessor, DebertaV2Tokenizer, AutoTokenizer
 import torch
 from tempfile import TemporaryDirectory
 import csv
 from unidecode import unidecode
 import json
+from train_whisper import load_whisper_pipeline
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
 GDRIVE_DIR = '/Users/markjos/Library/CloudStorage/GoogleDrive-mjsimmons@ucsd.edu/Shared drives/Tira/Recordings'
@@ -645,12 +646,7 @@ def infer_asr(args) -> int:
     Save output csv with results in column named after model checkpoint specified.
     """
     ds = load_dataset_safe(args)
-    pipe=pipeline(
-        'automatic-speech-recognition',
-        args.model,
-        device=args.device,
-        batch_size=args.batch_size,
-    )
+    model = load_whisper_pipeline(args)
     if args.language==['all']:
         with open('meta/language_codes.json') as f:
             language_codes=json.load(f)

@@ -2,9 +2,9 @@
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
 from argparse import ArgumentParser
-from typing import Sequence, Optional, Dict, Any, List, Union
+from typing import Sequence, Optional, Dict, Any, List, Union, Tuple
 from asr_dataset import load_dataset_safe, DEVICE, device_type
-from transformers import WhisperProcessor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
+from transformers import WhisperProcessor, WhisperTokenizer, WhisperFeatureExtractor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer, AutomaticSpeechRecognitionPipeline
 from datasets import Audio
 import torch
 import numpy as np
@@ -185,7 +185,7 @@ def compute_wer_cer(pred, tokenizer):
 # model preparation #
 # ----------------- #
 
-def load_whisper_model(args) -> WhisperForConditionalGeneration:
+def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
     model = WhisperForConditionalGeneration.from_pretrained(args.model)
     model.generation_config.language = args.language
     model.generation_config.task = "transcribe"
@@ -205,7 +205,7 @@ def load_whisper_model(args) -> WhisperForConditionalGeneration:
         model.print_trainable_parameters()
     return model
 
-def load_peft_model(args) -> WhisperForConditionalGeneration:
+def load_whisper_peft(args) -> WhisperForConditionalGeneration:
     peft_config = PeftConfig.from_pretrained(args.model)
     model = WhisperForConditionalGeneration.from_pretrained(
         peft_config.base_model_name_or_path,
@@ -213,6 +213,21 @@ def load_peft_model(args) -> WhisperForConditionalGeneration:
     model = PeftModel.from_pretrained(model, args.model)
     return model
 
+def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
+    if args.peft:
+        model = load_whisper_peft(args)
+    else:
+        model = WhisperForConditionalGeneration.from_pretrained(args.model)
+    tokenizer = WhisperTokenizer.from_pretrained(args.model)
+    feature_extractor = WhisperFeatureExtractor.from_pretrained(args.model)
+    pipe = AutomaticSpeechRecognitionPipeline(
+        model=model,
+        tokenizer=tokenizer,
+        feature_extractor=feature_extractor,
+        batch_size=args.batch_size,
+        device=args.device,
+    )
+    return pipe
 
 # ------------- #
 # training args #
@@ -245,7 +260,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Loading model...")
-    model = load_whisper_model(args)
+    model = load_whisper_model_for_training(args)
     print("Making data collator...")
     data_collator = load_data_collator(model, processor)
     print("Defining training args...")
