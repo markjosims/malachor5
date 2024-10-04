@@ -58,6 +58,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
+    parser.add_argument('--checkpoint')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -230,6 +231,9 @@ def compute_wer_cer(pred, tokenizer):
 # ----------------- #
 
 def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
+    if args.peft_type and args.checkpoint:
+        model = load_whisper_peft(args)
+        return model
     model = WhisperForConditionalGeneration.from_pretrained(args.model)
     model.generation_config.language = args.language
     model.generation_config.task = "transcribe"
@@ -250,11 +254,12 @@ def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
     return model
 
 def load_whisper_peft(args) -> WhisperForConditionalGeneration:
-    peft_config = PeftConfig.from_pretrained(args.model)
+    model_path = args.checkpoint or args.model
+    peft_config = PeftConfig.from_pretrained(model_path)
     model = WhisperForConditionalGeneration.from_pretrained(
         peft_config.base_model_name_or_path,
     )
-    model = PeftModel.from_pretrained(model, args.model)
+    model = PeftModel.from_pretrained(model, model_path)
     return model
 
 def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
@@ -323,7 +328,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         tokenizer=processor.feature_extractor,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
-    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
     save_dir=os.path.join(args.output, 'pretrained')
     trainer.save_model(save_dir)
     processor.save_pretrained(save_dir)
