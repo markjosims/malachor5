@@ -233,11 +233,10 @@ def compute_wer_cer(pred, tokenizer):
 def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
     if args.peft_type and args.checkpoint:
         model = load_whisper_peft(args)
+        model = set_generation_config(args, model)
         return model
     model = WhisperForConditionalGeneration.from_pretrained(args.model)
-    model.generation_config.language = args.language
-    model.generation_config.task = "transcribe"
-    model.generation_config.forced_decoder_ids = None
+    model = set_generation_config(args, model)
     if args.peft_type == 'LoRA':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
@@ -251,6 +250,12 @@ def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
 
         model = get_peft_model(model, config)
         model.print_trainable_parameters()
+    return model
+
+def set_generation_config(args, model):
+    model.generation_config.language = args.language
+    model.generation_config.task = "transcribe"
+    model.generation_config.forced_decoder_ids = None
     return model
 
 def load_whisper_peft(args) -> WhisperForConditionalGeneration:
