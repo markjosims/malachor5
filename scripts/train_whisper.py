@@ -305,6 +305,20 @@ def get_training_args(args):
     )
     return training_args
 
+# -------- #
+# evaluate #
+# -------- #
+
+def evaluate_dataset(args, ds_split, processor, trainer):
+    predictions=trainer.predict(ds_split)
+    predictions['labels_decoded']=processor.tokenizer.batch_decode(
+                predictions.pred[0]
+            )
+    predictions['output_decoded']=processor.tokenizer.batch_decode(
+                predictions.pred[1]
+            )
+    torch.save(predictions, args.eval_output or os.path.join(args.output, 'predictions.pt'))
+
 # ---- #
 # main #
 # ---- #
@@ -342,15 +356,14 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         processor.save_pretrained(save_dir)
 
         if args.eval_output:
-            predictions=trainer.predict(ds['validation'])
-            torch.save(predictions, args.eval_output,)
+            evaluate_dataset(args, ds['validation'], processor, trainer)
     elif args.action=='evaluate':
-        predictions=trainer.predict(ds['validation'])
-        torch.save(predictions, args.eval_output,)
+        evaluate_dataset(args, ds['validation'], processor, trainer)
+
     else:
         # args.action == 'test'
-        predictions=trainer.predict(ds['test'])
-        torch.save(predictions, args.eval_output)
+        evaluate_dataset(args, ds['test'], processor, trainer)
+
 
     return 0
 
