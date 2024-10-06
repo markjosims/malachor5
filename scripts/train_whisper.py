@@ -60,6 +60,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default=['train'])
+    parser.add_argument('--eval_output')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -339,13 +340,17 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         save_dir=os.path.join(args.output, 'pretrained')
         trainer.save_model(save_dir)
         processor.save_pretrained(save_dir)
+
+        if args.eval_output:
+            predictions=trainer.predict(ds['validation'])
+            torch.save(predictions, args.eval_output,)
     elif args.action=='evaluate':
         predictions=trainer.predict(ds['validation'])
-        torch.save(predictions, args.output)
+        torch.save(predictions, args.eval_output,)
     else:
         # args.action == 'test'
         predictions=trainer.predict(ds['test'])
-        torch.save(predictions, args.output)
+        torch.save(predictions, args.eval_output)
 
     return 0
 
