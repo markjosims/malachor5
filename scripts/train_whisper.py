@@ -59,6 +59,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser.add_argument('--checkpoint')
+    parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default=['train'])
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -322,7 +323,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Defining metrics...")
     compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer)
 
-    print("Training!")
+    print("Initializing trainer...")
     trainer = Seq2SeqTrainer(
         args=training_args,
         model=model,
@@ -333,11 +334,18 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         tokenizer=processor.feature_extractor,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
-    trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
-    save_dir=os.path.join(args.output, 'pretrained')
-    trainer.save_model(save_dir)
-    processor.save_pretrained(save_dir)
-
+    if args.action=='train':
+        trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
+        save_dir=os.path.join(args.output, 'pretrained')
+        trainer.save_model(save_dir)
+        processor.save_pretrained(save_dir)
+    elif args.action=='evaluate':
+        predictions=trainer.predict(ds['validation'])
+        torch.save(predictions, args.output)
+    else:
+        # args.action == 'test'
+        predictions=trainer.predict(ds['test'])
+        torch.save(predictions, args.output)
 
     return 0
 
