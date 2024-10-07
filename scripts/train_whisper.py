@@ -315,7 +315,7 @@ def evaluate_dataset(args, ds_split, processor, trainer):
     labels_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[0]
     )
-    output_decoded=predictions['output_decoded']=processor.tokenizer.batch_decode(
+    output_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[1]
     )
     torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
