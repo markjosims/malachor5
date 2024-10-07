@@ -1,4 +1,4 @@
-from typing import Dict, Sequence, Any, Literal, List, Tuple
+from typing import Dict, Sequence, Any, Literal, List, Tuple, Callable
 from string import punctuation
 import unicodedata
 
@@ -43,9 +43,16 @@ COMPOSITE = {
 # ASR post-processing methods #
 # --------------------------- #
 
-def get_remove_oov_char_funct(vocab_file: str):
-    ...
-    
+def get_remove_oov_char_funct(vocab_file: str) -> Callable[str, str]:
+    """
+    Load a text file containing every unique char in an ASR dataset.
+    Returns a function that takes a str and outputs the same str with any characters
+    not in the vocab file removed.
+    """
+    with open(vocab_file) as f:
+        chars=f.read()
+    return lambda s: ''.join(c for c in s if c in chars)
+
 def condense_tones(s: str) -> str:
     """
     Return a string such that for each sequence of multiple tone chars in `s`,
