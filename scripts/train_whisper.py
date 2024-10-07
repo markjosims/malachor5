@@ -9,7 +9,6 @@ import torch
 from dataclasses import dataclass
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from jiwer import wer, cer
-import evaluate
 from math import ceil
 import pandas as pd
 import os
@@ -43,9 +42,6 @@ HYPERPARAM_ABBREVIATIONS = {
 
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 device_type = lambda s: int(s) if s!='cpu' else s
-
-evaluate_wer = evaluate.load('wer')
-evaluate_cer = evaluate.load('cer')
 
 # ---------------- #
 # Argparse methods #
@@ -210,10 +206,10 @@ def get_metrics(args, processor):
         remove_oov=get_remove_oov_char_funct(args.char_vocab)
         str_process_pipe.append(remove_oov)
     
-    def do_str_process_pipe(s):
+    def do_str_process_pipe(s_list):
         for f in str_process_pipe:
-            s=f(s)
-        return s
+            s_list=[f(s) for s in s_list]
+        return s_list
 
     compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=do_str_process_pipe)
     return compute_metrics
@@ -243,17 +239,18 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None):
 
     # we do not want to group tokens when computing the metrics
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
-    if output_process_f:
-        pred_str=output_process_f(pred_str)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
     batch_wer = wer(label_str, pred_str)
     batch_cer = cer(label_str, pred_str)
+    batch_metrics={"wer": batch_wer, "cer": batch_cer}
 
-    batch_wer_evaluate = evaluate_wer.compute(predictions=pred_str, references=label_str)
-    batch_cer_evaluate = evaluate_cer.compute(predictions=pred_str, references=label_str)
+    if output_process_f:
+        pred_str_processed=output_process_f(pred_str)
+        batch_metrics['cer_processed']=cer(label_str, pred_str_processed)
+        batch_metrics['wer_processed']=wer(label_str, pred_str_processed)
 
-    return {"jiwer_wer": batch_wer, "jiwer_cer": batch_cer, "wer_evaluate": batch_wer_evaluate, "cer_evaluate": batch_cer_evaluate}
+    return batch_metrics
 
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
