@@ -323,6 +323,7 @@ def evaluate_dataset(args, ds_split, processor, trainer):
     torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
     df=pd.DataFrame({'labels_decoded': labels_decoded, 'output_decoded': output_decoded})
     df.to_csv(args.output+'.csv' or os.path.join(args.output, 'predictions.csv'))
+    print(predictions.metrics)
 
 # ---- #
 # main #
