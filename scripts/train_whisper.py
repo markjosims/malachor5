@@ -270,21 +270,16 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None):
 
     return batch_metrics
 
-def evaluate_dataset(args, ds_split, processor, trainer):
+def evaluate_dataset(args, ds_split, trainer):
     predictions=trainer.predict(ds_split)
-    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
-    str_process_pipe=get_str_process_pipe(args)
-    output_decoded=processor.tokenizer.batch_decode(
-                predictions.predictions[0],
-                skip_special_tokens=True,
-    )
-    output_processed=str_process_pipe(output_decoded)
-    labels_decoded=processor.tokenizer.batch_decode(
-                predictions.predictions[1],
-                skip_special_tokens=True,
-    )
-    df=pd.DataFrame({'labels': labels_decoded, 'output': output_decoded, 'output_processed': output_processed})
+    labels=predictions.metrics['labels']
+    preds=predictions.metrics['preds']
+    preds_processed=predictions['preds_processed']
+    df=pd.DataFrame({'labels': labels, 'output': preds, 'output_processed': preds_processed})
     df.to_csv(args.eval_output+'.csv' or os.path.join(args.output, 'predictions.csv'))
+    del predictions.metrics['labels']
+    del predictions.metrics['preds']
+    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predi ctions.pt'))
     print(predictions.metrics)
 
 # ----------------- #
@@ -401,13 +396,13 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         processor.save_pretrained(save_dir)
 
         if args.eval_output:
-            evaluate_dataset(args, ds['validation'], processor, trainer)
+            evaluate_dataset(args, ds['validation'], trainer)
     elif args.action=='evaluate':
-        evaluate_dataset(args, ds['validation'], processor, trainer)
+        evaluate_dataset(args, ds['validation'], trainer)
 
     else:
         # args.action == 'test'
-        evaluate_dataset(args, ds['test'], processor, trainer)
+        evaluate_dataset(args, ds['test'], trainer)
 
 
     return 0
