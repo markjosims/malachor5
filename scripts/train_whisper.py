@@ -137,6 +137,7 @@ def load_and_prepare_dataset(args):
     ds_cache_files={}
     if args.action=='evaluate':
         ds=DatasetDict({'validation': ds['validation']})
+        colnames=ds['validation'].column_names
     elif args.action=='test':
         ds=DatasetDict({'test': ds['test']})
         colnames=ds['test'].column_names
