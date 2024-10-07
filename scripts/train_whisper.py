@@ -236,11 +236,13 @@ def compute_wer_cer(pred, tokenizer):
 
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
-    labels_decoded=processor.tokenizer.batch_decode(
-                predictions.predictions[0]
-    )
     output_decoded=processor.tokenizer.batch_decode(
-                predictions.predictions[1]
+                predictions.predictions[0],
+                skip_special_tokens=True,
+    )
+    labels_decoded=processor.tokenizer.batch_decode(
+                predictions.predictions[1],
+                skip_special_tokens=True,
     )
     torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
     df=pd.DataFrame({'labels_decoded': labels_decoded, 'output_decoded': output_decoded})
