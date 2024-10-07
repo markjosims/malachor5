@@ -198,7 +198,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # evaluation methods #
 # ------------------ #
 
-def get_metrics(args, processor):
+def get_str_process_pipe(args):
     str_process_pipe=[]
     if args.condense_tones:
         str_process_pipe.append(condense_tones)
@@ -211,7 +211,11 @@ def get_metrics(args, processor):
             s_list=[f(s) for s in s_list]
         return s_list
 
-    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=do_str_process_pipe)
+    return do_str_process_pipe
+
+def get_metrics(args, processor):
+    str_process_pipe=get_str_process_pipe(args)
+    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=str_process_pipe)
     return compute_metrics
 
 def preprocess_logits_for_metrics(logits, labels):
@@ -243,27 +247,35 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None):
 
     batch_wer = wer(label_str, pred_str)
     batch_cer = cer(label_str, pred_str)
-    batch_metrics={"wer": batch_wer, "cer": batch_cer}
+    batch_metrics={
+        "wer": batch_wer, 
+        "cer": batch_cer,
+        "labels": label_str,
+        "preds": pred_str,
+    }
 
     if output_process_f:
         pred_str_processed=output_process_f(pred_str)
         batch_metrics['cer_processed']=cer(label_str, pred_str_processed)
         batch_metrics['wer_processed']=wer(label_str, pred_str_processed)
+        batch_metrics['preds_processed']=pred_str_processed
 
     return batch_metrics
 
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
+    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
+    str_process_pipe=get_str_process_pipe(args)
     output_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[0],
                 skip_special_tokens=True,
     )
+    output_processed=str_process_pipe(output_decoded)
     labels_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[1],
                 skip_special_tokens=True,
-    )
-    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
-    df=pd.DataFrame({'labels_decoded': labels_decoded, 'output_decoded': output_decoded})
+    )"
+    df=pd.DataFrame({'labels': labels_decoded, 'output': output_decoded, 'output_processed': output_processed})
     df.to_csv(args.eval_output+'.csv' or os.path.join(args.output, 'predictions.csv'))
     print(predictions.metrics)
 
