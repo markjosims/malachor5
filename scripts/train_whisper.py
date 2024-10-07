@@ -141,7 +141,6 @@ def load_and_prepare_dataset(args):
         ds=DatasetDict({'test': ds['test']})
         colnames=ds['test'].column_names
     else:
-        ds=DatasetDict({'train': ds['train']})
         colnames=ds['train'].column_names
     for split in ds:
         ds_cache_files[split]=os.path.join(args.dataset, split+'-cache.arrow')
