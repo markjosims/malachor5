@@ -351,7 +351,7 @@ def get_remove_cols(args, ds):
     if args.keep_cols:
         return 'audio'
     if type(ds) is DatasetDict:
-        return ds.values()[0].column_names
+        return list(ds.values())[0].column_names
     return ds.column_names
 
 # -------------- #
