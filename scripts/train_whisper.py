@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from jiwer import wer, cer
 from math import ceil
+import pandas as pd
 
 import os
 
@@ -311,13 +312,17 @@ def get_training_args(args):
 
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
-    predictions['labels_decoded']=processor.tokenizer.batch_decode(
+    labels_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[0]
-            )
-    predictions['output_decoded']=processor.tokenizer.batch_decode(
+    )
+    output_decoded=predictions['output_decoded']=processor.tokenizer.batch_decode(
                 predictions.predictions[1]
-            )
-    torch.save(predictions, args.eval_output or os.path.join(args.output, 'predictions.pt'))
+    )
+    predictions['labels_decoded']=labels_decoded
+    predictions['output_decoded']=output_decoded
+    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
+    df=pd.DataFrame({'labels_decoded': labels_decoded, 'output_decoded': output_decoded})
+    df.to_csv(args.output+'.csv' or os.path.join(args.output, 'predictions.csv'))
 
 # ---- #
 # main #
