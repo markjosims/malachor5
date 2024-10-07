@@ -9,9 +9,9 @@ import torch
 from dataclasses import dataclass
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from jiwer import wer, cer
+import evaluate
 from math import ceil
 import pandas as pd
-
 import os
 
 DEFAULT_HYPERPARAMS = {
@@ -42,6 +42,9 @@ HYPERPARAM_ABBREVIATIONS = {
 
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 device_type = lambda s: int(s) if s!='cpu' else s
+
+evaluate_wer = evaluate.load('wer')
+evaluate_cer = evaluate.load('cer')
 
 # ---------------- #
 # Argparse methods #
@@ -226,7 +229,10 @@ def compute_wer_cer(pred, tokenizer):
     batch_wer = wer(label_str, pred_str)
     batch_cer = cer(label_str, pred_str)
 
-    return {"wer": batch_wer, "cer": batch_cer}
+    batch_wer_evaluate = evaluate_wer.compute(predictions=pred_str, references=label_str)
+    batch_cer_evaluate = evaluate_cer.compute(predictions=pred_str, references=label_str)
+
+    return {"jiwer_wer": batch_wer, "jiwer_cer": batch_cer, "wer_evaluate": batch_wer_evaluate, "cer_evaluate": batch_cer_evaluate}
 
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
