@@ -312,10 +312,10 @@ def get_training_args(args):
 def evaluate_dataset(args, ds_split, processor, trainer):
     predictions=trainer.predict(ds_split)
     predictions['labels_decoded']=processor.tokenizer.batch_decode(
-                predictions.pred[0]
+                predictions.predictions[0]
             )
     predictions['output_decoded']=processor.tokenizer.batch_decode(
-                predictions.pred[1]
+                predictions.predictions[1]
             )
     torch.save(predictions, args.eval_output or os.path.join(args.output, 'predictions.pt'))
 
