@@ -274,7 +274,7 @@ def evaluate_dataset(args, ds_split, processor, trainer):
     labels_decoded=processor.tokenizer.batch_decode(
                 predictions.predictions[1],
                 skip_special_tokens=True,
-    )"
+    )
     df=pd.DataFrame({'labels': labels_decoded, 'output': output_decoded, 'output_processed': output_processed})
     df.to_csv(args.eval_output+'.csv' or os.path.join(args.output, 'predictions.csv'))
     print(predictions.metrics)
