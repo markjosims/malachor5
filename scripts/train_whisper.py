@@ -274,7 +274,7 @@ def evaluate_dataset(args, ds_split, trainer):
     predictions=trainer.predict(ds_split)
     labels=predictions.metrics['test_labels']
     preds=predictions.metrics['test_preds']
-    preds_processed=predictions['test_preds_processed']
+    preds_processed=predictions.metrics['test_preds_processed']
     df=pd.DataFrame({'labels': labels, 'output': preds, 'output_processed': preds_processed})
     df.to_csv(args.eval_output+'.csv' or os.path.join(args.output, 'predictions.csv'))
     del predictions.metrics['test_labels']
