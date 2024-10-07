@@ -13,6 +13,7 @@ import evaluate
 from math import ceil
 import pandas as pd
 import os
+from string_norm import get_remove_oov_char_funct, condense_tones
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -65,6 +66,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default=['train'])
     parser.add_argument('--eval_output')
+    parser.add_argument('--char_vocab')
+    parser.add_argument('--condense_tones')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -199,6 +202,22 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 # evaluation methods #
 # ------------------ #
 
+def get_metrics(args, processor):
+    str_process_pipe=[]
+    if args.condense_tones:
+        str_process_pipe.append(condense_tones)
+    if args.char_vocab:
+        remove_oov=get_remove_oov_char_funct(args.char_vocab)
+        str_process_pipe.append(remove_oov)
+    
+    def do_str_process_pipe(s):
+        for f in str_process_pipe:
+            s=f(s)
+        return s
+
+    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=do_str_process_pipe)
+    return compute_metrics
+
 def preprocess_logits_for_metrics(logits, labels):
     """
     Original Trainer may have a memory leak. 
@@ -209,7 +228,7 @@ def preprocess_logits_for_metrics(logits, labels):
     pred_ids = torch.argmax(logits[0], dim=-1)
     return pred_ids, labels
 
-def compute_wer_cer(pred, tokenizer):
+def compute_wer_cer(pred, tokenizer, output_process_f=None):
     predictions = pred.predictions
     # if type(predictions) is tuple:
     #     # got logits instead of ids, decode greedily
@@ -224,6 +243,8 @@ def compute_wer_cer(pred, tokenizer):
 
     # we do not want to group tokens when computing the metrics
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
+    if output_process_f:
+        pred_str=output_process_f(pred_str)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
     batch_wer = wer(label_str, pred_str)
@@ -343,7 +364,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Defining training args...")
     training_args = get_training_args(args)
     print("Defining metrics...")
-    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer)
+    compute_metrics = get_metrics(args, processor)
 
     print("Initializing trainer...")
     trainer = Seq2SeqTrainer(
