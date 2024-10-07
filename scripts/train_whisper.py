@@ -63,7 +63,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default=['train'])
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
-    parser.add_argument('--condense_tones')
+    parser.add_argument('--condense_tones', action='store_true')
     parser = add_hyperparameter_args(parser)
     return parser
 
