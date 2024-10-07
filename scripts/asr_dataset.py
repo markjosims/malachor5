@@ -83,6 +83,7 @@ def init_parser() -> ArgumentParser:
     infer_asr_parser.add_argument('--batch_size', '-b', type=int, default=32)
     infer_asr_parser.add_argument('--language', '-l', nargs='+')
     infer_asr_parser.add_argument('--peft', action='store_true')
+    infer_asr_parser.add_argument('--checkpoint')
     infer_asr_parser.set_defaults(func=infer_asr)
 
     infer_vad_parser = commands.add_parser('infer_vad', help=infer_vad.__doc__)
