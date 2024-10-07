@@ -135,12 +135,20 @@ def load_and_prepare_dataset(args):
     if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds_cache_files={}
+    if args.action=='evaluate':
+        ds=DatasetDict({'validation': ds['validation']})
+    elif args.action=='test':
+        ds=DatasetDict({'test': ds['test']})
+        colnames=ds['test'].column_names
+    else:
+        ds=DatasetDict({'train': ds['train']})
+        colnames=ds['train'].column_names
     for split in ds:
         ds_cache_files[split]=os.path.join(args.dataset, split+'-cache.arrow')
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
         num_proc=4,
-        remove_columns=ds['train'].column_names,
+        remove_columns=colnames,
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
     )
@@ -379,14 +387,14 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     trainer = Seq2SeqTrainer(
         args=training_args,
         model=model,
-        train_dataset=ds["train"],
-        eval_dataset=ds["validation"],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=processor.feature_extractor,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
     if args.action=='train':
+        trainer.train_dataset=ds['train']
+        trainer.eval_dataset=ds['validation']
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
         save_dir=os.path.join(args.output, 'pretrained')
         trainer.save_model(save_dir)
