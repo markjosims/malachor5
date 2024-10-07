@@ -43,9 +43,28 @@ COMPOSITE = {
 # ASR post-processing methods #
 # --------------------------- #
 
-def remove_oov_chars():
+def get_remove_oov_char_funct(vocab_file: str):
     ...
     
+def condense_tones(s: str) -> str:
+    """
+    Return a string such that for each sequence of multiple tone chars in `s`,
+    only the first is returned.
+    """
+    in_tone_seq = False
+    out=''
+    for c in s:
+        if c in COMBINING_TO_NAME and not in_tone_seq:
+            # first tone in sequence
+            out+=c
+            in_tone_seq=True
+        elif c in COMBINING_TO_NAME:
+            pass
+        else:
+            out+=c
+            in_tone_seq=False
+
+    return out
 
 # ---------------------------- #
 # String normalization helpers #
