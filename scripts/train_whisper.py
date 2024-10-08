@@ -65,7 +65,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
-    parser.add_argument('--skip_idcs', nargs='+')
+    parser.add_argument('--skip_idcs', nargs='+', type=int)
     parser = add_hyperparameter_args(parser)
     return parser
 
