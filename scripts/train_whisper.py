@@ -134,6 +134,7 @@ def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
     processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
     if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
+        print("Resampling to 16kHz...")
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds_cache_files={}
     if args.action=='evaluate':
