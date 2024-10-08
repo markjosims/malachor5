@@ -288,12 +288,11 @@ def evaluate_dataset(args, ds_split, trainer):
 # ----------------- #
 
 def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
-    if args.peft_type and args.checkpoint:
-        model = load_whisper_peft(args)
+    if args.ft_peft_model:
+        model = load_peft_model_for_finetuning(args)
+    else:
+        model = WhisperForConditionalGeneration.from_pretrained(args.model)
         model = set_generation_config(args, model)
-        return model
-    model = WhisperForConditionalGeneration.from_pretrained(args.model)
-    model = set_generation_config(args, model)
     if args.peft_type == 'LoRA':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
@@ -315,11 +314,19 @@ def set_generation_config(args, model):
     model.generation_config.forced_decoder_ids = None
     return model
 
+def load_peft_model_for_finetuning(args):
+    model = load_whisper_peft(args)
+    print("Merging PEFT model for further finetuning...")
+    model = model.merge_and_unload()
+    return model
+
 def load_whisper_peft(args) -> WhisperForConditionalGeneration:
     model_path = args.checkpoint or args.model
     peft_config = PeftConfig.from_pretrained(model_path)
+    model_basename = peft_config.base_model_name_or_path
+    print(f"Loading adapters from {model_path} for model {model_basename}...")
     model = WhisperForConditionalGeneration.from_pretrained(
-        peft_config.base_model_name_or_path,
+        model_basename,
     )
     model = PeftModel.from_pretrained(model, model_path)
     return model
