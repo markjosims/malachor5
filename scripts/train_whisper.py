@@ -65,6 +65,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
+    parser.add_argument('--skip_idcs', nargs='+')
     parser = add_hyperparameter_args(parser)
     return parser
 
@@ -147,6 +148,12 @@ def load_and_prepare_dataset(args):
         colnames=ds['train'].column_names
     for split in ds:
         ds_cache_files[split]=os.path.join(args.dataset, split+'-cache.arrow')
+    if args.skip_idcs:
+        skip_range = list(
+            i for i in range(len(ds['train']))
+            if i not in args.skip_idcs
+        )
+        ds['train']=ds['train'].select(skip_range)
     ds = ds.map(
         lambda b: prepare_dataset(b, processor),
         num_proc=4,
