@@ -54,6 +54,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o')
     parser.add_argument('--model', '-m')
     parser.add_argument('--num_records', '-n', type=int)
+    parser.add_argument('--transcription_ids', action='store_true')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l')
     parser.add_argument('--peft_type', choices=['LoRA'])
@@ -155,7 +156,7 @@ def load_and_prepare_dataset(args):
         )
         ds['train']=ds['train'].select(skip_range)
     ds = ds.map(
-        lambda b: prepare_dataset(b, processor),
+        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids),
         num_proc=4,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
@@ -163,13 +164,16 @@ def load_and_prepare_dataset(args):
     )
     return ds, processor
 
-def prepare_dataset(row, processor):
+def prepare_dataset(row, processor, transcription_ids=False):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
     label = row["transcription"]
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
-    row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
+    if transcription_ids:
+        row["labels"]=eval(row["transcription_ids"])
+    else:
+        row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
 
 # ------------- #
