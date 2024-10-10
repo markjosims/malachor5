@@ -357,6 +357,7 @@ def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
         feature_extractor=feature_extractor,
         batch_size=args.batch_size,
         device=args.device,
+        chunk_length_s=getattr(args, 'chunk_length_s', None),
     )
     return pipe
 

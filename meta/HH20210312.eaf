@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-10-10T10:55:40-08:00"
+<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-10-10T11:03:24-08:00"
     FORMAT="3.0" VERSION="3.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
     <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
@@ -2164,49 +2164,49 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1252"
                 TIME_SLOT_REF1="ts935" TIME_SLOT_REF2="ts936">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah I've actually gone over them in the recordings and some of them they're long and some of them they're not. Like the same form.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1253"
                 TIME_SLOT_REF1="ts937" TIME_SLOT_REF2="ts938">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So, but this one I think is based on what I've heard before.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1254"
                 TIME_SLOT_REF1="ts939" TIME_SLOT_REF2="ts942">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>We were trying to like talk about it with respect to Arabic before, is this like</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1255"
                 TIME_SLOT_REF1="ts943" TIME_SLOT_REF2="ts944">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>shadda?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1256"
                 TIME_SLOT_REF1="ts952" TIME_SLOT_REF2="ts954">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Alright, so how would you say...</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1257"
                 TIME_SLOT_REF1="ts955" TIME_SLOT_REF2="ts956">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Huh?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1258"
                 TIME_SLOT_REF1="ts961" TIME_SLOT_REF2="ts962">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>It's a different vowel.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1259"
                 TIME_SLOT_REF1="ts967" TIME_SLOT_REF2="ts968">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay I'm not sure why...</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -3806,19 +3806,19 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1335"
                 TIME_SLOT_REF1="ts927" TIME_SLOT_REF2="ts928">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1336"
                 TIME_SLOT_REF1="ts940" TIME_SLOT_REF2="ts941">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1337"
                 TIME_SLOT_REF1="ts947" TIME_SLOT_REF2="ts948">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Kind of yeah. It's long.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -4517,49 +4517,49 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1616"
                 TIME_SLOT_REF1="ts930" TIME_SLOT_REF2="ts931">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1617"
                 TIME_SLOT_REF1="ts933" TIME_SLOT_REF2="ts934">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>I have a lot more geminate "l's" than you do in your notes.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1618"
                 TIME_SLOT_REF1="ts951" TIME_SLOT_REF2="ts953">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1619"
                 TIME_SLOT_REF1="ts957" TIME_SLOT_REF2="ts958">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>There's definitely a vowel before this one, some of the other ones it's not clear that there's a vowel.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1620"
                 TIME_SLOT_REF1="ts959" TIME_SLOT_REF2="ts960">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>It's just</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1621"
                 TIME_SLOT_REF1="ts963" TIME_SLOT_REF2="ts964">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yes, there's a schwa, or there's a schwa or no vowel in some of them, and that might lead to lengthening</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1622"
                 TIME_SLOT_REF1="ts965" TIME_SLOT_REF2="ts966">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>in a separate kind of process, whereas this you have a full vowel and you also have a geminate.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1623"
                 TIME_SLOT_REF1="ts969" TIME_SLOT_REF2="ts972">
-                <ANNOTATION_VALUE>ENGTIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Anyways, in the first set of forms we had "l</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -4741,7 +4741,7 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1193"
                 TIME_SLOT_REF1="ts9" TIME_SLOT_REF2="ts10">
-                <ANNOTATION_VALUE>Sorry?</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
     </TIER>
