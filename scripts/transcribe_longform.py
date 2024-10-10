@@ -215,10 +215,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 def annotate(args) -> int:
-    print(f"Initializing ASR pipeline from URI {args.asr_model}...")
+    print(f"Initializing ASR pipeline from URI {args.model}...")
     if args.strategy != "drz-only":
         asr_pipe = load_whisper_pipeline(args)
-        tokenizer = WhisperTokenizer.from_pretrained(args.asr_model)
+        tokenizer = WhisperTokenizer.from_pretrained(args.model)
         forced_decoder_ids = tokenizer.get_decoder_prompt_ids(language="english", task="transcribe")
     else:
         asr_pipe=None
