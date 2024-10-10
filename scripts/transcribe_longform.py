@@ -180,7 +180,7 @@ def init_parser() -> ArgumentParser:
         action='store_true',
         help="Whisper by default chunks speech more or less into utterances. "\
         +"Use this option to chunk by word, which may give more precise time accuracy "\
-        "When detecting speaker changes. (I recommend using this option.)"
+        "When detecting speaker changes."
     )
     parser.add_argument(
         "-r",
