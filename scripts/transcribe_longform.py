@@ -156,6 +156,10 @@ def init_parser() -> ArgumentParser:
         default=ASR_URI,
     )
     parser.add_argument(
+        "--checkpoint",
+        help="Path to load model checkpoint from, if different from model path."
+    )
+    parser.add_argument(
         "--peft",
         action="store_true"
     )
