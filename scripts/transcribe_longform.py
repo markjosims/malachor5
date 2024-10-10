@@ -151,7 +151,7 @@ def init_parser() -> ArgumentParser:
         default=2,
     )
     parser.add_argument(
-        "-m", "--asr_model",
+        "-m", "--model",
         help=f"ASR model path. Default is {ASR_URI}.",
         default=ASR_URI,
     )
