@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-10-09T21:01:11-08:00"
+<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-10-10T10:55:40-08:00"
     FORMAT="3.0" VERSION="3.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
     <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
@@ -2002,163 +2002,163 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1225"
                 TIME_SLOT_REF1="ts751" TIME_SLOT_REF2="ts752">
-                <ANNOTATION_VALUE>So I'm gonna assume this unless you tell me something different. STOPPEDHERE</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So I'm gonna assume this unless you tell me something different.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1226"
                 TIME_SLOT_REF1="ts755" TIME_SLOT_REF2="ts757">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay and then "you all will pull them tomorrow."</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1227"
                 TIME_SLOT_REF1="ts759" TIME_SLOT_REF2="ts760">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Well I'm gonna do them together.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1228"
                 TIME_SLOT_REF1="ts763" TIME_SLOT_REF2="ts764">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah, let's ask. Can you get a ló,</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1229"
                 TIME_SLOT_REF1="ts765" TIME_SLOT_REF2="ts766">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>léɲǎl və́lɛ̂ðàló</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1230"
                 TIME_SLOT_REF1="ts777" TIME_SLOT_REF2="ts780">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay, and then how about "you all will pull them tomorrow"</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1231"
                 TIME_SLOT_REF1="ts787" TIME_SLOT_REF2="ts788">
-                <ANNOTATION_VALUE>ENGTIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>And can you put a -ló on the end of that?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1232"
                 TIME_SLOT_REF1="ts801" TIME_SLOT_REF2="ts802">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So do you have a sense of who would say it?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1233"
                 TIME_SLOT_REF1="ts806" TIME_SLOT_REF2="ts808">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay. Alright</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1234"
                 TIME_SLOT_REF1="ts819" TIME_SLOT_REF2="ts820">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay I'm not getting a clear pattern of when you can get the -ló's and when you can't.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1235"
                 TIME_SLOT_REF1="ts825" TIME_SLOT_REF2="ts826">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So this was andative, right?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1236"
                 TIME_SLOT_REF1="ts828" TIME_SLOT_REF2="ts831">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>"He will pull them tomorrow." That was the same.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1237"
                 TIME_SLOT_REF1="ts837" TIME_SLOT_REF2="ts838">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1238"
                 TIME_SLOT_REF1="ts839" TIME_SLOT_REF2="ts840">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>"He will pull them tomorrow" ventive, no good.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1239"
                 TIME_SLOT_REF1="ts842" TIME_SLOT_REF2="ts843">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1240"
                 TIME_SLOT_REF1="ts844" TIME_SLOT_REF2="ts846">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay. But "He pulled them yesterday", andative, we could not do.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1241"
                 TIME_SLOT_REF1="ts848" TIME_SLOT_REF2="ts850">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Except it's a "he" form so maybe it's consistent.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1242"
                 TIME_SLOT_REF1="ts853" TIME_SLOT_REF2="ts854">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So if we do "they's" next we'll see.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1243"
                 TIME_SLOT_REF1="ts857" TIME_SLOT_REF2="ts858">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay. So, all good? Okay, so we're gonna do the "they" forms now.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1244"
                 TIME_SLOT_REF1="ts859" TIME_SLOT_REF2="ts860">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay, so "they pulled them...towards"</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1245"
                 TIME_SLOT_REF1="ts873" TIME_SLOT_REF2="ts874">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Can you say it again?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1246"
                 TIME_SLOT_REF1="ts879" TIME_SLOT_REF2="ts880">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1247"
                 TIME_SLOT_REF1="ts883" TIME_SLOT_REF2="ts885">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1248"
                 TIME_SLOT_REF1="ts891" TIME_SLOT_REF2="ts892">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So falling on the -ló.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1249"
                 TIME_SLOT_REF1="ts899" TIME_SLOT_REF2="ts900">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So like this?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1250"
                 TIME_SLOT_REF1="ts903" TIME_SLOT_REF2="ts904">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>I see.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1251"
                 TIME_SLOT_REF1="ts925" TIME_SLOT_REF2="ts926">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Is it a long "l" though?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -2910,43 +2910,43 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1288"
                 TIME_SLOT_REF1="ts884" TIME_SLOT_REF2="ts886">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So I heard the final part as like falling, falling-high.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1289"
                 TIME_SLOT_REF1="ts887" TIME_SLOT_REF2="ts888">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>ðɜ̂llú</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1290"
                 TIME_SLOT_REF1="ts889" TIME_SLOT_REF2="ts890">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>HUMMING</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1291"
                 TIME_SLOT_REF1="ts893" TIME_SLOT_REF2="ts894">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>I mean, -ló would be high.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1292"
                 TIME_SLOT_REF1="ts895" TIME_SLOT_REF2="ts898">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>But like the -ɜ̂l part. -ɜ̂lló.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1293"
                 TIME_SLOT_REF1="ts901" TIME_SLOT_REF2="ts902">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1294"
                 TIME_SLOT_REF1="ts920" TIME_SLOT_REF2="ts922">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah now it sounded "high high" to me too.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -3710,97 +3710,97 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1319"
                 TIME_SLOT_REF1="ts767" TIME_SLOT_REF2="ts768">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Ok</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1320"
                 TIME_SLOT_REF1="ts771" TIME_SLOT_REF2="ts772">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Oh yeah, that one definitely you can say</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1321"
                 TIME_SLOT_REF1="ts778" TIME_SLOT_REF2="ts779">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>léɲǎl və́lɛ̂ðàlú nd̪ɔ̀bà</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1322"
                 TIME_SLOT_REF1="ts791" TIME_SLOT_REF2="ts792">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah, definitely you can put</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1323"
                 TIME_SLOT_REF1="ts793" TIME_SLOT_REF2="ts794">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>-ló</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1324"
                 TIME_SLOT_REF1="ts795" TIME_SLOT_REF2="ts796">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>But in most cases actually people don't put</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1325"
                 TIME_SLOT_REF1="ts797" TIME_SLOT_REF2="ts798">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>-ló</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1326"
                 TIME_SLOT_REF1="ts799" TIME_SLOT_REF2="ts800">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>but if you put it it's absolutely correct.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1327"
                 TIME_SLOT_REF1="ts803" TIME_SLOT_REF2="ts804">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Anyone can say that.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1328"
                 TIME_SLOT_REF1="ts805" TIME_SLOT_REF2="ts807">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1329"
                 TIME_SLOT_REF1="ts812" TIME_SLOT_REF2="ts813">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1330"
                 TIME_SLOT_REF1="ts815" TIME_SLOT_REF2="ts818">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>It's not really like emphasizing but it's just another form, like another way of saying it. But it's not really anything to do with emphasizing.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1331"
                 TIME_SLOT_REF1="ts861" TIME_SLOT_REF2="ts862">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>They pulled them? Towards? Okay.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1332"
                 TIME_SLOT_REF1="ts863" TIME_SLOT_REF2="ts865">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1333"
                 TIME_SLOT_REF1="ts905" TIME_SLOT_REF2="ts907">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>lə̀və̀lɛ̀ðɜ̂llú</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1334"
                 TIME_SLOT_REF1="ts909" TIME_SLOT_REF2="ts910">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yes.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
@@ -4409,109 +4409,109 @@
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1598"
                 TIME_SLOT_REF1="ts756" TIME_SLOT_REF2="ts758">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Do you have a -ló at the end of that one?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1599"
                 TIME_SLOT_REF1="ts761" TIME_SLOT_REF2="ts762">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1600"
                 TIME_SLOT_REF1="ts809" TIME_SLOT_REF2="ts810">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Is there, do you feel like you're emphasizing "them" if I say the -ló there? Like "we'll pull THEM tomorrow." Does that feel emphatic?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1601"
                 TIME_SLOT_REF1="ts811" TIME_SLOT_REF2="ts814">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Or is it just another form?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1602"
                 TIME_SLOT_REF1="ts816" TIME_SLOT_REF2="ts817">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Okay.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1603"
                 TIME_SLOT_REF1="ts821" TIME_SLOT_REF2="ts822">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Well you definitely cannot get them with the -ɔ́, the andative, the VENITIVE imperfective in both cases. You could get them in the andative imperfective in both cases.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1604"
                 TIME_SLOT_REF1="ts823" TIME_SLOT_REF2="ts824">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>And the two cases differ in whether you can get them in andative perfective. So...</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1605"
                 TIME_SLOT_REF1="ts827" TIME_SLOT_REF2="ts829">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Which is this? Where you could get it?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1606"
                 TIME_SLOT_REF1="ts830" TIME_SLOT_REF2="ts832">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah. That's where we got it, yes.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1607"
                 TIME_SLOT_REF1="ts833" TIME_SLOT_REF2="ts834">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>We got inconsistent with "he pulled them there," the andative perfective, last time.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1608"
                 TIME_SLOT_REF1="ts835" TIME_SLOT_REF2="ts836">
-                <ANNOTATION_VALUE>TIC</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>So làlə́lvə̀vɛ̀ðɔ̀, làlə́lvə̀lɛ̀ðɛ̀ ùnɛ̀ɾɛ̀</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1609"
                 TIME_SLOT_REF1="ts841" TIME_SLOT_REF2="ts845">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yes. That's true. Final -ɔ́ never combines with the -lò.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1610"
                 TIME_SLOT_REF1="ts847" TIME_SLOT_REF2="ts849">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>No that's the one that's inconsistent. We could try to...</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1611"
                 TIME_SLOT_REF1="ts851" TIME_SLOT_REF2="ts852">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Yeah that's true.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1612"
                 TIME_SLOT_REF1="ts855" TIME_SLOT_REF2="ts856">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Right.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1613"
                 TIME_SLOT_REF1="ts896" TIME_SLOT_REF2="ts897">
-                <ANNOTATION_VALUE>NOLING</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1614"
                 TIME_SLOT_REF1="ts906" TIME_SLOT_REF2="ts908">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>Can you say it again, Himidan?</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1615"
                 TIME_SLOT_REF1="ts919" TIME_SLOT_REF2="ts921">
-                <ANNOTATION_VALUE>ENG</ANNOTATION_VALUE>
+                <ANNOTATION_VALUE>I hear actually "high high".</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
