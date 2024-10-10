@@ -39,6 +39,21 @@ def perform_asr(
     result = pipe(audio,**kwargs)
     return result
 
+def perform_vad(
+        audio: torch.Tensor,
+        pipe: Optional[PyannotePipeline] = None,
+    ):
+
+    if not pipe:
+        pipe = PyannotePipeline.from_pretrained(DIARIZE_URI)
+
+    with ProgressHook() as hook:
+        result = pipe(
+            {"waveform": audio, "sample_rate": SAMPLE_RATE},
+            hook=hook,
+        )
+    return result
+
 def diarize(
         audio: torch.Tensor,
         pipe: Optional[PyannotePipeline] = None,
