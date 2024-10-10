@@ -156,6 +156,11 @@ def init_parser() -> ArgumentParser:
         default=ASR_URI,
     )
     parser.add_argument(
+        "-l", "--language",
+        nargs="+",
+        help="Language(s) to transcribe.",
+    )
+    parser.add_argument(
         "--checkpoint",
         help="Path to load model checkpoint from, if different from model path."
     )
@@ -219,7 +224,12 @@ def annotate(args) -> int:
     if args.strategy != "drz-only":
         asr_pipe = load_whisper_pipeline(args)
         tokenizer = WhisperTokenizer.from_pretrained(args.model)
-        forced_decoder_ids = tokenizer.get_decoder_prompt_ids(language="english", task="transcribe")
+        forced_decoder_ids=set()
+        for language in args.language:
+            forced_decoder_ids.update(
+                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
+            )
+        forced_decoder_ids=list(forced_decoder_ids)
     else:
         asr_pipe=None
         tokenizer=None
