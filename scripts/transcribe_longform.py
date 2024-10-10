@@ -199,7 +199,7 @@ def init_parser() -> ArgumentParser:
     )
     parser.add_argument(
         '-b',
-        "--asr_batch_size",
+        "--batch_size",
         type=int, default=8,
         help="Inference batch size for ASR. Default 8."
     )
