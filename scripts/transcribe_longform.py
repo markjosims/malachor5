@@ -12,6 +12,7 @@ from pympi import Elan
 from glob import glob
 import os
 from tqdm import tqdm
+from train_whisper import load_whisper_pipeline
 
 SAMPLE_RATE = 16000
 DIARIZE_URI = "pyannote/speaker-diarization-3.1"
@@ -155,6 +156,10 @@ def init_parser() -> ArgumentParser:
         default=ASR_URI,
     )
     parser.add_argument(
+        "--peft",
+        action="store_true"
+    )
+    parser.add_argument(
         "-d", "--drz_model",
         help=f"DRZ model path. Default is {DIARIZE_URI}.",
         default=DIARIZE_URI,
@@ -208,12 +213,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 def annotate(args) -> int:
     print(f"Initializing ASR pipeline from URI {args.asr_model}...")
     if args.strategy != "drz-only":
-        asr_pipe = pipeline(
-            "automatic-speech-recognition",
-            model=args.asr_model,
-            device=args.device,
-            chunk_length_s=args.chunk_length_s,
-        )
+        asr_pipe = load_whisper_pipeline(args)
         tokenizer = WhisperTokenizer.from_pretrained(args.asr_model)
         forced_decoder_ids = tokenizer.get_decoder_prompt_ids(language="english", task="transcribe")
     else:
