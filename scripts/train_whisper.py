@@ -174,7 +174,10 @@ def prepare_dataset(row, processor, transcription_ids=False):
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
-        row["labels"]=eval(row["transcription_ids"])
+        transcription_ids=row["transcription_ids"]
+        if type(transcription_ids) is str:
+            transcription_ids=eval(transcription_ids)
+        row["labels"]=
     else:
         row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
