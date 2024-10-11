@@ -306,15 +306,23 @@ def evaluate_dataset(args, ds_split, trainer, processor):
         df['preds_processed']=preds_processed
     df.to_csv(
         args.eval_output+'.csv' if args.eval_output
-        else os.path.join(args.output, 'predictions.csv')
+        else os.path.join(args.output, f'{args.action}-predictions.csv')
     )
     predictions.metrics.pop('test_labels')
     predictions.metrics.pop('test_preds')
     predictions.metrics.pop('test_preds_processed', None)
+    
+    # replace 'test' with 'eval' if evaluating
+    if args.action=='evaluate':
+        for k in predictions.metrics.keys():
+            v=predictions.metrics.pop(k)
+            eval_k=k.replace('test', 'eval')
+            predictions.metrics[eval_k]=v
+            
     torch.save(
         predictions,
         args.eval_output+'.pt' if args.eval_output
-        else os.path.join(args.output, 'predictions.pt')
+        else os.path.join(args.output, f'{args.action}-predictions.pt')
     )
     print(predictions.metrics)
 
