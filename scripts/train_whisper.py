@@ -31,6 +31,8 @@ DEFAULT_HYPERPARAMS = {
     'learning_rate': 3e-4,
     'warmup_steps': 500,
     'report_to': 'tensorboard',
+    'predict_with_generate': False,
+    'generation_num_beams': 4,
     # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
@@ -433,7 +435,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=processor.feature_extractor,
-        preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+        preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
     )
     if args.action=='train':
         trainer.train_dataset=ds['train']
