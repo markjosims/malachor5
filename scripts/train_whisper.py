@@ -227,6 +227,9 @@ def get_str_process_pipe(args):
     if args.char_vocab:
         remove_oov=get_remove_oov_char_funct(args.char_vocab)
         str_process_pipe.append(remove_oov)
+
+    if not str_process_pipe:
+        return
     
     def do_str_process_pipe(s_list):
         for f in str_process_pipe:
