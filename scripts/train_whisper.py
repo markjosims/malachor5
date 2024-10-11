@@ -322,9 +322,11 @@ def evaluate_dataset(args, ds_split, trainer, processor):
 # model preparation #
 # ----------------- #
 
-def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
+def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGeneration:
     if args.ft_peft_model:
         model = load_peft_model_for_finetuning(args)
+    elif args.action in ('evaluate', 'test'):
+        return load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
         model = set_generation_config(args, model)
@@ -414,7 +416,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Loading model...")
-    model = load_whisper_model_for_training(args)
+    model = load_whisper_model_for_training_or_eval(args)
     print("Making data collator...")
     data_collator = load_data_collator(model, processor)
     print("Defining training args...")
