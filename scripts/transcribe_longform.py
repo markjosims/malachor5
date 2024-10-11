@@ -15,8 +15,8 @@ from tqdm import tqdm
 from train_whisper import load_whisper_pipeline
 
 SAMPLE_RATE = 16000
-DIARIZE_URI = "pyannote/speaker-diarization-3.1"
-ASR_URI = "openai/whisper-large-v2"
+DIARIZE_URI = "pyannote/voice-activity-detection"
+ASR_URI = "openai/whisper-large-v3"
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
 
 """
@@ -37,6 +37,21 @@ def perform_asr(
     if type(audio) is torch.Tensor:
         audio = np.array(audio[0,:])
     result = pipe(audio,**kwargs)
+    return result
+
+def perform_vad(
+        audio: torch.Tensor,
+        pipe: Optional[PyannotePipeline] = None,
+    ):
+
+    if not pipe:
+        pipe = PyannotePipeline.from_pretrained(DIARIZE_URI)
+
+    with ProgressHook() as hook:
+        result = pipe(
+            {"waveform": audio, "sample_rate": SAMPLE_RATE},
+            hook=hook,
+        )
     return result
 
 def diarize(
