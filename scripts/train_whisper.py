@@ -311,7 +311,11 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     predictions.metrics.pop('test_labels')
     predictions.metrics.pop('test_preds')
     predictions.metrics.pop('test_preds_processed', None)
-    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
+    torch.save(
+        predictions,
+        args.eval_output+'.pt' if args.eval_output
+        else os.path.join(args.output, 'predictions.pt')
+    )
     print(predictions.metrics)
 
 # ----------------- #
