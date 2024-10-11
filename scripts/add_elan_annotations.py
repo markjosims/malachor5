@@ -11,6 +11,23 @@ and add all tiers from the input .eaf file.
 If `args.media` is specified, add a linked file pointing to the respective wav in the media dir.
 """
 
+# ---------------- #
+# filepath helpers #
+# ---------------- #
+
+def get_file_mapping(media, in_eafs, out_eafs):
+    eaf_map=defaultdict(dict)
+    for eaf_fp in in_eafs:
+        stem=Path(eaf_fp).stem
+        eaf_map[stem]['in_eaf']=eaf_fp
+    for eaf_fp in out_eafs:
+        stem=Path(eaf_fp).stem
+        eaf_map[stem]['out_eaf']=eaf_fp
+    for wav_fp in media:
+        stem=Path(wav_fp).stem
+        eaf_map[stem]['media']=wav_fp
+    return eaf_map
+
 # ---- #
 # main #
 # ---- #
@@ -37,16 +54,7 @@ def main(argv:Optional[Sequence[str]]=None) -> int:
         out_eafs = glob(Path(args.output)/'*.eaf')
         if args.media:
             media = glob(Path(args.media)/'**/*.wav', recursive=True)
-    eaf_map=defaultdict(dict)
-    for eaf_fp in in_eafs:
-        stem=Path(eaf_fp).stem
-        eaf_map[stem]['in_eaf']=eaf_fp
-    for eaf_fp in out_eafs:
-        stem=Path(eaf_fp).stem
-        eaf_map[stem]['out_eaf']=eaf_fp
-    for wav_fp in media:
-        stem=Path(wav_fp).stem
-        eaf_map[stem]['media']=wav_fp
+    eaf_map=get_file_mapping(media, in_eafs, out_eafs)
 
 
     return 0
