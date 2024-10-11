@@ -22,7 +22,7 @@ def get_file_mapping(media, in_eafs, out_eafs):
         eaf_map[stem]['in_eaf']=eaf_fp
     for eaf_fp in out_eafs:
         stem=Path(eaf_fp).stem
-        eaf_map[stem]['out_eaf']=eaf_fp
+        eaf_map[stem]['out_eaf']=eaf_map[stem].get('out_eaf', [])+[eaf_fp,]
     for wav_fp in media:
         stem=Path(wav_fp).stem
         eaf_map[stem]['media']=wav_fp
@@ -55,6 +55,7 @@ def main(argv:Optional[Sequence[str]]=None) -> int:
         if args.media:
             media = glob(Path(args.media)/'**/*.wav', recursive=True)
     eaf_map=get_file_mapping(media, in_eafs, out_eafs)
+    breakpoint()
 
 
     return 0
