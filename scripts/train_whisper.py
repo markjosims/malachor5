@@ -308,9 +308,9 @@ def evaluate_dataset(args, ds_split, trainer, processor):
         args.eval_output+'.csv' if args.eval_output
         else os.path.join(args.output, 'predictions.csv')
     )
-    del predictions.metrics['test_labels']
-    del predictions.metrics['test_preds']
-    del predictions.metrics['test_preds_processed']
+    predictions.metrics.pop('test_labels')
+    predictions.metrics.pop('test_preds')
+    predictions.metrics.pop('test_preds_processed', None)
     torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
     print(predictions.metrics)
 
