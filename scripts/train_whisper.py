@@ -238,9 +238,13 @@ def get_str_process_pipe(args):
 
     return do_str_process_pipe
 
-def get_metrics(args, processor):
+def get_metrics(args, processor, return_decoded=False):
     str_process_pipe=get_str_process_pipe(args)
-    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=str_process_pipe)
+    compute_metrics = lambda pred: compute_wer_cer(
+        pred, processor.tokenizer,
+        output_process_f=str_process_pipe,
+        return_decoded=return_decoded,
+    )
     return compute_metrics
 
 def preprocess_logits_for_metrics(logits, labels):
@@ -290,7 +294,9 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False
 
     return batch_metrics
 
-def evaluate_dataset(args, ds_split, trainer):
+def evaluate_dataset(args, ds_split, trainer, processor):
+    # change metrics to return labels
+    trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
     predictions=trainer.predict(ds_split)
     labels=predictions.metrics['test_labels']
     preds=predictions.metrics['test_preds']
@@ -428,13 +434,13 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         processor.save_pretrained(save_dir)
 
         if args.eval_output:
-            evaluate_dataset(args, ds['validation'], trainer)
+            evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
-        evaluate_dataset(args, ds['validation'], trainer)
+        evaluate_dataset(args, ds['validation'], trainer, processor)
 
     else:
         # args.action == 'test'
-        evaluate_dataset(args, ds['test'], trainer)
+        evaluate_dataset(args, ds['test'], trainer, processor)
 
 
     return 0
