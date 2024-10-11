@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from pympi.Elan import Eaf
 from glob import glob
 from pathlib import Path
+import os
 from typing import Optional, Sequence
 from collections import defaultdict
 
@@ -46,15 +47,15 @@ def main(argv:Optional[Sequence[str]]=None) -> int:
     args=parser.parse_args(argv)
     media=[]
     if args.recursive:
-        in_eafs = glob(Path(args.input)/'**/*.eaf', recursive=True)
-        out_eafs = glob(Path(args.output)/'**/*.eaf', recursive=True)
+        in_eafs = glob(os.path.join(args.input,'**/*.eaf'), recursive=True)
+        out_eafs = glob(os.path.join(args.output,'**/*.eaf'), recursive=True)
         if args.media:
-            media = glob(Path(args.media)/'**/*.wav', recursive=True)
+            media = glob(os.path.join(args.media,'**/*.wav'), recursive=True)
     else:
-        in_eafs = glob(Path(args.input)/'*.eaf')
-        out_eafs = glob(Path(args.output)/'*.eaf')
+        in_eafs = glob(os.path.join(args.input,'*.eaf'))
+        out_eafs = glob(os.path.join(args.output,'*.eaf'))
         if args.media:
-            media = glob(Path(args.media)/'**/*.wav', recursive=True)
+            media = glob(os.path.join(args.media,'**/*.wav'), recursive=True)
     eaf_map=get_file_mapping(media, in_eafs, out_eafs)
     breakpoint()
 
