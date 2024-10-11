@@ -1,3 +1,8 @@
+from argparse import ArgumentParser
+from pympi.Elan import Eaf
+from glob import glob
+import os
+
 """
 For all .eaf files in `args.output`, find an eaf file in `args.input` with the same basename
 and add all tiers from the input .eaf file.
