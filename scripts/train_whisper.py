@@ -253,7 +253,7 @@ def preprocess_logits_for_metrics(logits, labels):
     pred_ids = torch.argmax(logits[0], dim=-1)
     return pred_ids, labels
 
-def compute_wer_cer(pred, tokenizer, output_process_f=None):
+def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False):
     predictions = pred.predictions
     # if type(predictions) is tuple:
     #     # got logits instead of ids, decode greedily
@@ -275,15 +275,18 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None):
     batch_metrics={
         "wer": batch_wer, 
         "cer": batch_cer,
-        "labels": label_str,
-        "preds": pred_str,
+
     }
+    if return_decoded:
+        batch_metrics["labels"]=label_str
+        batch_metrics["preds"]=pred_str
 
     if output_process_f:
         pred_str_processed=output_process_f(pred_str)
         batch_metrics['cer_processed']=cer(label_str, pred_str_processed)
         batch_metrics['wer_processed']=wer(label_str, pred_str_processed)
-        batch_metrics['preds_processed']=pred_str_processed
+        if return_decoded:
+            batch_metrics['preds_processed']=pred_str_processed
 
     return batch_metrics
 
