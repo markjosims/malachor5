@@ -177,7 +177,7 @@ def prepare_dataset(row, processor, transcription_ids=False):
         transcription_ids=row["transcription_ids"]
         if type(transcription_ids) is str:
             transcription_ids=eval(transcription_ids)
-        row["labels"]=
+        row["labels"]=transcription_ids
     else:
         row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
