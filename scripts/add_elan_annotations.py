@@ -37,7 +37,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--input', '-i')
     parser.add_argument('--output', '-o')
     parser.add_argument('--media', '-m')
-    parser.add_argument('--recursive', '-r')
+    parser.add_argument('--recursive', '-r', action='store_true')
     return parser
 
 
