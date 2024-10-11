@@ -300,8 +300,10 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     predictions=trainer.predict(ds_split)
     labels=predictions.metrics['test_labels']
     preds=predictions.metrics['test_preds']
-    preds_processed=predictions.metrics['test_preds_processed']
-    df=pd.DataFrame({'labels': labels, 'output': preds, 'output_processed': preds_processed})
+    preds_processed=predictions.metrics.get('test_preds_processed', None)
+    df=pd.DataFrame({'labels': labels, 'preds': preds})
+    if not (preds_processed is None):
+        df['preds_processed']=preds_processed
     df.to_csv(
         args.eval_output+'.csv' if args.eval_output
         else os.path.join(args.output, 'predictions.csv')
