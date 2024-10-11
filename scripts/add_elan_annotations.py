@@ -38,6 +38,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o')
     parser.add_argument('--media', '-m')
     parser.add_argument('--recursive', '-r')
+    return parser
 
 
 def main(argv:Optional[Sequence[str]]=None) -> int:
