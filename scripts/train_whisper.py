@@ -295,12 +295,13 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False
     return batch_metrics
 
 def evaluate_dataset(args, ds_split, trainer, processor):
+    metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
-    predictions=trainer.predict(ds_split)
-    labels=predictions.metrics['test_labels']
-    preds=predictions.metrics['test_preds']
-    preds_processed=predictions.metrics.get('test_preds_processed', None)
+    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix)
+    labels=predictions.metrics[f'{metric_key_prefix}_labels']
+    preds=predictions.metrics[f'{metric_key_prefix}_preds']
+    preds_processed=predictions.metrics.get(f'{metric_key_prefix}_preds_processed', None)
     df=pd.DataFrame({'labels': labels, 'preds': preds})
     if not (preds_processed is None):
         df['preds_processed']=preds_processed
@@ -308,17 +309,10 @@ def evaluate_dataset(args, ds_split, trainer, processor):
         args.eval_output+'.csv' if args.eval_output
         else os.path.join(args.output, f'{args.action}-predictions.csv')
     )
-    predictions.metrics.pop('test_labels')
-    predictions.metrics.pop('test_preds')
-    predictions.metrics.pop('test_preds_processed', None)
-    
-    # replace 'test' with 'eval' if evaluating
-    if args.action=='evaluate':
-        for k in predictions.metrics.keys():
-            v=predictions.metrics.pop(k)
-            eval_k=k.replace('test', 'eval')
-            predictions.metrics[eval_k]=v
-            
+    predictions.metrics.pop(f'{metric_key_prefix}_labels')
+    predictions.metrics.pop(f'{metric_key_prefix}_preds')
+    predictions.metrics.pop(f'{metric_key_prefix}_preds_processed', None)
+
     torch.save(
         predictions,
         args.eval_output+'.pt' if args.eval_output
