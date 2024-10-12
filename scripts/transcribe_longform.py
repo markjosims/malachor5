@@ -342,7 +342,7 @@ def annotate_file(args, asr_pipe, drz_pipe, audio_fp, generate_kwargs):
             args.output, os.path.basename(eaf_fp)
         )
     eaf.to_file(eaf_fp)
-    txt_fp = change_file_suffix(audio_fp, '.txt')
+    txt_fp = change_file_suffix(eaf_fp, '.txt')
     write_script(
         eaf,
         txt_fp,
