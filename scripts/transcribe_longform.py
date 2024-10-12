@@ -96,9 +96,11 @@ def change_file_suffix(media_fp: str, ext: str) -> str:
 # Audio handling methods #
 # ---------------------- #
 
-def load_and_resample(fp: str, sr: int = SAMPLE_RATE) -> torch.Tensor:
+def load_and_resample(fp: str, sr: int = SAMPLE_RATE, to_mono: bool = True) -> torch.Tensor:
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
+    if to_mono and wav.shape[0]==2:
+        wav=wav[:1]
     return wav
 
 def sec_to_samples(time_sec: float) -> int:
