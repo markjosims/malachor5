@@ -29,6 +29,32 @@ def get_file_mapping(media, in_eafs, out_eafs):
         eaf_map[stem]['media']=wav_fp
     return eaf_map
 
+# ------------ #
+# elan helpers #
+# ------------ #
+
+def add_metadata_to_list(eaf_dict):
+    in_eaf_fp = eaf_dict['in_eaf']
+    in_eaf=Eaf(in_eaf_fp)
+    out_eafs=eaf_dict['out_eaf']
+    media=eaf_dict.get('media', None)
+    for out_eaf_fp in out_eafs:
+        print(f"Adding tiers from {in_eaf_fp} to {out_eaf_fp}")
+        out_eaf=Eaf(out_eaf_fp)
+        out_eaf=add_metadata_to_file(in_eaf, out_eaf, media)
+        out_eaf.to_file(out_eaf_fp)
+
+def add_metadata_to_file(in_eaf: Eaf, out_eaf: Eaf, media: str=None) -> Eaf:
+    tiers = in_eaf.get_tier_names()
+    for tier in tiers:
+        out_eaf.add_tier(tier)
+        tier_annotations=in_eaf.get_annotation_data_for_tier(tier)
+        [out_eaf.add_annotation(tier, *annotation) for annotation in tier_annotations]
+    if media:
+        out_eaf.add_linked_file(media)
+    return out_eaf
+        
+
 # ---- #
 # main #
 # ---- #
@@ -57,7 +83,10 @@ def main(argv:Optional[Sequence[str]]=None) -> int:
         if args.media:
             media = glob(os.path.join(args.media,'**/*.wav'), recursive=True)
     eaf_map=get_file_mapping(media, in_eafs, out_eafs)
-    breakpoint()
+    
+    for stem, eaf_dict in eaf_map.items():
+        print(stem)
+        add_metadata_to_list(eaf_dict)
 
 
     return 0
