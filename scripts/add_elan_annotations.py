@@ -48,6 +48,7 @@ def add_metadata_to_file(in_eaf: Eaf, out_eaf: Eaf, media: str=None) -> Eaf:
     tiers = in_eaf.get_tier_names()
     for tier in tiers:
         out_eaf.add_tier(tier)
+        out_eaf.remove_all_annotations_from_tier(tier)
         tier_annotations=in_eaf.get_annotation_data_for_tier(tier)
         [out_eaf.add_annotation(tier, *annotation) for annotation in tier_annotations]
     if media:
