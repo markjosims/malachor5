@@ -140,6 +140,7 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser("Annotation runner")
     parser.add_argument("-i", "--input", help=".wav file or directory of .wav files to annotate")
+    parser.add_argument("-o", "--output", help="directory files to save output to")
     parser.add_argument(
         "-s",
         "--strategy",
@@ -336,6 +337,10 @@ def annotate_file(args, asr_pipe, drz_pipe, audio_fp, generate_kwargs):
             )
 
     eaf_fp = change_file_suffix(audio_fp, '.eaf')
+    if args.output:
+        eaf_fp=os.path.join(
+            args.output, os.path.basename(eaf_fp)
+        )
     eaf.to_file(eaf_fp)
     txt_fp = change_file_suffix(audio_fp, '.txt')
     write_script(
