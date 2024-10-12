@@ -100,6 +100,7 @@ def load_and_resample(fp: str, sr: int = SAMPLE_RATE, to_mono: bool = True) -> t
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
     if to_mono and wav.shape[0]==2:
+        print("Converting stereo wav to mono")
         wav=wav[:1]
     return wav
 
