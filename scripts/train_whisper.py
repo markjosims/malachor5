@@ -270,7 +270,9 @@ def preprocess_logits_for_metrics(logits, labels):
     return pred_ids, labels
 
 def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False):
-    pred_ids = pred.predictions.squeeze()
+    pred_ids = pred.predictions
+    if type(pred_ids) is tuple:
+        pred_ids = pred_ids[0]
     label_ids = pred.label_ids
 
     # replace -100 with the pad_token_id
