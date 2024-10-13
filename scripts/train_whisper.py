@@ -334,7 +334,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
 def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGeneration:
     if args.ft_peft_model:
         model = load_peft_model_for_finetuning(args)
-    elif args.action in ('evaluate', 'test'):
+    elif args.action in ('evaluate', 'test') and args.peft_type:
         return load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
