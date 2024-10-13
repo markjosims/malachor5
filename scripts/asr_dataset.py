@@ -71,6 +71,17 @@ def init_parser() -> ArgumentParser:
     hf_dataset_parser.add_argument('--make_splits', action='store_true')
     hf_dataset_parser.set_defaults(func=make_hf_dataset)
 
+    elan_to_audiofolder_parser=commands.add_parser(
+        'elan_to_audiofolder',
+        help=elan_to_audiofolder.__doc__
+    )
+    elan_to_audiofolder_parser.add_argument(
+        '--tiers',
+        '-t',
+        nargs='+'
+    )
+    elan_to_audiofolder_parser.set_defaults(func=elan_to_audiofolder)
+
     remove_clips_parser=commands.add_parser(
         'remove_extra_clips',
         help=remove_extra_clips.__doc__
@@ -267,7 +278,8 @@ def move_clip_to_split(row, args) -> str:
 def validate_clipfile(f, wav, wav_obj=None):
     try:
         if wav_obj is None:
-            wav_obj=soundfile.read(wav, always_2d=True)[0]
+            wav_obj, _=soundfile.read(wav, always_2d=True)
+            wav_obj=wav_obj[0]
         if len(wav_obj)==0:
             f.write(f"{wav} is empty.\n")
     except Exception as e:
@@ -593,6 +605,76 @@ def remove_extra_clips(args) -> int:
     for clip_wav in tqdm(clip_wavs):
         if clip_wav not in df_clip_wavs:
             os.remove(clip_wav)
+
+def elan_to_audiofolder(args) -> int:
+    """
+    Create audiofolder HF dataset from consecutive chunks of <=30s
+    from annotations in input eaf file.
+    """
+    eaf=Elan.Eaf(args.input)
+    wav_path=get_media_path(eaf)
+    wav, _=librosa.load(wav_path, sr=16_000, mono=True)
+    wav_basename=os.path.basename(wav_path)
+    clip_relpath='validation'
+    clip_dir=os.path.join(args.output, clip_path)
+
+    # dataframe columns
+    clip_paths=[]
+    start_times=[]
+    end_times=[]
+    transcriptions=[]
+
+    transcription_intervals=[]
+    for tier in args.tiers:
+        tier_annotations=eaf.get_annotation_data_for_tier(tier)
+        transcription_intervals.extend(tier_annotations)
+    # sort by start time
+    transcription_intervals.sort(key=lambda t:t[0])
+
+    for i, annotation in tqdm(list(enumerate(transcription_intervals))):
+        start, end, val = annotation
+        if i==0:
+            # first turn is special case
+            start_times.append(start)
+            end_times.append(end)
+            transcriptions.append(val)
+            continue
+
+        last_start=start_times[-1] if start_times else start
+        last_end=end_times[-1] if end_times else None
+        if end-last_start>=30_000:
+            # we've passed 30s, start new label
+            clip_path=clip_segment(last_start, last_end, wav_basename, clip_relpath, wav)
+            clip_paths.append(clip_path)
+
+            # next label will by default be the start and end of this annotation
+            start_times.append(start)
+            end_times.append(end)
+            transcriptions.append(val)
+        else:
+            # inside a 30s segment
+            # update end time and append transcription
+            transcriptions[-1]=' '.join([transcriptions[-1], val]).strip()
+            end_times[-1]=end
+    if len(clip_paths)<len(start_times):
+        # need to append last segment
+        clip_path=clip_segment(start_times[-1], end_times[-1], wav_basename, clip_relpath, wav)
+        clip_paths.append(clip_path)
+    
+    df=pd.DataFrame(data={
+        'start': start_times,
+        'end': end_times,
+        'transcription': transcriptions,
+        'file_name': clip_paths,
+    })
+    df['duration']=df['end']-df['start']
+    num_rows=len(df)
+    avg_duration=df['duration'].mean()/1_000
+    tot_duration=df['duration'].sum()/60_000
+    print(f"Generated {num_rows} rows averaging {avg_duration}s each for {tot_duration} minutes of audio.")
+
+    csv_path=os.path.join(args.output, 'metadata.csv')
+    df.to_csv(csv_path, index=False)
 
 def infer_asr(args) -> int:
     """
