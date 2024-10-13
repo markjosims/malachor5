@@ -138,7 +138,9 @@ def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
     processor = WhisperProcessor.from_pretrained(args.processor or args.model, language=args.language, task="transcribe")
-    if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
+    # get a random split name dynamically since we don't know what splits are saved in dataset
+    split_key=list(ds.keys())[0]
+    if ds[split_key][0]["audio"]["sampling_rate"]!=16_000:
         print("Resampling to 16kHz...")
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds_cache_files={}
