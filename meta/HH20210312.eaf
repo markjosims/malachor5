@@ -4,7 +4,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
     <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
         <MEDIA_DESCRIPTOR
-            MEDIA_URL="file:///G:/My Drive/Speechproc lab/recordings/test/HH20210312.WAV" MIME_TYPE="audio/x-wav"/>
+            MEDIA_URL="file:///Users/markjos/projects/malachor5/data/elan_outputs/HH20210312.wav" MIME_TYPE="audio/x-wav"/>
         <PROPERTY NAME="URN">urn:nl-mpi-tools-elan-eaf:d9cb0baf-d633-45b8-b37a-c79a495e296d</PROPERTY>
         <PROPERTY NAME="lastUsedAnnotationId">1655</PROPERTY>
     </HEADER>
