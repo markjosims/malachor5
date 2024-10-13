@@ -32,7 +32,7 @@ DEFAULT_HYPERPARAMS = {
     'warmup_steps': 500,
     'report_to': 'tensorboard',
     'predict_with_generate': False,
-    'generation_num_beams': 4,
+    'generation_num_beams': 0,
     # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
@@ -104,7 +104,12 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     split=getattr(args, 'split', None)
     make_split=getattr(args, 'make_split', False)
     if os.path.exists(dataset_path):
-        dataset=load_from_disk(dataset_path)
+        if os.path.exists(
+            os.path.join(dataset_path, 'metadata.csv')
+        ):
+            dataset=load_dataset('audiofolder', data_dir=dataset_path)
+        else:
+            dataset=load_from_disk(dataset_path)
         if split and args.num_records:
             return dataset[split].select(range(args.num_records))
         if split:
@@ -172,7 +177,7 @@ def load_and_prepare_dataset(args):
 def prepare_dataset(row, processor, transcription_ids=False):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
-    label = row["transcription"]
+    label = "foo bar baz"#row["transcription"]
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
@@ -265,13 +270,7 @@ def preprocess_logits_for_metrics(logits, labels):
     return pred_ids, labels
 
 def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False):
-    predictions = pred.predictions
-    # if type(predictions) is tuple:
-    #     # got logits instead of ids, decode greedily
-    #     pred_ids = np.argmax(predictions[0], axis=-1)
-    # else:
-    #     # assume pred.predictions is the ids otherwise
-    pred_ids = predictions[0]
+    pred_ids = pred.predictions.squeeze()
     label_ids = pred.label_ids
 
     # replace -100 with the pad_token_id
@@ -305,7 +304,8 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
-    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix)
+    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix, use_cache=False)
+    # breakpoint()
     labels=predictions.metrics[f'{metric_key_prefix}_labels']
     preds=predictions.metrics[f'{metric_key_prefix}_preds']
     preds_processed=predictions.metrics.get(f'{metric_key_prefix}_preds_processed', None)
