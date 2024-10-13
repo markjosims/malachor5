@@ -32,7 +32,8 @@ DEFAULT_HYPERPARAMS = {
     'warmup_steps': 500,
     'report_to': 'tensorboard',
     'predict_with_generate': False,
-    'generation_num_beams': 0,
+    'generation_num_beams': 1,
+    'generation_greedy_search': False
     # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
