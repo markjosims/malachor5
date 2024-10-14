@@ -471,10 +471,11 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     elif args.action=='evaluate':
         if args.all_chkpnts:
             chkpnts=glob(
-                os.path.join(args.output, 'checkpoint-')
+                os.path.join(args.output, 'checkpoint-*')
             )
             eval_output_stem=args.eval_output or args.output
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
+                chkpnt=chkpnt.removesuffix('/')
                 args.checkpoint=chkpnt
                 print(f"Loading {chkpnt}...")
                 chkpnt_model = load_whisper_model_for_training_or_eval(args)
