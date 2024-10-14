@@ -61,7 +61,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--transcription_ids', action='store_true')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
-    parser.add_argument('--language', '-l')
+    parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--ft_peft_model', action='store_true')
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
