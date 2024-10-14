@@ -69,7 +69,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
     parser.add_argument('--all_chkpnts', action='store_true')
-    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts')
+    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
@@ -363,6 +363,11 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
         metrics.append(predictions.metrics)
         metrics[-1]['checkpoint']=chkpnt
+
+        del chkpnt_model
+        del data_collator
+        del trainer
+        del predictions
     csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df=pd.DataFrame(data=metrics)
     df.to_csv(csv_path, index=False)
