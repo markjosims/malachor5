@@ -333,6 +333,36 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     print(predictions.metrics)
     return predictions
 
+def evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics):
+    chkpnts=glob(
+                os.path.join(args.output, 'checkpoint-*')
+            )
+    eval_output_stem=args.eval_output or args.output
+    metrics=[]
+    for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
+        chkpnt=chkpnt.removesuffix('/')
+        args.checkpoint=chkpnt
+        chkpnt_basename=os.path.basename(chkpnt)
+        args.eval_output=os.path.join(eval_output_stem, chkpnt_basename)
+        tqdm.write(f"Loading {chkpnt}...")
+        chkpnt_model = load_whisper_model_for_training_or_eval(args)
+        chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
+        trainer = Seq2SeqTrainer(
+                    args=training_args,
+                    model=chkpnt_model,
+                    data_collator=data_collator,
+                    compute_metrics=compute_metrics,
+                    tokenizer=processor.feature_extractor,
+                    preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+                )
+        predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
+        metrics.append(predictions.metrics)
+        metrics[-1]['checkpoint']=chkpnt
+    csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
+    df=pd.DataFrame(data=metrics)
+    df.to_csv(csv_path, index=False)
+    return trainer
+
 # ----------------- #
 # model preparation #
 # ----------------- #
@@ -471,33 +501,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
         if args.all_chkpnts:
-            chkpnts=glob(
-                os.path.join(args.output, 'checkpoint-*')
-            )
-            eval_output_stem=args.eval_output or args.output
-            metrics=[]
-            for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
-                chkpnt=chkpnt.removesuffix('/')
-                args.checkpoint=chkpnt
-                chkpnt_basename=os.path.basename(chkpnt)
-                args.eval_output=os.path.join(eval_output_stem, chkpnt_basename)
-                tqdm.write(f"Loading {chkpnt}...")
-                chkpnt_model = load_whisper_model_for_training_or_eval(args)
-                chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
-                trainer = Seq2SeqTrainer(
-                    args=training_args,
-                    model=chkpnt_model,
-                    data_collator=data_collator,
-                    compute_metrics=compute_metrics,
-                    tokenizer=processor.feature_extractor,
-                    preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
-                )
-                predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
-                metrics.append(predictions.metrics)
-                metrics[-1]['checkpoint']=chkpnt
-            csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
-            df=pd.DataFrame(data=metrics)
-            df.to_csv(csv_path, index=False)
+            trainer = evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
 
@@ -507,6 +511,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
 
     return 0
+
+
 
 if __name__ == '__main__':
     main()
