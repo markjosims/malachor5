@@ -361,7 +361,6 @@ def evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, 
     csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df=pd.DataFrame(data=metrics)
     df.to_csv(csv_path, index=False)
-    return trainer
 
 # ----------------- #
 # model preparation #
@@ -501,7 +500,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
         if args.all_chkpnts:
-            trainer = evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics)
+            evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
 
