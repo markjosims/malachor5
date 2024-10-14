@@ -485,7 +485,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 data_collator = load_data_collator(model, processor)
                 trainer.model=chkpnt_model
                 trainer.data_collator=data_collator
-                args.eval_output=os.path.josin(
+                args.eval_output=os.path.join(
                     eval_output_stem, chkpnt+'-eval'
                 )
                 evaluate_dataset(args, ds['validation'], trainer, processor)                
