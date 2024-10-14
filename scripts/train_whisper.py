@@ -177,7 +177,7 @@ def load_and_prepare_dataset(args):
 def prepare_dataset(row, processor, transcription_ids=False):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
-    label = "foo bar baz"#row["transcription"]
+    label = row["transcription"]
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
