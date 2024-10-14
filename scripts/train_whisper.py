@@ -481,14 +481,14 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 args.checkpoint=chkpnt
                 tqdm.write(f"Loading {chkpnt}...")
                 chkpnt_model = load_whisper_model_for_training_or_eval(args)
-                tqdm.write("Setting model generation config...")
                 chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
-                tqdm.write("Making data collator...")
-                data_collator = load_data_collator(model, processor)
-                trainer.model=chkpnt_model
-                trainer.data_collator=data_collator
-                args.eval_output=os.path.join(
-                    eval_output_stem, chkpnt+'-eval'
+                trainer = Seq2SeqTrainer(
+                    args=training_args,
+                    model=chkpnt_model,
+                    data_collator=data_collator,
+                    compute_metrics=compute_metrics,
+                    tokenizer=processor.feature_extractor,
+                    preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
                 )
                 predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
                 metrics.append(predictions.metrics)
