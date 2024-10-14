@@ -436,12 +436,16 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
-    print("Loading model...")
-    chkpnt_model = load_whisper_model_for_training_or_eval(args)
-    print("Setting model generation config...")
-    chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
-    print("Making data collator...")
-    data_collator = load_data_collator(chkpnt_model, processor)
+    if args.all_chkpts:
+        model=None
+        data_collator=None
+    else:
+        print("Loading model...")
+        model = load_whisper_model_for_training_or_eval(args)
+        print("Setting model generation config...")
+        model = set_generation_config(args, model, processor.tokenizer)
+        print("Making data collator...")
+        data_collator = load_data_collator(model, processor)
     print("Defining training args...")
     training_args = get_training_args(args)
     print("Defining metrics...")
@@ -450,7 +454,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Initializing trainer...")
     trainer = Seq2SeqTrainer(
         args=training_args,
-        model=chkpnt_model,
+        model=model,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=processor.feature_extractor,
@@ -479,7 +483,10 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 chkpnt_model = load_whisper_model_for_training_or_eval(args)
                 print("Setting model generation config...")
                 chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
+                print("Making data collator...")
+                data_collator = load_data_collator(model, processor)
                 trainer.model=chkpnt_model
+                trainer.data_collator=data_collator
                 args.eval_output=os.path.join(
                     eval_output_stem, chkpnt+'-eval'
                 )
