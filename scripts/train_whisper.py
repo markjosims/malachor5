@@ -473,7 +473,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             chkpnts=glob(
                 os.path.join(args.output, 'checkpoint-')
             )
-            eval_output_stem=args.eval_output or args.out
+            eval_output_stem=args.eval_output or args.output
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
                 args.checkpoint=chkpnt
                 print(f"Loading {chkpnt}...")
