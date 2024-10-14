@@ -472,6 +472,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             chkpnts=glob(
                 os.path.join(args.output, 'checkpoint-')
             )
+            eval_output_stem=args.eval_output or args.out
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
                 args.checkpoint=chkpnt
                 print(f"Loading {chkpnt}...")
@@ -480,7 +481,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
                 trainer.model=chkpnt_model
                 args.eval_output=os.path.join(
-                    args.output, chkpnt+'-eval'
+                    eval_output_stem, chkpnt+'-eval'
                 )
                 evaluate_dataset(args, ds['validation'], trainer, processor)                
         else:
