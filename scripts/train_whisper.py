@@ -337,7 +337,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
 def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics):
     chkpnts=glob(
                 os.path.join(args.output, 'checkpoint-*/')
-            )
+    )
     if args.num_chkpnts:
         chkpnts=chkpnts[:args.num_chkpnts]
     eval_output_stem=args.eval_output or args.output
