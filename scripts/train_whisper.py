@@ -436,7 +436,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
-    if args.all_chkpts:
+    if args.all_chkpnts:
         model=None
         data_collator=None
     else:
