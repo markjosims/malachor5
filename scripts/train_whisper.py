@@ -469,6 +469,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     ds, processor = load_and_prepare_dataset(args)
     print("Defining metrics...")
     compute_metrics = get_metrics(args, processor)
+    print("Defining training args...")
+    training_args = get_training_args(args)
 
     if not args.all_chkpnts:
         print("Loading model...")
@@ -477,8 +479,6 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         model = set_generation_config(args, model, processor.tokenizer)
         print("Making data collator...")
         data_collator = load_data_collator(model, processor)
-        print("Defining training args...")
-        training_args = get_training_args(args)
         print("Initializing trainer...")
         trainer = Seq2SeqTrainer(
             args=training_args,
