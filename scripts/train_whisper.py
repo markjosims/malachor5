@@ -479,6 +479,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
                 chkpnt=chkpnt.removesuffix('/')
                 args.checkpoint=chkpnt
+                chkpnt_basename=os.path.basename(chkpnt)
+                args.eval_output=os.path.join(eval_output_stem, chkpnt_basename)
                 tqdm.write(f"Loading {chkpnt}...")
                 chkpnt_model = load_whisper_model_for_training_or_eval(args)
                 chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
