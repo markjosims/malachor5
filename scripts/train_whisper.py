@@ -436,16 +436,13 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
-    if args.all_chkpnts:
-        model=None
-        data_collator=None
-    else:
-        print("Loading model...")
-        model = load_whisper_model_for_training_or_eval(args)
-        print("Setting model generation config...")
-        model = set_generation_config(args, model, processor.tokenizer)
-        print("Making data collator...")
-        data_collator = load_data_collator(model, processor)
+
+    print("Loading model...")
+    model = load_whisper_model_for_training_or_eval(args)
+    print("Setting model generation config...")
+    model = set_generation_config(args, model, processor.tokenizer)
+    print("Making data collator...")
+    data_collator = load_data_collator(model, processor)
     print("Defining training args...")
     training_args = get_training_args(args)
     print("Defining metrics...")
