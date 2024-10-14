@@ -12,6 +12,8 @@ from jiwer import wer, cer
 from math import ceil
 import pandas as pd
 import os
+from glob import glob
+from tqdm import tqdm
 from string_norm import get_remove_oov_char_funct, condense_tones
 
 DEFAULT_HYPERPARAMS = {
@@ -66,6 +68,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
+    parser.add_argument('--all_chkpnts')
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
@@ -375,7 +378,7 @@ def load_peft_model_for_finetuning(args):
     model = model.merge_and_unload()
     return model
 
-def load_whisper_peft(args, tokenizer=None) -> WhisperForConditionalGeneration:
+def load_whisper_peft(args) -> WhisperForConditionalGeneration:
     model_path = args.checkpoint or args.model
     peft_config = PeftConfig.from_pretrained(model_path)
     model_basename = peft_config.base_model_name_or_path
@@ -434,11 +437,11 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Loading model...")
-    model = load_whisper_model_for_training_or_eval(args)
+    chkpnt_model = load_whisper_model_for_training_or_eval(args)
     print("Setting model generation config...")
-    model = set_generation_config(args, model, processor.tokenizer)
+    chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
     print("Making data collator...")
-    data_collator = load_data_collator(model, processor)
+    data_collator = load_data_collator(chkpnt_model, processor)
     print("Defining training args...")
     training_args = get_training_args(args)
     print("Defining metrics...")
@@ -447,7 +450,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     print("Initializing trainer...")
     trainer = Seq2SeqTrainer(
         args=training_args,
-        model=model,
+        model=chkpnt_model,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=processor.feature_extractor,
@@ -456,6 +459,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     if args.action=='train':
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
+        print("Training!")
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
         save_dir=os.path.join(args.output, 'pretrained')
         trainer.save_model(save_dir)
@@ -464,7 +468,23 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         if args.eval_output:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
-        evaluate_dataset(args, ds['validation'], trainer, processor)
+        if args.all_chkpnts:
+            chkpnts=glob(
+                os.path.join(args.output, 'checkpoint-')
+            )
+            for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
+                args.checkpoint=chkpnt
+                print(f"Loading {chkpnt}...")
+                chkpnt_model = load_whisper_model_for_training_or_eval(args)
+                print("Setting model generation config...")
+                chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
+                trainer.model=chkpnt_model
+                args.eval_output=os.path.join(
+                    args.output, chkpnt+'-eval'
+                )
+                evaluate_dataset(args, ds['validation'], trainer, processor)                
+        else:
+            evaluate_dataset(args, ds['validation'], trainer, processor)
 
     else:
         # args.action == 'test'
