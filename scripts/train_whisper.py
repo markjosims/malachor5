@@ -333,7 +333,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     print(predictions.metrics)
     return predictions
 
-def evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics):
+def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics):
     chkpnts=glob(
                 os.path.join(args.output, 'checkpoint-*')
             )
@@ -347,6 +347,7 @@ def evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, 
         tqdm.write(f"Loading {chkpnt}...")
         chkpnt_model = load_whisper_model_for_training_or_eval(args)
         chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
+        data_collator=load_data_collator(chkpnt_model, processor)
         trainer = Seq2SeqTrainer(
                     args=training_args,
                     model=chkpnt_model,
@@ -500,7 +501,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
         if args.all_chkpnts:
-            evaluate_all_checkpoints(args, ds, processor, data_collator, training_args, compute_metrics)
+            evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
 
