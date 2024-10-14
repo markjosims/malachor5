@@ -337,10 +337,9 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
     if args.ft_peft_model:
         model = load_peft_model_for_finetuning(args)
     elif args.action in ('evaluate', 'test') and args.peft_type:
-        return load_whisper_peft(args)
+        return load_whisper_peft(args, tokenizer)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
-        model = set_generation_config(args, model)
     if args.peft_type == 'LoRA':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
@@ -356,11 +355,19 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
         model.print_trainable_parameters()
     return model
 
-def set_generation_config(args, model):
-    model.generation_config.language = args.language
-    model.generation_config.task = "transcribe"
-    model.generation_config.forced_decoder_ids = None
+def set_generation_config(args, model, tokenizer):
+    forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
+    model.generation_config.forced_decoder_ids = forced_decoder_ids
     return model
+
+def get_forced_decoder_ids(args, tokenizer):
+    forced_decoder_ids=set()
+    for language in args.language or [None]:
+        forced_decoder_ids.update(
+                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
+            )
+    forced_decoder_ids=list(forced_decoder_ids)
+    return forced_decoder_ids
 
 def load_peft_model_for_finetuning(args):
     model = load_whisper_peft(args)
@@ -368,7 +375,7 @@ def load_peft_model_for_finetuning(args):
     model = model.merge_and_unload()
     return model
 
-def load_whisper_peft(args) -> WhisperForConditionalGeneration:
+def load_whisper_peft(args, tokenizer=None) -> WhisperForConditionalGeneration:
     model_path = args.checkpoint or args.model
     peft_config = PeftConfig.from_pretrained(model_path)
     model_basename = peft_config.base_model_name_or_path
@@ -428,6 +435,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
     ds, processor = load_and_prepare_dataset(args)
     print("Loading model...")
     model = load_whisper_model_for_training_or_eval(args)
+    print("Setting model generation config...")
+    model = set_generation_config(args, model, processor.tokenizer)
     print("Making data collator...")
     data_collator = load_data_collator(model, processor)
     print("Defining training args...")

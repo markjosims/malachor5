@@ -12,7 +12,7 @@ from pympi import Elan
 from glob import glob
 import os
 from tqdm import tqdm
-from train_whisper import load_whisper_pipeline
+from train_whisper import load_whisper_pipeline, get_forced_decoder_ids
 
 SAMPLE_RATE = 16000
 DIARIZE_URI = "pyannote/voice-activity-detection"
@@ -243,12 +243,7 @@ def annotate(args) -> int:
     if args.strategy != "drz-only":
         asr_pipe = load_whisper_pipeline(args)
         tokenizer = WhisperTokenizer.from_pretrained(args.model)
-        forced_decoder_ids=set()
-        for language in args.language:
-            forced_decoder_ids.update(
-                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
-            )
-        forced_decoder_ids=list(forced_decoder_ids)
+        forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
     else:
         asr_pipe=None
         tokenizer=None
