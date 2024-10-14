@@ -477,15 +477,15 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
                 chkpnt=chkpnt.removesuffix('/')
                 args.checkpoint=chkpnt
-                print(f"Loading {chkpnt}...")
+                tqdm.write(f"Loading {chkpnt}...")
                 chkpnt_model = load_whisper_model_for_training_or_eval(args)
-                print("Setting model generation config...")
+                tqdm.write("Setting model generation config...")
                 chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
-                print("Making data collator...")
+                tqdm.write("Making data collator...")
                 data_collator = load_data_collator(model, processor)
                 trainer.model=chkpnt_model
                 trainer.data_collator=data_collator
-                args.eval_output=os.path.join(
+                args.eval_output=os.path.josin(
                     eval_output_stem, chkpnt+'-eval'
                 )
                 evaluate_dataset(args, ds['validation'], trainer, processor)                
