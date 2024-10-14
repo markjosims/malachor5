@@ -466,27 +466,27 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
-
-    print("Loading model...")
-    model = load_whisper_model_for_training_or_eval(args)
-    print("Setting model generation config...")
-    model = set_generation_config(args, model, processor.tokenizer)
-    print("Making data collator...")
-    data_collator = load_data_collator(model, processor)
-    print("Defining training args...")
-    training_args = get_training_args(args)
     print("Defining metrics...")
     compute_metrics = get_metrics(args, processor)
 
-    print("Initializing trainer...")
-    trainer = Seq2SeqTrainer(
-        args=training_args,
-        model=model,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-        tokenizer=processor.feature_extractor,
-        preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
-    )
+    if not args.all_chkpnts:
+        print("Loading model...")
+        model = load_whisper_model_for_training_or_eval(args)
+        print("Setting model generation config...")
+        model = set_generation_config(args, model, processor.tokenizer)
+        print("Making data collator...")
+        data_collator = load_data_collator(model, processor)
+        print("Defining training args...")
+        training_args = get_training_args(args)
+        print("Initializing trainer...")
+        trainer = Seq2SeqTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+        )
     if args.action=='train':
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
