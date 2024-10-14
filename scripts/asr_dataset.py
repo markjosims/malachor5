@@ -225,6 +225,7 @@ def clip_segment(
         end_ms: int,
         wav_basename: str,
         target_dir: str,
+        data_dir: Optional[str]=None,
         wav: Optional[np.ndarray]=None,
         sampling_rate: int=16_000,
     ) -> str:
@@ -249,6 +250,8 @@ def clip_segment(
         end_samples=ms_to_samples(end_ms, sampling_rate=sampling_rate)
         wav_clip = wav[start_samples:end_samples]
         soundfile.write(clip_fp, wav_clip, samplerate=sampling_rate)
+    if data_dir:
+        clip_fp=os.path.relpath(clip_fp, data_dir)
 
     return clip_fp
 
@@ -616,7 +619,8 @@ def elan_to_audiofolder(args) -> int:
     wav, _=librosa.load(wav_path, sr=16_000, mono=True)
     wav_basename=os.path.basename(wav_path)
     clip_relpath='validation'
-    clip_dir=os.path.join(args.output, clip_path)
+    clip_dir=os.path.join(args.output, clip_relpath)
+    os.makedirs(clip_dir, exist_ok=True)
 
     # dataframe columns
     clip_paths=[]
@@ -644,7 +648,14 @@ def elan_to_audiofolder(args) -> int:
         last_end=end_times[-1] if end_times else None
         if end-last_start>=30_000:
             # we've passed 30s, start new label
-            clip_path=clip_segment(last_start, last_end, wav_basename, clip_relpath, wav)
+            clip_path=clip_segment(
+                start_ms=last_start,
+                end_ms=last_end,
+                wav_basename=wav_basename,
+                target_dir=clip_dir,
+                data_dir=args.output,
+                wav=wav,
+            )
             clip_paths.append(clip_path)
 
             # next label will by default be the start and end of this annotation
@@ -658,7 +669,14 @@ def elan_to_audiofolder(args) -> int:
             end_times[-1]=end
     if len(clip_paths)<len(start_times):
         # need to append last segment
-        clip_path=clip_segment(start_times[-1], end_times[-1], wav_basename, clip_relpath, wav)
+        clip_path=clip_segment(
+            start_ms=start_times[-1],
+            end_ms=end_times[-1],
+            wav_basename=wav_basename,
+            target_dir=clip_dir,
+            data_dir=args.output,
+            wav=wav
+        )
         clip_paths.append(clip_path)
     
     df=pd.DataFrame(data={
