@@ -331,6 +331,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
         else os.path.join(args.output, f'{args.action}-predictions.pt')
     )
     print(predictions.metrics)
+    return predictions
 
 # ----------------- #
 # model preparation #
@@ -474,6 +475,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 os.path.join(args.output, 'checkpoint-*')
             )
             eval_output_stem=args.eval_output or args.output
+            metrics=[]
             for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
                 chkpnt=chkpnt.removesuffix('/')
                 args.checkpoint=chkpnt
@@ -488,7 +490,12 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
                 args.eval_output=os.path.join(
                     eval_output_stem, chkpnt+'-eval'
                 )
-                evaluate_dataset(args, ds['validation'], trainer, processor)                
+                predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
+                metrics.append(predictions.metrics)
+                metrics[-1]['checkpoint']=chkpnt
+            csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
+            df=pd.DataFrame(data=metrics)
+            df.to_csv(csv_path, index=False)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
 
