@@ -12,7 +12,7 @@ from pympi import Elan
 from glob import glob
 import os
 from tqdm import tqdm
-from train_whisper import load_whisper_pipeline
+from train_whisper import load_whisper_pipeline, get_forced_decoder_ids
 
 SAMPLE_RATE = 16000
 DIARIZE_URI = "pyannote/speaker-diarization-3.1"
@@ -97,9 +97,12 @@ def change_file_suffix(media_fp: str, ext: str) -> str:
 # Audio handling methods #
 # ---------------------- #
 
-def load_and_resample(fp: str, sr: int = SAMPLE_RATE) -> torch.Tensor:
+def load_and_resample(fp: str, sr: int = SAMPLE_RATE, to_mono: bool = True) -> torch.Tensor:
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
+    if to_mono and wav.shape[0]==2:
+        print("Converting stereo wav to mono")
+        wav=wav[:1]
     return wav
 
 def sec_to_samples(time_sec: float) -> int:
@@ -141,6 +144,7 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser("Annotation runner")
     parser.add_argument("-i", "--input", help=".wav file or directory of .wav files to annotate")
+    parser.add_argument("-o", "--output", help="directory files to save output to")
     parser.add_argument(
         "-s",
         "--strategy",
@@ -240,12 +244,7 @@ def annotate(args) -> int:
     if args.strategy != "drz-only":
         asr_pipe = load_whisper_pipeline(args)
         tokenizer = WhisperTokenizer.from_pretrained(args.model)
-        forced_decoder_ids=set()
-        for language in args.language:
-            forced_decoder_ids.update(
-                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
-            )
-        forced_decoder_ids=list(forced_decoder_ids)
+        forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
     else:
         asr_pipe=None
         tokenizer=None
@@ -337,8 +336,12 @@ def annotate_file(args, asr_pipe, drz_pipe, audio_fp, generate_kwargs):
             )
 
     eaf_fp = change_file_suffix(audio_fp, '.eaf')
+    if args.output:
+        eaf_fp=os.path.join(
+            args.output, os.path.basename(eaf_fp)
+        )
     eaf.to_file(eaf_fp)
-    txt_fp = change_file_suffix(audio_fp, '.txt')
+    txt_fp = change_file_suffix(eaf_fp, '.txt')
     write_script(
         eaf,
         txt_fp,

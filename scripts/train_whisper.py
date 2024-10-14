@@ -12,6 +12,8 @@ from jiwer import wer, cer
 from math import ceil
 import pandas as pd
 import os
+from glob import glob
+from tqdm import tqdm
 from string_norm import get_remove_oov_char_funct, condense_tones
 
 DEFAULT_HYPERPARAMS = {
@@ -31,6 +33,8 @@ DEFAULT_HYPERPARAMS = {
     'learning_rate': 3e-4,
     'warmup_steps': 500,
     'report_to': 'tensorboard',
+    'predict_with_generate': False,
+    'generation_num_beams': 1,
     # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
@@ -53,6 +57,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--make_split', action='store_true')
     parser.add_argument('--output', '-o')
     parser.add_argument('--model', '-m')
+    parser.add_argument('--processor')
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--transcription_ids', action='store_true')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
@@ -63,6 +68,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
+    parser.add_argument('--all_chkpnts', action='store_true')
+    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts')
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
@@ -101,7 +108,12 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     split=getattr(args, 'split', None)
     make_split=getattr(args, 'make_split', False)
     if os.path.exists(dataset_path):
-        dataset=load_from_disk(dataset_path)
+        if os.path.exists(
+            os.path.join(dataset_path, 'metadata.csv')
+        ):
+            dataset=load_dataset('audiofolder', data_dir=dataset_path)
+        else:
+            dataset=load_from_disk(dataset_path)
         if split and args.num_records:
             return dataset[split].select(range(args.num_records))
         if split:
@@ -134,8 +146,10 @@ def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
 
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
-    processor = WhisperProcessor.from_pretrained(args.model, language=args.language, task="transcribe")
-    if ds['train'][0]["audio"]["sampling_rate"]!=16_000:
+    processor = WhisperProcessor.from_pretrained(args.processor or args.model, language=args.language, task="transcribe")
+    # get a random split name dynamically since we don't know what splits are saved in dataset
+    split_key=list(ds.keys())[0]
+    if ds[split_key][0]["audio"]["sampling_rate"]!=16_000:
         print("Resampling to 16kHz...")
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds_cache_files={}
@@ -171,7 +185,10 @@ def prepare_dataset(row, processor, transcription_ids=False):
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
-        row["labels"]=eval(row["transcription_ids"])
+        transcription_ids=row["transcription_ids"]
+        if type(transcription_ids) is str:
+            transcription_ids=eval(transcription_ids)
+        row["labels"]=transcription_ids
     else:
         row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
@@ -226,6 +243,9 @@ def get_str_process_pipe(args):
     if args.char_vocab:
         remove_oov=get_remove_oov_char_funct(args.char_vocab)
         str_process_pipe.append(remove_oov)
+
+    if not str_process_pipe:
+        return
     
     def do_str_process_pipe(s_list):
         for f in str_process_pipe:
@@ -234,9 +254,13 @@ def get_str_process_pipe(args):
 
     return do_str_process_pipe
 
-def get_metrics(args, processor):
+def get_metrics(args, processor, return_decoded=False):
     str_process_pipe=get_str_process_pipe(args)
-    compute_metrics = lambda pred: compute_wer_cer(pred, processor.tokenizer, output_process_f=str_process_pipe)
+    compute_metrics = lambda pred: compute_wer_cer(
+        pred, processor.tokenizer,
+        output_process_f=str_process_pipe,
+        return_decoded=return_decoded,
+    )
     return compute_metrics
 
 def preprocess_logits_for_metrics(logits, labels):
@@ -249,14 +273,10 @@ def preprocess_logits_for_metrics(logits, labels):
     pred_ids = torch.argmax(logits[0], dim=-1)
     return pred_ids, labels
 
-def compute_wer_cer(pred, tokenizer, output_process_f=None):
-    predictions = pred.predictions
-    # if type(predictions) is tuple:
-    #     # got logits instead of ids, decode greedily
-    #     pred_ids = np.argmax(predictions[0], axis=-1)
-    # else:
-    #     # assume pred.predictions is the ids otherwise
-    pred_ids = predictions[0]
+def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False):
+    pred_ids = pred.predictions
+    if type(pred_ids) is tuple:
+        pred_ids = pred_ids[0]
     label_ids = pred.label_ids
 
     # replace -100 with the pad_token_id
@@ -271,41 +291,93 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None):
     batch_metrics={
         "wer": batch_wer, 
         "cer": batch_cer,
-        "labels": label_str,
-        "preds": pred_str,
+
     }
+    if return_decoded:
+        batch_metrics["labels"]=label_str
+        batch_metrics["preds"]=pred_str
 
     if output_process_f:
         pred_str_processed=output_process_f(pred_str)
         batch_metrics['cer_processed']=cer(label_str, pred_str_processed)
         batch_metrics['wer_processed']=wer(label_str, pred_str_processed)
-        batch_metrics['preds_processed']=pred_str_processed
+        if return_decoded:
+            batch_metrics['preds_processed']=pred_str_processed
 
     return batch_metrics
 
-def evaluate_dataset(args, ds_split, trainer):
-    predictions=trainer.predict(ds_split)
-    labels=predictions.metrics['test_labels']
-    preds=predictions.metrics['test_preds']
-    preds_processed=predictions.metrics['test_preds_processed']
-    df=pd.DataFrame({'labels': labels, 'output': preds, 'output_processed': preds_processed})
-    df.to_csv(args.eval_output+'.csv' or os.path.join(args.output, 'predictions.csv'))
-    del predictions.metrics['test_labels']
-    del predictions.metrics['test_preds']
-    del predictions.metrics['test_preds_processed']
-    torch.save(predictions, args.eval_output+'.pt' or os.path.join(args.output, 'predictions.pt'))
+def evaluate_dataset(args, ds_split, trainer, processor):
+    metric_key_prefix = 'test' if args.action=='test' else 'eval'
+    # change metrics to return labels
+    trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
+    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix, use_cache=False)
+    # breakpoint()
+    labels=predictions.metrics[f'{metric_key_prefix}_labels']
+    preds=predictions.metrics[f'{metric_key_prefix}_preds']
+    preds_processed=predictions.metrics.get(f'{metric_key_prefix}_preds_processed', None)
+    df=pd.DataFrame({'labels': labels, 'preds': preds})
+    if not (preds_processed is None):
+        df['preds_processed']=preds_processed
+    df.to_csv(
+        args.eval_output+'.csv' if args.eval_output
+        else os.path.join(args.output, f'{args.action}-predictions.csv')
+    )
+    predictions.metrics.pop(f'{metric_key_prefix}_labels')
+    predictions.metrics.pop(f'{metric_key_prefix}_preds')
+    predictions.metrics.pop(f'{metric_key_prefix}_preds_processed', None)
+
+    torch.save(
+        predictions,
+        args.eval_output+'.pt' if args.eval_output
+        else os.path.join(args.output, f'{args.action}-predictions.pt')
+    )
     print(predictions.metrics)
+    return predictions
+
+def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics):
+    chkpnts=glob(
+                os.path.join(args.output, 'checkpoint-*/')
+    )
+    chkpnts.sort(key=lambda s:int(s.removesuffix('/').split(sep='-')[-1]))
+    if args.num_chkpnts:
+        chkpnts=chkpnts[:args.num_chkpnts]
+    eval_output_stem=args.eval_output or args.output
+    metrics=[]
+    for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
+        chkpnt=chkpnt.removesuffix('/')
+        args.checkpoint=chkpnt
+        chkpnt_basename=os.path.basename(chkpnt)
+        args.eval_output=os.path.join(eval_output_stem, chkpnt_basename)
+        tqdm.write(f"Loading {chkpnt}...")
+        chkpnt_model = load_whisper_model_for_training_or_eval(args)
+        chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
+        data_collator=load_data_collator(chkpnt_model, processor)
+        trainer = Seq2SeqTrainer(
+                    args=training_args,
+                    model=chkpnt_model,
+                    data_collator=data_collator,
+                    compute_metrics=compute_metrics,
+                    tokenizer=processor.feature_extractor,
+                    preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+                )
+        predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
+        metrics.append(predictions.metrics)
+        metrics[-1]['checkpoint']=chkpnt
+    csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
+    df=pd.DataFrame(data=metrics)
+    df.to_csv(csv_path, index=False)
 
 # ----------------- #
 # model preparation #
 # ----------------- #
 
-def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
+def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGeneration:
     if args.ft_peft_model:
         model = load_peft_model_for_finetuning(args)
+    elif args.action in ('evaluate', 'test') and args.peft_type:
+        return load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
-        model = set_generation_config(args, model)
     if args.peft_type == 'LoRA':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
@@ -321,11 +393,19 @@ def load_whisper_model_for_training(args) -> WhisperForConditionalGeneration:
         model.print_trainable_parameters()
     return model
 
-def set_generation_config(args, model):
-    model.generation_config.language = args.language
-    model.generation_config.task = "transcribe"
-    model.generation_config.forced_decoder_ids = None
+def set_generation_config(args, model, tokenizer):
+    forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
+    model.generation_config.forced_decoder_ids = forced_decoder_ids
     return model
+
+def get_forced_decoder_ids(args, tokenizer):
+    forced_decoder_ids=set()
+    for language in args.language or [None]:
+        forced_decoder_ids.update(
+                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
+            )
+    forced_decoder_ids=list(forced_decoder_ids)
+    return forced_decoder_ids
 
 def load_peft_model_for_finetuning(args):
     model = load_whisper_peft(args)
@@ -391,43 +471,52 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
-    print("Loading model...")
-    model = load_whisper_model_for_training(args)
-    print("Making data collator...")
-    data_collator = load_data_collator(model, processor)
-    print("Defining training args...")
-    training_args = get_training_args(args)
     print("Defining metrics...")
     compute_metrics = get_metrics(args, processor)
+    print("Defining training args...")
+    training_args = get_training_args(args)
 
-    print("Initializing trainer...")
-    trainer = Seq2SeqTrainer(
-        args=training_args,
-        model=model,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-        tokenizer=processor.feature_extractor,
-        preprocess_logits_for_metrics=preprocess_logits_for_metrics,
-    )
+    if not args.all_chkpnts:
+        print("Loading model...")
+        model = load_whisper_model_for_training_or_eval(args)
+        print("Setting model generation config...")
+        model = set_generation_config(args, model, processor.tokenizer)
+        print("Making data collator...")
+        data_collator = load_data_collator(model, processor)
+        print("Initializing trainer...")
+        trainer = Seq2SeqTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+        )
     if args.action=='train':
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
+        print("Training!")
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
         save_dir=os.path.join(args.output, 'pretrained')
         trainer.save_model(save_dir)
         processor.save_pretrained(save_dir)
 
         if args.eval_output:
-            evaluate_dataset(args, ds['validation'], trainer)
+            evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
-        evaluate_dataset(args, ds['validation'], trainer)
+        if args.all_chkpnts:
+            evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics)
+        else:
+            evaluate_dataset(args, ds['validation'], trainer, processor)
 
     else:
         # args.action == 'test'
-        evaluate_dataset(args, ds['test'], trainer)
+        evaluate_dataset(args, ds['test'], trainer, processor)
 
 
     return 0
+
+
 
 if __name__ == '__main__':
     main()
