@@ -68,7 +68,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--resume_from_checkpoint' ,action='store_true')
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
-    parser.add_argument('--all_chkpnts')
+    parser.add_argument('--all_chkpnts', action='store_true')
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
