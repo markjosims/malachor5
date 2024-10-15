@@ -345,7 +345,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     elif args.chkpnts:
         chkpnts=[
             chkpnt for chkpnt in chkpnts
-            if int(chkpnt.removesuffix('/').split(sep='-')[-1]) in args.chkpnts
+            if chkpnt.removesuffix('/').split(sep='-')[-1] in args.chkpnts
         ]
     eval_output_stem=args.eval_output or args.output
     os.makedirs(eval_output_stem, exist_ok=True)
