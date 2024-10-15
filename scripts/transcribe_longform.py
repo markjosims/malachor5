@@ -46,7 +46,7 @@ def perform_vad(
     ):
 
     if not pipe:
-        pipe = PyannotePipeline.from_pretrained(DIARIZE_URI)
+        pipe = PyannotePipeline.from_pretrained(VAD_URI)
 
     with ProgressHook() as hook:
         result = pipe(
