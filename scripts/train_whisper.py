@@ -311,7 +311,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
-    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix, use_cache=False)
+    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix)
     # breakpoint()
     labels=predictions.metrics[f'{metric_key_prefix}_labels']
     preds=predictions.metrics[f'{metric_key_prefix}_preds']
