@@ -174,7 +174,12 @@ def load_and_prepare_dataset(args):
             if i not in args.skip_idcs
         )
         ds['train']=ds['train'].select(skip_range)
-    epitran=get_epitran(args.fleurs_lang) if args.g2p else None
+    epitran=get_epitran(
+        args.fleurs_lang,
+        lang_key='fleurs' if 'fleurs' in args.dataset
+        else 'common_voice' if 'common_voice' in args.dataset
+        else 'whisper'
+    ) if args.g2p else None
     ds = ds.map(
         lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids, g2p=epitran, label_key=args.label_key),
         num_proc=4,
