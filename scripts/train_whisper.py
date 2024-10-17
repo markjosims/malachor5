@@ -14,7 +14,7 @@ import pandas as pd
 import os
 from glob import glob
 from tqdm import tqdm
-from string_norm import get_remove_oov_char_funct, condense_tones
+from string_norm import get_remove_oov_char_funct, condense_tones, get_epitran
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -60,6 +60,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--processor')
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--transcription_ids', action='store_true')
+    parser.add_argument('--g2p')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l')
     parser.add_argument('--peft_type', choices=['LoRA'])
@@ -169,6 +170,8 @@ def load_and_prepare_dataset(args):
             if i not in args.skip_idcs
         )
         ds['train']=ds['train'].select(skip_range)
+    if args.g2p:
+        epitran=get_epitran(args.language, lang_key='whisper')
     ds = ds.map(
         lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids),
         num_proc=4,

@@ -1,6 +1,8 @@
-from typing import Dict, Sequence, Any, Literal, List, Tuple, Callable
+from typing import Dict, Sequence, Any, Literal, List, Tuple, Callable, Optional
 from string import punctuation
 import unicodedata
+import json
+import epitran
 
 """
 Copied from zugubul
@@ -38,6 +40,24 @@ COMPOSITE = {
     "o": {"acute": "ó", "macrn": "ō", "grave": "ò", "caron": "ǒ", "circm": "ô", "tilde": "õ",},
     "u": {"acute": "ú", "macrn": "ū", "grave": "ù", "caron": "ǔ", "circm": "û", "tilde": "ũ",},
 }
+
+# ------------------- #
+# IPA transliteration #
+# ------------------- #
+
+def get_epitran(lang_tag, lang_key='fleurs', script: Optional[str]=None):
+    """
+    Instantiate and return an Epitran transliteration object
+    for the given `fleurs_lang`.
+    """
+    with open('meta/language_codes.json') as f:
+        lang_codes = json.load(f)
+    lang_dict = [d for d in lang_codes if d[lang_key]==lang_tag][0]
+    iso3 = lang_dict['iso3']
+    if not script:
+        script=lang_dict['fleurs_script']
+    
+    return epitran.Epitran(f"{iso3}-{script}")
 
 # --------------------------- #
 # ASR post-processing methods #

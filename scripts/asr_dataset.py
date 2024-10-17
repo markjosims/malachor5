@@ -17,6 +17,7 @@ import csv
 from unidecode import unidecode
 import json
 from train_whisper import load_whisper_pipeline, load_dataset_safe, DEVICE, device_type
+from string_norm import get_epitran
 
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
@@ -399,21 +400,6 @@ def normalize_str(s: Union[str, List[str]], args) -> Union[str, List[str]]:
     if args.no_space:
         s = ''.join(s.split())
     return s
-
-def get_epitran(fleurs_lang_tag, script: Optional[str]=None):
-    """
-    Instantiate and return an Epitran transliteration object
-    for the given `fleurs_lang`.
-    """
-    import epitran
-    with open('meta/language_codes.json') as f:
-        lang_codes = json.load(f)
-    lang_dict = [d for d in lang_codes if d['fleurs']==fleurs_lang_tag][0]
-    iso3 = lang_dict['iso3']
-    if not script:
-        script=lang_dict['fleurs_script']
-    
-    return epitran.Epitran(f"{iso3}-{script}")
 
 # ------------------------- #
 # Cosine similarity helpers #
