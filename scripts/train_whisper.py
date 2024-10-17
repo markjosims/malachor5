@@ -62,7 +62,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--transcription_ids', action='store_true')
     parser.add_argument('--g2p')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
-    parser.add_argument('--language', '-l')
+    parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--ft_peft_model', action='store_true')
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
@@ -70,7 +70,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
     parser.add_argument('--all_chkpnts', action='store_true')
-    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts')
+    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
+    parser.add_argument('--chkpnts', nargs='+')
     parser.add_argument('--eval_output')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
@@ -147,7 +148,7 @@ def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
 
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
-    processor = WhisperProcessor.from_pretrained(args.processor or args.model, language=args.language, task="transcribe")
+    processor = WhisperProcessor.from_pretrained(args.processor or args.model, task="transcribe")
     # get a random split name dynamically since we don't know what splits are saved in dataset
     split_key=list(ds.keys())[0]
     if ds[split_key][0]["audio"]["sampling_rate"]!=16_000:
@@ -313,7 +314,7 @@ def evaluate_dataset(args, ds_split, trainer, processor):
     metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
-    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix, use_cache=False)
+    predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix)
     # breakpoint()
     labels=predictions.metrics[f'{metric_key_prefix}_labels']
     preds=predictions.metrics[f'{metric_key_prefix}_preds']
@@ -344,7 +345,13 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     chkpnts.sort(key=lambda s:int(s.removesuffix('/').split(sep='-')[-1]))
     if args.num_chkpnts:
         chkpnts=chkpnts[:args.num_chkpnts]
+    elif args.chkpnts:
+        chkpnts=[
+            chkpnt for chkpnt in chkpnts
+            if chkpnt.removesuffix('/').split(sep='-')[-1] in args.chkpnts
+        ]
     eval_output_stem=args.eval_output or args.output
+    os.makedirs(eval_output_stem, exist_ok=True)
     metrics=[]
     for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
         chkpnt=chkpnt.removesuffix('/')
@@ -366,6 +373,11 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
         metrics.append(predictions.metrics)
         metrics[-1]['checkpoint']=chkpnt
+
+        del chkpnt_model
+        del data_collator
+        del trainer
+        del predictions
     csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df=pd.DataFrame(data=metrics)
     df.to_csv(csv_path, index=False)
