@@ -48,8 +48,8 @@ def build_dataloader(dataset, batch_size):
 
 def sb_model(args):
     model = EncoderClassifier.from_hparams(
-        source=args.model,
-        savedir=args.sb_savedir,
+        source=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa'),
+        savedir=getattr(args, 'sb_savedir', 'models'),
         run_opts={"device":torch.device(args.device)},
     )
     return model
@@ -64,10 +64,10 @@ def load_lr(args) -> LogisticRegression:
 # ----------------- #
 
 def infer_hf(args, dataset) -> List[Dict[str, Any]]:
-    print(f"Loading HuggingFace model {args.model} for performing inference.")
+    print(f"Loading HuggingFace model {args.sli_model} for performing inference.")
     pipe = pipeline(
         'audio-classification', 
-        args.model,
+        args.sli_model,
         device=(torch.device(args.device)),
     )
 
@@ -82,7 +82,7 @@ def infer_hf(args, dataset) -> List[Dict[str, Any]]:
     return output
 
 def infer_sb(args, dataset) -> List[Dict[str, Any]]:
-    print(f"Loading SpeechBrain model {args.model} for performing inference.")
+    print(f"Loading SpeechBrain model {args.sli_model} for performing inference.")
     model = sb_model(args)
     dataloader = build_dataloader(dataset, args.batch_size)
 
@@ -201,8 +201,9 @@ def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
 # ----------------- #
 
 def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
+    sli_model=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa')
     if model is None:
-        print(f"Loading SpeechBrain model {args.model} for extracting embeddings.")
+        print(f"Loading SpeechBrain model {sli_model} for extracting embeddings.")
         model = sb_model(args)
     if type(dataset) is DatasetDict:
         embedding_dict={}
@@ -222,9 +223,9 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
 
 def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
     if model is None:
-        print(f"Loading HuggingFace model {args.model} for extracting embeddings.")
-        model = Wav2Vec2ForSequenceClassification.from_pretrained(args.model)
-        proc = Wav2Vec2FeatureExtractor.from_pretrained(args.model)
+        print(f"Loading HuggingFace model {args.sli_model} for extracting embeddings.")
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(args.sli_model)
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(args.sli_model)
         model.to(torch.device(args.device))
 
     if type(dataset) is DatasetDict:
@@ -292,9 +293,9 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
     return logits, hidden_states
 
 def load_embeddings(args, dataset):
-    if args.embeds_path:
+    if getattr(args, 'embeds_path', None):
         embeds = torch.load(args.embeds_path)
-    elif args.embed_api == 'hf':
+    elif getattr(args, 'embed_api', 'sb') == 'hf':
         embeds = hf_embeddings(args, dataset)
     else:
         embeds = sb_embeddings(args, dataset)
@@ -307,7 +308,7 @@ def load_embeddings(args, dataset):
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
     parser.add_argument(
-        "--model", '-m',
+        "--sli_model", '-m',
     )
     parser.add_argument(
         "--lr_model",
