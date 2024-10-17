@@ -175,12 +175,11 @@ def load_and_prepare_dataset(args):
         ds['train']=ds['train'].select(skip_range)
     epitran=get_epitran(args.fleurs_lang) if args.g2p else None
     ds = ds.map(
-        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids),
+        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids, g2p=epitran),
         num_proc=4,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
-        g2p=epitran,
     )
     return ds, processor
 
