@@ -61,6 +61,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--stream', action='store_true')
     parser.add_argument('--transcription_ids', action='store_true')
+    parser.add_argument('--label_key', default='transcription')
     parser.add_argument('--g2p', action='store_true')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l', nargs='+')
@@ -129,7 +130,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
                 dataset[split]=dataset[split].select(range(args.num_records))
         return dataset    
 
-    if 'fleurs' in dataset_path:
+    if ('fleurs' in dataset_path) or ('common_voice' in dataset_path):
         return load_dataset(dataset_path, args.fleurs_lang, split=split, streaming=args.stream)
     dataset = load_dataset(dataset_path, split=split)
     if (args.num_records) and (not args.stream) and (split):
@@ -175,7 +176,7 @@ def load_and_prepare_dataset(args):
         ds['train']=ds['train'].select(skip_range)
     epitran=get_epitran(args.fleurs_lang) if args.g2p else None
     ds = ds.map(
-        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids, g2p=epitran),
+        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids, g2p=epitran, label_key=args.label_key),
         num_proc=4,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
@@ -183,10 +184,10 @@ def load_and_prepare_dataset(args):
     )
     return ds, processor
 
-def prepare_dataset(row, processor, transcription_ids=False, g2p=None):
+def prepare_dataset(row, processor, transcription_ids=False, g2p=None, label_key='transcription'):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
-    label = row["transcription"]
+    label = row[label_key]
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
