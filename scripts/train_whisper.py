@@ -60,7 +60,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--processor')
     parser.add_argument('--num_records', '-n', type=int)
     parser.add_argument('--transcription_ids', action='store_true')
-    parser.add_argument('--g2p')
+    parser.add_argument('--g2p', action='store_true')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l', nargs='+')
     parser.add_argument('--fleurs_lang')
