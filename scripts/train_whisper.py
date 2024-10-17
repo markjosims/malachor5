@@ -177,7 +177,7 @@ def load_and_prepare_dataset(args):
     epitran=get_epitran(
         args.fleurs_lang,
         lang_key='fleurs' if 'fleurs' in args.dataset
-        else 'common_voice' if 'common_voice' in args.dataset
+        else 'commonvoice_code' if 'common_voice' in args.dataset
         else 'whisper'
     ) if args.g2p else None
     ds = ds.map(
