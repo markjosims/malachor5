@@ -63,6 +63,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--g2p')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
     parser.add_argument('--language', '-l', nargs='+')
+    parser.add_argument('--fleurs_lang')
     parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--ft_peft_model', action='store_true')
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
@@ -171,18 +172,18 @@ def load_and_prepare_dataset(args):
             if i not in args.skip_idcs
         )
         ds['train']=ds['train'].select(skip_range)
-    if args.g2p:
-        epitran=get_epitran(args.language, lang_key='whisper')
+    epitran=get_epitran(args.fleurs_lang) if args.g2p else None
     ds = ds.map(
         lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids),
         num_proc=4,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
+        g2p=epitran,
     )
     return ds, processor
 
-def prepare_dataset(row, processor, transcription_ids=False):
+def prepare_dataset(row, processor, transcription_ids=False, g2p=None):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
     label = row["transcription"]
@@ -193,6 +194,9 @@ def prepare_dataset(row, processor, transcription_ids=False):
         if type(transcription_ids) is str:
             transcription_ids=eval(transcription_ids)
         row["labels"]=transcription_ids
+    elif g2p:
+        label=g2p.transliterate(label)
+        row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     else:
         row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
     return row
