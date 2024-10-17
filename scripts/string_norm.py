@@ -56,7 +56,7 @@ def get_epitran(lang_tag, lang_key='fleurs', script: Optional[str]=None):
         lang_tag=lang_tag[0]
     elif type(lang_tag) is list:
         return {tag: get_epitran(lang_key=lang_key, script=script) for tag in lang_tag}
-    lang_dict = [d for d in lang_codes if d[lang_key]==lang_tag][0]
+    lang_dict = [d for d in lang_codes if d.get(lang_key, None)==lang_tag][0]
     iso3 = lang_dict['iso3']
     if not script:
         script=lang_dict['fleurs_script']
