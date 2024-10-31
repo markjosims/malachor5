@@ -1,19 +1,16 @@
 import torch.utils
 from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from speechbrain.inference.classifiers import EncoderClassifier
-from speechbrain.dataio.batch import PaddedBatch
 from sklearn.linear_model import LogisticRegression
-from datasets import load_from_disk, Audio, Dataset, DatasetDict
-from datasets.combine import concatenate_datasets
-from typing import Optional, Sequence, Dict, Any, List, List, Generator, Union
+from datasets import load_from_disk, Audio, DatasetDict
+from typing import Optional, Sequence, Dict, Any, List, List, Union
 from argparse import ArgumentParser
 import torch
-from torch.utils.data import DataLoader
-import os
 from tqdm import tqdm
 import pandas as pd
-import json
 import pickle
+
+from scripts.dataset_utils import build_dataloader, dataset_generator
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -42,32 +39,9 @@ def init_argparser() -> ArgumentParser:
     
     return parser
 
-# ----------------------------------------- #
-# Data processing and model loading methods #
-# ----------------------------------------- #
-
-def dataset_generator(dataset: Dataset) -> Generator:
-    """
-    For progress bars to work with the HuggingFace pipeline,
-    the dataset must be wrapped in an iterable class,
-    with the Pipeline object handling batching.
-    """
-    for row in dataset:
-        yield row['audio']
-
-def collate_sb(batch):
-    return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
-
-def build_dataloader(dataset, batch_size):
-    # create a dataloader that returns batches of wav objs
-    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        collate_fn=collate_sb
-    )
-    
-    return dataloader
+# --------------------- #
+# Model loading methods #
+# --------------------- #
 
 def sb_model(args):
     model = EncoderClassifier.from_hparams(
@@ -323,6 +297,10 @@ def load_embeddings(args, dataset):
     else:
         embeds = sb_embeddings(args, dataset)
     return embeds
+
+# ------------------- #
+# logistic regression #
+# ------------------- #
 
 def train_logreg(args, dataset) -> int:
     embeds = load_embeddings(args, dataset)
