@@ -1,5 +1,11 @@
+import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
+from sklearn.linear_model import LogisticRegression
+from speechbrain.inference.classifiers import EncoderClassifier
 from transformers import AutomaticSpeechRecognitionPipeline, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
+import pickle
+
+DEVICE = 0 if torch.cuda.is_available() else -1
 
 # ----------------- #
 # model preparation #
@@ -79,3 +85,24 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
         model = get_peft_model(model, config)
         model.print_trainable_parameters()
     return model
+
+
+def sb_model(
+        model='speechbrain/lang-id-voxlingua107-ecapa',
+        sb_savedir='speechbrain',
+        device=DEVICE
+    ):
+    model = EncoderClassifier.from_hparams(
+        source=model,
+        savedir=sb_savedir,
+        run_opts={"device":torch.device(device)},
+    )
+    return model
+
+
+def load_lr(path: str) -> LogisticRegression:
+    with open(path, 'rb') as f:
+        lr = pickle.load(f)
+    if type(lr) is dict:
+        return lr['lr_model']
+    return lr

@@ -1,6 +1,5 @@
 import torch.utils
 from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
-from speechbrain.inference.classifiers import EncoderClassifier
 from sklearn.linear_model import LogisticRegression
 from datasets import load_from_disk, Audio, DatasetDict
 from typing import Optional, Sequence, Dict, Any, List, List, Union
@@ -9,12 +8,11 @@ import torch
 from tqdm import tqdm
 import pandas as pd
 import pickle
-
-from scripts.dataset_utils import build_dataloader, dataset_generator
+from dataset_utils import build_dataloader, dataset_generator
+from model_utils import load_lr, sb_model
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
-DEVICE = 0 if torch.cuda.is_available() else -1
 
 # --------- #
 # argparser #
@@ -38,23 +36,6 @@ def init_argparser() -> ArgumentParser:
     train_lr_parser.set_defaults(func=train_logreg)
     
     return parser
-
-# --------------------- #
-# Model loading methods #
-# --------------------- #
-
-def sb_model(args):
-    model = EncoderClassifier.from_hparams(
-        source=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa'),
-        savedir=getattr(args, 'sb_savedir', 'models'),
-        run_opts={"device":torch.device(args.device)},
-    )
-    return model
-
-def load_lr(args) -> LogisticRegression:
-    with open(args.lr_model, 'rb') as f:
-        lr = pickle.load(f)
-    return lr
 
 # ----------------- #
 # Inference methods #
