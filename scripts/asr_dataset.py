@@ -17,7 +17,8 @@ import csv
 from unidecode import unidecode
 import json
 from scripts.dataset_utils import load_dataset_safe
-from train_whisper import load_whisper_pipeline, DEVICE, device_type
+from scripts.model_utils import load_whisper_pipeline
+from train_whisper import DEVICE, device_type
 from string_norm import get_epitran
 
 # TODO: move heavy imports (torch, transformers, datasets) into methods
