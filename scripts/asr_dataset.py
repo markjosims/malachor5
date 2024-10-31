@@ -16,7 +16,8 @@ from tempfile import TemporaryDirectory
 import csv
 from unidecode import unidecode
 import json
-from train_whisper import load_whisper_pipeline, load_dataset_safe, DEVICE, device_type
+from scripts.dataset_utils import load_dataset_safe
+from train_whisper import load_whisper_pipeline, DEVICE, device_type
 from string_norm import get_epitran
 
 # TODO: move heavy imports (torch, transformers, datasets) into methods
