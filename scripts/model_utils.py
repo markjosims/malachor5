@@ -96,9 +96,9 @@ def sb_model(args):
     return model
 
 
-def load_lr(path: str) -> LogisticRegression:
+def load_lr(path: str, model_only: bool=False) -> LogisticRegression:
     with open(path, 'rb') as f:
         lr = pickle.load(f)
-    if type(lr) is dict:
+    if type(lr) is dict and model_only:
         return lr['lr_model']
     return lr
