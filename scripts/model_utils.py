@@ -87,15 +87,11 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
     return model
 
 
-def sb_model(
-        model='speechbrain/lang-id-voxlingua107-ecapa',
-        sb_savedir='speechbrain',
-        device=DEVICE
-    ):
+def sb_model(args):
     model = EncoderClassifier.from_hparams(
-        source=model,
-        savedir=sb_savedir,
-        run_opts={"device":torch.device(device)},
+        source=args.sli_model,
+        savedir=args.sb_savedir,
+        run_opts={"device":torch.device(args.device)},
     )
     return model
 

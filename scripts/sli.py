@@ -9,7 +9,8 @@ from tqdm import tqdm
 import pandas as pd
 import pickle
 from dataset_utils import build_dataloader, dataset_generator
-from model_utils import load_lr, sb_model
+from model_utils import load_lr, sb_model, DEVICE
+from speechbrain.inference.classifiers import EncoderClassifier
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -22,17 +23,23 @@ def empty_command(args) -> int:
     print("Specify a command to run.")
     return 1
 
+def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--sli_model')
+    parser.add_argument('--sli_model_type', choices=['hf', 'sb'], default='sb')
+    parser.add_argument('--sb_savedir', default='speechbrain')
+    return parser
+
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
     parser.add_argument('--dataset', '-D')
     parser.add_argument('--output', '-o')
-    parser.add_argument('--model', '-m')
-    parser.add_argument('--model_type', '-t', choices=['hf', 'sb'], default='sb')
-    parser.add_argument('--sb_savedir', default='speechbrain')
+    parser.add_argument('--device', '-d')
+    parser=add_sli_args(parser)
     parser.set_defaults(func=empty_command)
     commands=parser.add_subparsers('command')
 
     train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
+    train_lr_parser.add_argument('--embeds_path')
     train_lr_parser.set_defaults(func=train_logreg)
     
     return parser
@@ -52,7 +59,11 @@ def infer_lr(args, dataset):
 # Embedding methods #
 # ----------------- #
 
-def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
+def sb_embeddings(
+        args,
+        dataset,
+        model: Optional[EncoderClassifier]=None
+    ) -> torch.Tensor:
     sli_model=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa')
     if model is None:
         print(f"Loading SpeechBrain model {sli_model} for extracting embeddings.")
@@ -63,7 +74,7 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.batch_size)
+    dataloader = build_dataloader(dataset, args.sli_batch_size)
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -86,7 +97,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.batch_size)
+    dataloader = build_dataloader(dataset, args.sli_batch_size)
 
     logits = []
     # [
@@ -182,7 +193,7 @@ def train_logreg(args, dataset) -> int:
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
     args = parser.parse_args(argv)
-    args.func(**vars(args))
+    args.func(args)
 
 
 if __name__ == '__main__':
