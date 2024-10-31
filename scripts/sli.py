@@ -31,12 +31,14 @@ def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
     parser.add_argument('--dataset', '-D')
     parser.add_argument('--output', '-o')
+    parser.add_argument('--model', '-m')
+    parser.add_argument('--model_type', '-t', choices=['hf', 'sb'], default='sb')
+    parser.add_argument('--sb_savedir', default='speechbrain')
     parser.set_defaults(func=empty_command)
     commands=parser.add_subparsers('command')
 
     train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
     train_lr_parser.set_defaults(func=train_logreg)
-    train_lr_parser.add_argument('--model', '-m')
     
     return parser
 
@@ -322,61 +324,6 @@ def load_embeddings(args, dataset):
         embeds = sb_embeddings(args, dataset)
     return embeds
 
-def do_inference(args, dataset) -> int:
-    if args.inference_api == 'hf':
-        output = infer_hf(args, dataset)
-    elif args.inference_api == 'sb':
-        output = infer_sb(args, dataset)
-    else:
-        # args.inference_api == 'lr'
-        output = infer_lr(args, dataset)
-
-    if args.evaluate:
-        # calculate accuracy on output
-        dataset = dataset.add_column("output", output)
-        output_metrics = dataset.map(
-            lambda row: compare_predictions(row, args.meta_threshold),
-            remove_columns=dataset.column_names
-        )
-        output_metrics = output_metrics.to_pandas()
-        summary = get_metric_summary(output_metrics)
-
-        # save result
-        output_metrics.to_csv(args.output+'.csv', index=False)
-        with open(args.output+'.json', 'w') as f:
-            json.dump(summary, f, indent=2)
-
-        return 0
-    
-    dataset = dataset.add_column("output", output)
-    dataset = dataset.remove_columns("audio")
-    dataset.to_csv(args.output+'.csv')
-
-    return 0
-
-
-def make_embeddings(args, dataset) -> int:
-    if args.embed_api == 'hf':
-        embeds = hf_embeddings(args, dataset)
-    else:
-        embeds = sb_embeddings(args, dataset)
-    torch.save(embeds, args.output+'.pt')
-
-    # save metadata
-    dataset = dataset.remove_columns('audio')
-    dataset = dataset.rename_column('audio_path', 'audio')
-    if type(dataset) is DatasetDict:
-        split_dfs=[]
-        for split in dataset:
-            split_df=dataset[split].to_pandas()
-            split_df['split']=split
-            split_dfs.append(split_df)
-        df=pd.concat(split_dfs)
-    else:
-        df = dataset.to_pandas()
-    df.to_csv(args.output+'.csv', index=False)
-    return 0
-
 def train_logreg(args, dataset) -> int:
     embeds = load_embeddings(args, dataset)
 
@@ -402,7 +349,7 @@ def train_logreg(args, dataset) -> int:
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_argparser()
     args = parser.parse_args(argv)
-    args.func(args)
+    args.func(**vars(args))
 
 
 if __name__ == '__main__':
