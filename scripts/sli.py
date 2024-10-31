@@ -19,6 +19,27 @@ MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
 DEVICE = 0 if torch.cuda.is_available() else -1
 
+# --------- #
+# argparser #
+# --------- #
+
+def empty_command(args) -> int:
+    print("Specify a command to run.")
+    return 1
+
+def init_argparser() -> ArgumentParser:
+    parser = ArgumentParser("Script for running SLI experiment")
+    parser.add_argument('--dataset', '-D')
+    parser.add_argument('--output', '-o')
+    parser.set_defaults(func=empty_command)
+    commands=parser.add_subparsers('command')
+
+    train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
+    train_lr_parser.set_defaults(func=train_logreg)
+    train_lr_parser.add_argument('--model', '-m')
+    
+    return parser
+
 # ----------------------------------------- #
 # Data processing and model loading methods #
 # ----------------------------------------- #
@@ -301,85 +322,6 @@ def load_embeddings(args, dataset):
         embeds = sb_embeddings(args, dataset)
     return embeds
 
-# ---- #
-# Main #
-# ---- #
-
-def init_argparser() -> ArgumentParser:
-    parser = ArgumentParser("Script for running SLI experiment")
-    parser.add_argument(
-        "--sli_model", '-m',
-    )
-    parser.add_argument(
-        "--lr_model",
-    )
-    parser.add_argument(
-        "--dataset", '-d',
-    )
-    parser.add_argument(
-        "--embeds_path",
-    )
-    parser.add_argument(
-        "--device", '-D', type=int, default=DEVICE,
-    )
-    parser.add_argument(
-        '--batch_size', '-b', type=int,
-    )
-    parser.add_argument(
-        "--output", '-o',
-    )
-    parser.add_argument(
-        "--split", '-s', choices=['train', 'test', 'validation', 'all'],
-    )
-    parser.add_argument(
-        '--inference_api', '-a', choices=['hf', 'sb', 'lr'], default='sb',
-    )
-    parser.add_argument(
-        '--embed_api', choices=['hf', 'sb'], default='sb',
-    )
-    parser.add_argument(
-        '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
-    )
-    parser.add_argument(
-        '--meta_threshold', type=float,
-    )
-    parser.add_argument(
-        '--output_type', choices=['inference', 'embedding', 'logreg'], default='inference',
-    )
-    parser.add_argument(
-        '--evaluate', action='store_true',
-    )
-    return parser
-
-def main(argv: Optional[Sequence[str]]=None) -> int:
-    parser = init_argparser()
-    args = parser.parse_args(argv)
-
-    # load dataset
-    if args.split == 'all':
-        dataset = load_from_disk(args.dataset)
-        dataset = concatenate_datasets(dataset.values())
-    elif args.split:
-        split_path = os.path.join(args.dataset, args.split)
-        dataset = load_from_disk(split_path)
-    else:
-        dataset = load_from_disk(args.dataset)
-    # cast 'audio' to Audio obj but keep path as a separate col
-    if type(dataset) is DatasetDict:
-        for split in dataset:
-            dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset[split]['audio']])
-    else:
-        dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
-    dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
-
-    if args.output_type == 'embedding':
-        return make_embeddings(args, dataset)
-
-    if args.output_type == 'logreg':
-        return do_logreg(args, dataset)
-        
-    return do_inference(args, dataset)
-
 def do_inference(args, dataset) -> int:
     if args.inference_api == 'hf':
         output = infer_hf(args, dataset)
@@ -435,7 +377,7 @@ def make_embeddings(args, dataset) -> int:
     df.to_csv(args.output+'.csv', index=False)
     return 0
 
-def do_logreg(args, dataset) -> int:
+def train_logreg(args, dataset) -> int:
     embeds = load_embeddings(args, dataset)
 
     train_labels=dataset['train']['label']
@@ -453,7 +395,14 @@ def do_logreg(args, dataset) -> int:
     
     return 0 
 
-    
+# ---- #
+# Main #
+# ---- #
+
+def main(argv: Optional[Sequence[str]]=None) -> int:
+    parser = init_argparser()
+    args = parser.parse_args(argv)
+    args.func(args)
 
 
 if __name__ == '__main__':
