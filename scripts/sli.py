@@ -1,18 +1,16 @@
 import torch.utils
-from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
+from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from sklearn.linear_model import LogisticRegression
-from datasets import load_from_disk, Audio, DatasetDict
-from typing import Optional, Sequence, Dict, Any, List, List, Union
+from datasets import DatasetDict
+from typing import Optional, Sequence
 from argparse import ArgumentParser
 import torch
 from tqdm import tqdm
-import pandas as pd
 import pickle
-from dataset_utils import build_dataloader, dataset_generator
-from model_utils import load_lr, sb_model, DEVICE
+from dataset_utils import build_dataloader
+from model_utils import load_lr, sb_model
 from speechbrain.inference.classifiers import EncoderClassifier
-
-from scripts.model_utils import add_sli_args
+from model_utils import add_sli_args
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
@@ -39,17 +37,6 @@ def init_argparser() -> ArgumentParser:
     train_lr_parser.set_defaults(func=train_logreg)
     
     return parser
-
-# ----------------- #
-# Inference methods #
-# ----------------- #
-
-def infer_lr(args, dataset):
-    embeds = load_embeddings(args, dataset)
-    lr = load_lr(args)
-    outputs = lr.predict(embeds)
-
-    return outputs
 
 # ----------------- #
 # Embedding methods #
@@ -173,14 +160,27 @@ def train_logreg(args, dataset) -> int:
     train_X=embeds['train']
     test_X=embeds['test']
 
-    logreg=LogisticRegression().fit(train_X, train_labels)
-    scores=logreg.score(test_X, test_labels)
+    lr=LogisticRegression().fit(train_X, train_labels)
+    scores=lr.score(test_X, test_labels)
     print(scores)
     
+    lr_dict = {
+        'lr_model': lr,
+        'embed_model': args.sli_model,
+        'embed_api': args.embed_api
+    }
+
     with open(args.output, 'wb') as f:
-        pickle.dump(logreg, f)
+        pickle.dump(lr_dict, f)
     
     return 0 
+
+def infer_lr(args, dataset):
+    args, lr = load_lr(args)
+    embeds = load_embeddings(args, dataset)
+    outputs = lr.predict(embeds)
+
+    return outputs
 
 # ---- #
 # Main #

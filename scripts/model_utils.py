@@ -99,12 +99,13 @@ def sb_model(args):
     return model
 
 
-def load_lr(path: str, model_only: bool=False) -> LogisticRegression:
-    with open(path, 'rb') as f:
-        lr = pickle.load(f)
-    if type(lr) is dict and model_only:
-        return lr['lr_model']
-    return lr
+def load_lr(args) -> LogisticRegression:
+    with open(args.lr_model, 'rb') as f:
+        lr_dict = pickle.load(f)
+    args.sli_model=lr_dict['embed_model']
+    args.embed_api=lr_dict['embed_api']
+    lr_model=lr_dict['lr_model']
+    return args, lr_model
 
 
 # ---------------- #
