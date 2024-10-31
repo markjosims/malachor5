@@ -1,9 +1,12 @@
+from argparse import ArgumentParser
 import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.linear_model import LogisticRegression
 from speechbrain.inference.classifiers import EncoderClassifier
 from transformers import AutomaticSpeechRecognitionPipeline, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
 import pickle
+
+from scripts.train_whisper import device_type
 
 DEVICE = 0 if torch.cuda.is_available() else -1
 
@@ -102,3 +105,32 @@ def load_lr(path: str, model_only: bool=False) -> LogisticRegression:
     if type(lr) is dict and model_only:
         return lr['lr_model']
     return lr
+
+
+# ---------------- #
+# Argparse methods #
+# ---------------- #
+
+def add_processor_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--processor')
+    parser.add_argument('--g2p', action='store_true')
+    parser.add_argument('--transcription_ids', action='store_true')
+    parser.add_argument('--label_key', default='transcription')
+    parser.add_argument('--language', '-l', nargs='+')
+    parser.add_argument('--load_ds_cache', '-c', action='store_true')
+    parser.add_argument('--char_vocab')
+    parser.add_argument('--condense_tones', action='store_true')
+    return parser
+
+def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--model', '-m')
+    parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
+    parser.add_argument('--peft_type', choices=['LoRA'])
+    return parser
+
+
+def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--sli_model')
+    parser.add_argument('--sli_model_type', choices=['hf', 'sb'], default='sb')
+    parser.add_argument('--sb_savedir', default='speechbrain')
+    return parser

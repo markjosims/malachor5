@@ -10,8 +10,8 @@ import pandas as pd
 import os
 from glob import glob
 from tqdm import tqdm
-from dataset_utils import load_and_prepare_dataset, load_data_collator
-from model_utils import load_whisper_model_for_training_or_eval, set_generation_config
+from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
+from model_utils import load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args
 from string_norm import get_remove_oov_char_funct, condense_tones
 
 DEFAULT_HYPERPARAMS = {
@@ -45,38 +45,20 @@ HYPERPARAM_ABBREVIATIONS = {
 DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 device_type = lambda s: int(s) if s!='cpu' else s
 
-# ---------------- #
-# Argparse methods #
-# ---------------- #
-
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
-    parser.add_argument('--dataset', '-d')
-    parser.add_argument('--make_split', action='store_true')
     parser.add_argument('--output', '-o')
-    parser.add_argument('--model', '-m')
-    parser.add_argument('--processor')
-    parser.add_argument('--num_records', '-n', type=int)
-    parser.add_argument('--stream', action='store_true')
-    parser.add_argument('--transcription_ids', action='store_true')
-    parser.add_argument('--label_key', default='transcription')
-    parser.add_argument('--g2p', action='store_true')
-    parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
-    parser.add_argument('--language', '-l', nargs='+')
-    parser.add_argument('--fleurs_lang')
-    parser.add_argument('--peft_type', choices=['LoRA'])
     parser.add_argument('--ft_peft_model', action='store_true')
-    parser.add_argument('--load_ds_cache', '-c', action='store_true')
-    parser.add_argument('--resume_from_checkpoint' ,action='store_true')
+    parser.add_argument('--resume_from_checkpoint', action='store_true')
     parser.add_argument('--checkpoint')
     parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
     parser.add_argument('--all_chkpnts', action='store_true')
     parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
     parser.add_argument('--chkpnts', nargs='+')
     parser.add_argument('--eval_output')
-    parser.add_argument('--char_vocab')
-    parser.add_argument('--condense_tones', action='store_true')
-    parser.add_argument('--skip_idcs', nargs='+', type=int)
+    parser = add_processor_args(parser)
+    parser = add_whisper_model_args(parser)
+    parser = add_dataset_args(parser)
     parser = add_hyperparameter_args(parser)
     return parser
 

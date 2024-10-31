@@ -4,7 +4,7 @@ from speechbrain.dataio.batch import PaddedBatch
 import torch
 from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Union
-
+from argparse import ArgumentParser
 from torch.utils.data import DataLoader
 from scripts.string_norm import get_epitran
 from transformers import WhisperProcessor
@@ -188,3 +188,16 @@ def build_dataloader(dataset, batch_size):
     )
 
     return dataloader
+
+# ---------------- #
+# Argparse methods #
+# ---------------- #
+
+def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--dataset', '-d')
+    parser.add_argument('--num_records', '-n', type=int)
+    parser.add_argument('--stream', action='store_true')
+    parser.add_argument('--fleurs_lang')
+    parser.add_argument('--skip_idcs', nargs='+', type=int)
+    parser.add_argument('--make_split', action='store_true')
+    return parser

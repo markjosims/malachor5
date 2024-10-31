@@ -12,6 +12,8 @@ from dataset_utils import build_dataloader, dataset_generator
 from model_utils import load_lr, sb_model, DEVICE
 from speechbrain.inference.classifiers import EncoderClassifier
 
+from scripts.model_utils import add_sli_args
+
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
 
@@ -22,12 +24,6 @@ DEFAULT_SR = 16_000
 def empty_command(args) -> int:
     print("Specify a command to run.")
     return 1
-
-def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--sli_model')
-    parser.add_argument('--sli_model_type', choices=['hf', 'sb'], default='sb')
-    parser.add_argument('--sb_savedir', default='speechbrain')
-    return parser
 
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
