@@ -1,8 +1,11 @@
 from math import ceil
 from datasets import Audio, Dataset, DatasetDict, load_dataset, load_from_disk
+from speechbrain.dataio.batch import PaddedBatch
 import torch
 from dataclasses import dataclass
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generator, List, Union
+from argparse import ArgumentParser
+from torch.utils.data import DataLoader
 from scripts.string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
@@ -159,3 +162,42 @@ def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
     dataset['validation']=dataset['train'].select(range(num_val))
     dataset['train']=dataset['train'].select(range(num_val, num_records))
     return dataset
+
+
+def dataset_generator(dataset: Dataset) -> Generator:
+    """
+    For progress bars to work with the HuggingFace pipeline,
+    the dataset must be wrapped in an iterable class,
+    with the Pipeline object handling batching.
+    """
+    for row in dataset:
+        yield row['audio']
+
+
+def collate_sb(batch):
+    return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
+
+
+def build_dataloader(dataset, batch_size):
+    # create a dataloader that returns batches of wav objs
+    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn=collate_sb
+    )
+
+    return dataloader
+
+# ---------------- #
+# Argparse methods #
+# ---------------- #
+
+def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument('--dataset', '-d')
+    parser.add_argument('--num_records', '-n', type=int)
+    parser.add_argument('--stream', action='store_true')
+    parser.add_argument('--fleurs_lang')
+    parser.add_argument('--skip_idcs', nargs='+', type=int)
+    parser.add_argument('--make_split', action='store_true')
+    return parser

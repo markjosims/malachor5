@@ -1,206 +1,52 @@
 import torch.utils
-from transformers import pipeline, Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
-from speechbrain.inference.classifiers import EncoderClassifier
-from speechbrain.dataio.batch import PaddedBatch
+from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from sklearn.linear_model import LogisticRegression
-from datasets import load_from_disk, Audio, Dataset, DatasetDict
-from datasets.combine import concatenate_datasets
-from typing import Optional, Sequence, Dict, Any, List, List, Generator, Union
+from datasets import DatasetDict
+from typing import Optional, Sequence
 from argparse import ArgumentParser
 import torch
-from torch.utils.data import DataLoader
-import os
 from tqdm import tqdm
-import pandas as pd
-import json
 import pickle
+from dataset_utils import build_dataloader
+from model_utils import load_lr, sb_model
+from speechbrain.inference.classifiers import EncoderClassifier
+from model_utils import add_sli_args
 
 MMS_LID_256 = 'facebook/mms-lid-256'
 DEFAULT_SR = 16_000
-DEVICE = 0 if torch.cuda.is_available() else -1
 
-# ----------------------------------------- #
-# Data processing and model loading methods #
-# ----------------------------------------- #
+# --------- #
+# argparser #
+# --------- #
 
-def dataset_generator(dataset: Dataset) -> Generator:
-    """
-    For progress bars to work with the HuggingFace pipeline,
-    the dataset must be wrapped in an iterable class,
-    with the Pipeline object handling batching.
-    """
-    for row in dataset:
-        yield row['audio']
+def empty_command(args) -> int:
+    print("Specify a command to run.")
+    return 1
 
-def collate_sb(batch):
-    return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
+def init_argparser() -> ArgumentParser:
+    parser = ArgumentParser("Script for running SLI experiment")
+    parser.add_argument('--dataset', '-D')
+    parser.add_argument('--output', '-o')
+    parser.add_argument('--device', '-d')
+    parser=add_sli_args(parser)
+    parser.set_defaults(func=empty_command)
+    commands=parser.add_subparsers('command')
 
-def build_dataloader(dataset, batch_size):
-    # create a dataloader that returns batches of wav objs
-    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        collate_fn=collate_sb
-    )
+    train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
+    train_lr_parser.add_argument('--embeds_path')
+    train_lr_parser.set_defaults(func=train_logreg)
     
-    return dataloader
-
-def sb_model(args):
-    model = EncoderClassifier.from_hparams(
-        source=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa'),
-        savedir=getattr(args, 'sb_savedir', 'models'),
-        run_opts={"device":torch.device(args.device)},
-    )
-    return model
-
-def load_lr(args) -> LogisticRegression:
-    with open(args.lr_model, 'rb') as f:
-        lr = pickle.load(f)
-    return lr
-
-# ----------------- #
-# Inference methods #
-# ----------------- #
-
-def infer_hf(args, dataset) -> List[Dict[str, Any]]:
-    print(f"Loading HuggingFace model {args.sli_model} for performing inference.")
-    pipe = pipeline(
-        'audio-classification', 
-        args.sli_model,
-        device=(torch.device(args.device)),
-    )
-
-    ds_gen = dataset_generator(dataset)
-    output = []
-    for batch_output in tqdm(
-        pipe(ds_gen, batch_size=args.batch_size),
-        total=len(dataset),
-        desc='SLI pipeline'
-    ):
-        output.append(batch_output)
-    return output
-
-def infer_sb(args, dataset) -> List[Dict[str, Any]]:
-    print(f"Loading SpeechBrain model {args.sli_model} for performing inference.")
-    model = sb_model(args)
-    dataloader = build_dataloader(dataset, args.batch_size)
-
-    label_encoder = model.hparams.label_encoder
-    assert label_encoder.is_continuous()
-
-    long_labels = label_encoder.decode_ndim(range(len(label_encoder)))
-    iso_codes = [label.split(':')[0] for label in long_labels]
-    # normalize 'en' or 'English' to 'eng'
-    if 'en' in iso_codes:
-        en_idx = iso_codes.index('en')
-    else:
-        en_idx = iso_codes.index('English')
-    iso_codes[en_idx]='eng'
-
-    outputs = []
-    for batch in tqdm(dataloader):
-        prediction = model.classify_batch(batch)
-        probs = prediction[0]
-
-        # save label probabilities as a list of dicts
-        # to match output returned by HF pipeline
-        for row_probs in probs:
-            row_obj = []
-            for i, log_prob in enumerate(row_probs):
-                label = iso_codes[i]
-                long_label = long_labels[i]
-                prob = log_prob.exp().item()
-                row_obj.append({'label': label, 'score': prob, 'long_label': long_label})
-            outputs.append(row_obj)
-    return outputs
-
-def infer_lr(args, dataset):
-    embeds = load_embeddings(args, dataset)
-    lr = load_lr(args)
-    outputs = lr.predict(embeds)
-
-    return outputs
-
-# ------------------ #
-# Evaluation methods #
-# ------------------ #
-
-def compare_predictions(row: Dict[str, Any], meta_threshold: Optional[float]=None) -> Dict[str, Union[str, float]]:
-    label_col = 'lang'
-    pred_col = 'output'
-
-    label = row[label_col].lower()
-    pred = row[pred_col]
-    pred.sort(key=lambda x:x['score'], reverse=True)
-
-    pred_label = pred[0]['label']
-    pred_score = pred[0]['score']
-
-    eng = [score for score in pred if score['label'].lower()=='eng']
-    eng_score = eng[0]['score'] if len(eng)>0 else 0
-
-    # TODO: allow metalang to be set dynamically
-    if meta_threshold:
-        # correct if model gives P(ENG) higher than threshold
-        # when label is ENG
-        if (label=='eng') and eng_score > meta_threshold:
-            acc=1
-        # correct if model gives P(ENG) lower than threshold
-        # when label is fieldwork
-        elif (label!='eng') and eng_score < meta_threshold:
-            acc=1
-        # incorrect otherwise
-        else:
-            acc=0
-    else:
-        # correct if model predicts same label
-        # in practice this will be when model predicts 'eng' for English
-        if label==pred_label:
-            acc=1
-        # correct if model predicts non-English for non-English
-        elif (label!='eng') and (pred_label!='eng'):
-            acc=1
-        # incorrect otherwise
-        else:
-            acc=0
-
-    return {
-        "label": label,
-        "pred": pred_label,
-        "pred_score": round(pred_score, 4),
-        "eng_score": round(eng_score, 4),
-        "acc": acc,
-        "audio": row['audio_path'],
-    }
-
-def get_metric_summary(metrics: pd.DataFrame) -> Dict[str, float]:
-    summary_obj = {}
-
-    label_tic = metrics['label']=='tic'
-    label_eng = metrics['label']=='eng'
-
-    summary_obj['tic_mean_acc'] = round(metrics[label_tic]['acc'].mean(), 4)
-    summary_obj['tic_mean_eng_score'] = round(metrics[label_tic]['eng_score'].mean(), 4)
-    
-    summary_obj['eng_mean_acc'] = round(metrics[label_eng]['acc'].mean(), 4)
-    summary_obj['eng_mean_eng_score'] = round(metrics[label_eng]['eng_score'].mean(), 4)
-
-    summary_obj['tic_lang_counts'] = metrics[label_tic]['pred'].value_counts().to_dict()
-    summary_obj['eng_lang_counts'] = metrics[label_eng]['pred'].value_counts().to_dict()
-
-    tic_langs = set(metrics[label_tic]['pred'])
-    eng_langs = set(metrics[label_eng]['pred'])
-    overlap_langs = set.intersection(tic_langs, eng_langs)
-    summary_obj['overlap'] = list(overlap_langs)
-
-    return summary_obj
+    return parser
 
 # ----------------- #
 # Embedding methods #
 # ----------------- #
 
-def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
+def sb_embeddings(
+        args,
+        dataset,
+        model: Optional[EncoderClassifier]=None
+    ) -> torch.Tensor:
     sli_model=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa')
     if model is None:
         print(f"Loading SpeechBrain model {sli_model} for extracting embeddings.")
@@ -211,7 +57,7 @@ def sb_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.batch_size)
+    dataloader = build_dataloader(dataset, args.sli_batch_size)
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -234,7 +80,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.batch_size)
+    dataloader = build_dataloader(dataset, args.sli_batch_size)
 
     logits = []
     # [
@@ -301,141 +147,11 @@ def load_embeddings(args, dataset):
         embeds = sb_embeddings(args, dataset)
     return embeds
 
-# ---- #
-# Main #
-# ---- #
+# ------------------- #
+# logistic regression #
+# ------------------- #
 
-def init_argparser() -> ArgumentParser:
-    parser = ArgumentParser("Script for running SLI experiment")
-    parser.add_argument(
-        "--sli_model", '-m',
-    )
-    parser.add_argument(
-        "--lr_model",
-    )
-    parser.add_argument(
-        "--dataset", '-d',
-    )
-    parser.add_argument(
-        "--embeds_path",
-    )
-    parser.add_argument(
-        "--device", '-D', type=int, default=DEVICE,
-    )
-    parser.add_argument(
-        '--batch_size', '-b', type=int,
-    )
-    parser.add_argument(
-        "--output", '-o',
-    )
-    parser.add_argument(
-        "--split", '-s', choices=['train', 'test', 'validation', 'all'],
-    )
-    parser.add_argument(
-        '--inference_api', '-a', choices=['hf', 'sb', 'lr'], default='sb',
-    )
-    parser.add_argument(
-        '--embed_api', choices=['hf', 'sb'], default='sb',
-    )
-    parser.add_argument(
-        '--sb_savedir', help='Path to save SpeechBrain model to, if not saved locally already.'
-    )
-    parser.add_argument(
-        '--meta_threshold', type=float,
-    )
-    parser.add_argument(
-        '--output_type', choices=['inference', 'embedding', 'logreg'], default='inference',
-    )
-    parser.add_argument(
-        '--evaluate', action='store_true',
-    )
-    return parser
-
-def main(argv: Optional[Sequence[str]]=None) -> int:
-    parser = init_argparser()
-    args = parser.parse_args(argv)
-
-    # load dataset
-    if args.split == 'all':
-        dataset = load_from_disk(args.dataset)
-        dataset = concatenate_datasets(dataset.values())
-    elif args.split:
-        split_path = os.path.join(args.dataset, args.split)
-        dataset = load_from_disk(split_path)
-    else:
-        dataset = load_from_disk(args.dataset)
-    # cast 'audio' to Audio obj but keep path as a separate col
-    if type(dataset) is DatasetDict:
-        for split in dataset:
-            dataset[split] = dataset[split].add_column('audio_path', [row['path'] for row in dataset[split]['audio']])
-    else:
-        dataset = dataset.add_column('audio_path', [row['path'] for row in dataset['audio']])
-    dataset = dataset.cast_column('audio', Audio(sampling_rate=DEFAULT_SR))
-
-    if args.output_type == 'embedding':
-        return make_embeddings(args, dataset)
-
-    if args.output_type == 'logreg':
-        return do_logreg(args, dataset)
-        
-    return do_inference(args, dataset)
-
-def do_inference(args, dataset) -> int:
-    if args.inference_api == 'hf':
-        output = infer_hf(args, dataset)
-    elif args.inference_api == 'sb':
-        output = infer_sb(args, dataset)
-    else:
-        # args.inference_api == 'lr'
-        output = infer_lr(args, dataset)
-
-    if args.evaluate:
-        # calculate accuracy on output
-        dataset = dataset.add_column("output", output)
-        output_metrics = dataset.map(
-            lambda row: compare_predictions(row, args.meta_threshold),
-            remove_columns=dataset.column_names
-        )
-        output_metrics = output_metrics.to_pandas()
-        summary = get_metric_summary(output_metrics)
-
-        # save result
-        output_metrics.to_csv(args.output+'.csv', index=False)
-        with open(args.output+'.json', 'w') as f:
-            json.dump(summary, f, indent=2)
-
-        return 0
-    
-    dataset = dataset.add_column("output", output)
-    dataset = dataset.remove_columns("audio")
-    dataset.to_csv(args.output+'.csv')
-
-    return 0
-
-
-def make_embeddings(args, dataset) -> int:
-    if args.embed_api == 'hf':
-        embeds = hf_embeddings(args, dataset)
-    else:
-        embeds = sb_embeddings(args, dataset)
-    torch.save(embeds, args.output+'.pt')
-
-    # save metadata
-    dataset = dataset.remove_columns('audio')
-    dataset = dataset.rename_column('audio_path', 'audio')
-    if type(dataset) is DatasetDict:
-        split_dfs=[]
-        for split in dataset:
-            split_df=dataset[split].to_pandas()
-            split_df['split']=split
-            split_dfs.append(split_df)
-        df=pd.concat(split_dfs)
-    else:
-        df = dataset.to_pandas()
-    df.to_csv(args.output+'.csv', index=False)
-    return 0
-
-def do_logreg(args, dataset) -> int:
+def train_logreg(args, dataset) -> int:
     embeds = load_embeddings(args, dataset)
 
     train_labels=dataset['train']['label']
@@ -444,16 +160,36 @@ def do_logreg(args, dataset) -> int:
     train_X=embeds['train']
     test_X=embeds['test']
 
-    logreg=LogisticRegression().fit(train_X, train_labels)
-    scores=logreg.score(test_X, test_labels)
+    lr=LogisticRegression().fit(train_X, train_labels)
+    scores=lr.score(test_X, test_labels)
     print(scores)
     
+    lr_dict = {
+        'lr_model': lr,
+        'embed_model': args.sli_model,
+        'embed_api': args.embed_api
+    }
+
     with open(args.output, 'wb') as f:
-        pickle.dump(logreg, f)
+        pickle.dump(lr_dict, f)
     
     return 0 
 
-    
+def infer_lr(args, dataset):
+    args, lr = load_lr(args)
+    embeds = load_embeddings(args, dataset)
+    outputs = lr.predict(embeds)
+
+    return outputs
+
+# ---- #
+# Main #
+# ---- #
+
+def main(argv: Optional[Sequence[str]]=None) -> int:
+    parser = init_argparser()
+    args = parser.parse_args(argv)
+    args.func(args)
 
 
 if __name__ == '__main__':
