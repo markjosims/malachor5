@@ -6,8 +6,8 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from scripts.dataset_utils import collate_sb
-from scripts.model_utils import sb_model
+from dataset_utils import collate_sb
+from model_utils import sb_model
 import torch
 import json
 import os

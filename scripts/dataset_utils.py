@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Union
 from argparse import ArgumentParser
 from torch.utils.data import DataLoader
-from scripts.string_norm import get_epitran
+from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
 

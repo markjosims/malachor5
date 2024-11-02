@@ -16,8 +16,8 @@ from tempfile import TemporaryDirectory
 import csv
 from unidecode import unidecode
 import json
-from scripts.dataset_utils import load_dataset_safe
-from scripts.model_utils import load_whisper_pipeline
+from dataset_utils import load_dataset_safe
+from model_utils import load_whisper_pipeline
 from train_whisper import DEVICE, device_type
 from string_norm import get_epitran
 
