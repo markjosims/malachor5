@@ -6,8 +6,6 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from transformers import AutomaticSpeechRecognitionPipeline, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
 import pickle
 
-from scripts.train_whisper import device_type
-
 DEVICE = 0 if torch.cuda.is_available() else -1
 device_type = lambda s: int(s) if s!='cpu' else s
 
