@@ -104,12 +104,15 @@ def load_and_resample(
         fp: str,
         sr: int = SAMPLE_RATE,
         to_mono: bool = True,
+        flatten: bool = False,
     ) -> torch.Tensor:
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
     if to_mono and len(wav.shape)==2:
         print("Converting stereo wav to mono")
         wav=wav[0,:]
+    if flatten and len(wav.shape)==2:
+        wav=wav[0]
     return wav
 
 def sec_to_samples(time_sec: float) -> int:
