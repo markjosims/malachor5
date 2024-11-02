@@ -111,8 +111,8 @@ def load_and_resample(
     if to_mono and len(wav.shape)==2:
         print("Converting stereo wav to mono")
         wav=wav[0,:]
-    if flatten and len(wav.shape)==2:
-        wav=wav[0]
+        if flatten:
+            wav=wav[0]
     return wav
 
 def sec_to_samples(time_sec: float) -> int:
