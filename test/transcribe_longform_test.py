@@ -48,3 +48,20 @@ def test_drz():
     for chunk in drz_out['drz_chunks']:
         assert 'speaker' in chunk
         assert type(chunk['speaker']) is str
+
+def test_return_wavslices():
+    """
+    `perform_vad` and `diarize` should return a wav slice
+    with each chunk if the option `return_wav_slices` is passed
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    drz_out = diarize(wav, return_wav_slices=True)
+
+    for chunk in vad_out['vad_chunks']:
+        assert 'wav' in chunk
+        assert type(chunk['wav']) is torch.Tensor
+    
+    for chunk in drz_out['drz_chunks']:
+        assert 'wav' in chunk
+        assert type(chunk['wav']) is torch.Tensor
