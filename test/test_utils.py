@@ -1,9 +1,9 @@
 
-def assert_chunk_dict_shape(chunk_dict):
+def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
-    assert 'chunks' in chunk_dict
-    assert type(chunk_dict['chunks']) is list
-    for chunk in chunk_dict['chunks']:
+    assert chunks_key in chunk_dict
+    assert type(chunk_dict[chunks_key]) is list
+    for chunk in chunk_dict[chunks_key]:
         assert type(chunk) is dict
         assert 'timestamp' in chunk
         assert type(chunk['timestamp']) is tuple
