@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Dict, List, Union
+from typing import Optional, Sequence, Dict, List, Union, Any
 from argparse import ArgumentParser
 from transformers import Pipeline, pipeline, WhisperTokenizer
 import pandas as pd
@@ -46,6 +46,7 @@ def perform_asr(
 def perform_vad(
         audio: torch.Tensor,
         pipe: Optional[PyannotePipeline] = None,
+        annotations: Dict[str, Any] = dict(),
 ):
 
     if not pipe:
@@ -56,7 +57,9 @@ def perform_vad(
             {"waveform": audio, "sample_rate": SAMPLE_RATE},
             hook=hook,
         )
-    return result
+    timestamps = [{'timestamp':(seg.start, seg.end)} for seg in result.itersegments()]
+    annotations['vad_chunks'] = timestamps
+    return annotations
 
 def diarize(
         audio: torch.Tensor,
