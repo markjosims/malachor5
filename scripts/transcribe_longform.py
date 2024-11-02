@@ -45,9 +45,9 @@ def perform_asr(
         audio = audio[0,:].numpy()
     result = pipe(
         audio,
-        **kwargs,
         return_timestamps=return_timestamps,
         generate_kwargs=generate_kwargs,
+        **kwargs,
     )
     return result
 
@@ -55,6 +55,7 @@ def perform_vad(
         audio: torch.Tensor,
         pipe: Optional[PyannotePipeline] = None,
         annotations: Dict[str, Any] = dict(),
+        return_wav_slices: bool = False,
 ):
 
     if not pipe:
@@ -66,6 +67,10 @@ def perform_vad(
             hook=hook,
         )
     vad_chunks = [{'timestamp':(seg.start, seg.end)} for seg in result.itersegments()]
+    if return_wav_slices:
+        for chunk in vad_chunks:
+            wav_slice=get_segment_slice(audio, chunk['timestamp'])
+            chunk['wav']=wav_slice
     annotations['vad_chunks'] = vad_chunks
     return annotations
 
@@ -74,6 +79,7 @@ def diarize(
         pipe: Optional[PyannotePipeline] = None,
         num_speakers: int = 2,
         annotations: Dict[str, Any] = dict(),
+        return_wav_slices: bool = False,
 ):
 
     if not pipe:
@@ -93,6 +99,10 @@ def diarize(
             for seg in result.itersegments()
         ])
     annotations['drz_chunks']=drz_chunks
+    if return_wav_slices:
+        for chunk in drz_chunks:
+            wav_slice=get_segment_slice(audio, chunk['timestamp'])
+            chunk['wav']=wav_slice
     return annotations
 
 
