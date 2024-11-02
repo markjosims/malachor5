@@ -4,7 +4,7 @@ from test_utils import assert_chunk_dict_shape
 
 import sys
 sys.path.append('scripts')
-from transcribe_longform import perform_vad, perform_asr, load_and_resample
+from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_load_and_resample():
@@ -35,3 +35,16 @@ def test_asr():
     assert_chunk_dict_shape(asr_out)
     assert 'text' in asr_out
     assert type(asr_out['text']) is str
+
+def test_drz():
+    """
+    `diarize` should return a dict with key 'drz_chunks' which maps to
+    a list of dicts each with a `timestamps` key mapping to a 2-tuple of floats
+    and a `speaker` key mapping to a str
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    drz_out = diarize(wav)
+    assert_chunk_dict_shape(drz_out, 'drz_chunks')
+    for chunk in drz_out['drz_chunks']:
+        assert 'speaker' in chunk
+        assert type(chunk['speaker']) is str
