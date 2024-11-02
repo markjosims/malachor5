@@ -106,13 +106,21 @@ def load_and_resample(
         to_mono: bool = True,
         flatten: bool = False,
     ) -> torch.Tensor:
+    f"""
+    Load a wavfile at filepath `fp` into a torch tensor.
+    Resample to `sr` (default {SAMPLE_RATE}).
+    If `to_mono` is passed, convert to mono by dropping the second channel.
+    If `flatten` is also passed, squeeze.
+    """
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
     if to_mono and len(wav.shape)==2:
         print("Converting stereo wav to mono")
         wav=wav[0,:]
         if flatten:
-            wav=wav[0]
+            wav=wav.squeeze()
+    elif flatten:
+        raise ValueError("Cannot flatten wav unless converting to mono!")
     return wav
 
 def sec_to_samples(time_sec: float) -> int:
