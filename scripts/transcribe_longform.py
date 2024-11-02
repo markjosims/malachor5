@@ -65,8 +65,8 @@ def perform_vad(
             {"waveform": audio, "sample_rate": SAMPLE_RATE},
             hook=hook,
         )
-    timestamps = [{'timestamp':(seg.start, seg.end)} for seg in result.itersegments()]
-    annotations['vad_chunks'] = timestamps
+    vad_chunks = [{'timestamp':(seg.start, seg.end)} for seg in result.itersegments()]
+    annotations['vad_chunks'] = vad_chunks
     return annotations
 
 def diarize(
