@@ -34,13 +34,21 @@ Copied from `annotate.py` in https://github.com/markjosims/montague_archiving on
 def perform_asr(
         audio: Union[torch.Tensor, np.ndarray],
         pipe: Optional[Pipeline] = None,
+        model_path: str = ASR_URI,
+        return_timestamps = True,
+        generate_kwargs=None,
         **kwargs,
 ) -> str:
     if not pipe:
-        pipe = pipeline("automatic-speech-recognition", model=ASR_URI)
+        pipe = pipeline("automatic-speech-recognition", model=model_path)
     if type(audio) is torch.Tensor:
-        audio = np.array(audio[0,:])
-    result = pipe(audio,**kwargs)
+        audio = audio[0,:].numpy()
+    result = pipe(
+        audio,
+        **kwargs,
+        return_timestamps=return_timestamps,
+        generate_kwargs=generate_kwargs,
+    )
     return result
 
 def perform_vad(
