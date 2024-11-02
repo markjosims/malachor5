@@ -73,6 +73,7 @@ def diarize(
         audio: torch.Tensor,
         pipe: Optional[PyannotePipeline] = None,
         num_speakers: int = 2,
+        annotations: Dict[str, Any] = dict(),
 ):
 
     if not pipe:
@@ -84,7 +85,15 @@ def diarize(
             num_speakers=num_speakers,
             hook=hook,
         )
-    return result
+    speakers = result.labels()
+    drz_chunks=[]
+    for speaker in speakers:
+        drz_chunks.extend([
+            {'timestamp':(seg.start, seg.end), 'speaker':speaker}
+            for seg in result.itersegments()
+        ])
+    annotations['drz_chunks']=drz_chunks
+    return annotations
 
 
 # ------------ #
