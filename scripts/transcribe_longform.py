@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Dict, List, Union, Any
+from typing import Optional, Sequence, Dict, List, Union, Any, Tuple
 from argparse import ArgumentParser
 from transformers import Pipeline, pipeline, WhisperTokenizer
 import pandas as pd
@@ -155,14 +155,19 @@ def sec_to_ms(time_sec: float) -> int:
 
 def get_segment_slice(
         audio: torch.Tensor,
-        segment,
+        segment: Union[Segment, Tuple[float, float]],
 ) -> np.ndarray:
     """
     Takes torchaudio tensor and a pyannote segment,
     returns slice of tensor corresponding to segment endpoints.
     """
-    start_idx = sec_to_samples(segment.start)
-    end_idx = sec_to_samples(segment.end)
+    if type(segment) is Segment:
+        start_sec = segment.start
+        end_sec = segment.end
+    else: # type(segment) is tuple
+        start_sec, end_sec = segment
+    start_idx = sec_to_samples(start_sec)
+    end_idx = sec_to_samples(end_sec)
     return audio[:,start_idx:end_idx]
 
 def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
