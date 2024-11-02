@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 from test_utils import assert_chunk_dict_shape
 
@@ -11,9 +11,9 @@ def test_load_and_resample():
     """
     `load_and_resample` should return a single-channel numpy array of samples
     """
-    wav = load_and_resample(SAMPLE_WAVPATH, to_mono=True, to_np=True)
-    assert type(wav) is np.ndarray
-    assert len(wav.shape)==1
+    wav = load_and_resample(SAMPLE_WAVPATH, to_mono=True, flatten=False)
+    assert type(wav) is torch.Tensor
+    assert len(wav.shape)==2
 
 def test_vad():
     """
