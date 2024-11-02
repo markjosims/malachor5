@@ -11,7 +11,7 @@ import os
 from glob import glob
 from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
-from model_utils import load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args
+from model_utils import load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, device_type, DEVICE
 from string_norm import get_remove_oov_char_funct, condense_tones
 
 DEFAULT_HYPERPARAMS = {
@@ -41,9 +41,6 @@ HYPERPARAM_ABBREVIATIONS = {
     'num_train_epochs': 'e',
     'gradient_accumulation_steps': 'g',
 }
-
-DEVICE = 0 if torch.cuda.is_available() else 'cpu'
-device_type = lambda s: int(s) if s!='cpu' else s
 
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
