@@ -73,7 +73,7 @@ def load_data_collator(model, processor):
 def prepare_dataset(row, processor, transcription_ids=False, g2p=None, label_key='transcription'):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
-    label = row[label_key]
+    label = row[label_key or 'transcription']
     row["input_features"] = processor(wav, sampling_rate=sr, return_tensors='np').input_features[0]
     row["input_length"] = ceil(len(wav)/sr)
     if transcription_ids:
