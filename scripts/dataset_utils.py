@@ -98,12 +98,10 @@ def prepare_dataset(
         labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
     elif decoder_prompt_ids:
         labels = processor.tokenizer(label, return_tensors='np', add_special_tokens=False).input_ids[0]
-        labels = np.concatenate([
-            [BOS_TOKEN_ID,],
-            decoder_prompt_ids,
-            labels,
-            [EOS_TOKEN_ID,],
-        ])
+        prefix = [BOS_TOKEN_ID,] + decoder_prompt_ids
+        suffix = [EOS_TOKEN_ID,]
+        labels = np.concatenate([prefix, labels, suffix])
+        row["decoder_input_ids"]=prefix
     else:
         labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
     row["labels"]=labels
