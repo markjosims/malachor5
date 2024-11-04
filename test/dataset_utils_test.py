@@ -3,7 +3,7 @@ from test_utils import assert_tokens_in_row
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset
+from dataset_utils import load_and_prepare_dataset, DATASET_ARGS
 
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-asr-hf'
 SPECIAL_TOKENS = {
@@ -20,6 +20,9 @@ def test_dataset_language():
         dataset=TIRA_ASR_DS,
         language='en',
     )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
     ds = load_and_prepare_dataset(args)
     ds.map(lambda row: assert_tokens_in_row(row, languages=['en']))
     
