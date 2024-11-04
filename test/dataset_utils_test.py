@@ -19,10 +19,15 @@ def test_dataset_language():
     args = Namespace(
         dataset=TIRA_ASR_DS,
         language='en',
+        model='openai/whisper-tiny',
+        num_records=50,
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
             setattr(args, arg, None)
-    ds = load_and_prepare_dataset(args)
-    ds.map(lambda row: assert_tokens_in_row(row, languages=['en']))
+    ds, _ = load_and_prepare_dataset(args)
+    ds.map(
+        lambda row: assert_tokens_in_row(row, languages=['en'], special_tokens=SPECIAL_TOKENS),
+        batched=False,
+    )
     
