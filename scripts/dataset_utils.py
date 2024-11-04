@@ -19,6 +19,11 @@ DATASET_ARGS = [
     'make_split',
     'processor',
     'model',
+    'action',
+    'g2p',
+    'load_ds_cache',
+    'transcription_ids',
+    'label_key',
 ]
 
 # ------------- #
