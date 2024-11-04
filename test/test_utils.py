@@ -13,3 +13,11 @@ def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
         assert type(start) is float
         assert type(end) is float
         assert end>start
+
+def assert_tokens_in_row(row, languages, special_tokens=[]):
+    language_ids = [special_tokens[language]['id'] for language in languages]
+    labels = row['labels']
+    for lang_id in language_ids:
+        assert lang_id in labels
+    for spec_tok in special_tokens:
+        assert spec_tok in labels
