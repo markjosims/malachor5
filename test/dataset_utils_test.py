@@ -18,7 +18,7 @@ SPECIAL_TOKENS = {
 def test_dataset_language():
     args = Namespace(
         dataset=TIRA_ASR_DS,
-        language='en',
+        language=['en'],
         model='openai/whisper-tiny',
         num_records=50,
     )
