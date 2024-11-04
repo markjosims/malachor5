@@ -27,7 +27,12 @@ def test_dataset_language():
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
     ds.map(
-        lambda row: assert_tokens_in_row(row, token_names=['en'], special_tokens=SPECIAL_TOKENS),
+        lambda row: assert_tokens_in_row(
+            row,
+            token_names=['en', 'transcribe', 'bos', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS
+        ),
         batched=False,
     )
+
     
