@@ -153,7 +153,7 @@ def load_and_prepare_dataset(args):
             task='transcribe',
         )
     elif args.language:
-        decoder_prompt_ids=get_forced_decoder_ids(args, processor.tokenizer)
+        decoder_prompt_ids=get_forced_decoder_ids(args, processor.tokenizer, ids_only=True)
     # get a random split name dynamically since we don't know what splits are saved in dataset
     split_key=list(ds.keys())[0]
     if ds[split_key][0]["audio"]["sampling_rate"]!=16_000:
