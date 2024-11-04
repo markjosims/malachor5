@@ -65,3 +65,11 @@ def test_return_wavslices():
     for chunk in drz_out['drz_chunks']:
         assert 'wav' in chunk
         assert type(chunk['wav']) is torch.Tensor
+
+def test_sli():
+    """
+    `perform_sli` should accept an `annotations` dict with
+    a list of wav slices and add the `sli_label` key to each chunk
+    in the list
+    """
+    ...
