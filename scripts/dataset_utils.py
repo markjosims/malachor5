@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
+from model_utils import get_forced_decoder_ids
 
 DATASET_ARGS = [
     'dataset',
@@ -25,6 +26,8 @@ DATASET_ARGS = [
     'transcription_ids',
     'label_key',
 ]
+TRANSCRIBE_TOKEN_ID=50359
+
 
 # ------------- #
 # data collator #
@@ -70,7 +73,14 @@ def load_data_collator(model, processor):
 # dataset preprocessing #
 # --------------------- #
 
-def prepare_dataset(row, processor, transcription_ids=False, g2p=None, label_key='transcription'):
+def prepare_dataset(
+        row,
+        processor,
+        transcription_ids=False,
+        g2p=None,
+        label_key='transcription',
+        decoder_prompt_ids=None,
+    ):
     wav=row["audio"]["array"]
     sr=row["audio"]["sampling_rate"]
     label = row[label_key or 'transcription']
@@ -80,12 +90,16 @@ def prepare_dataset(row, processor, transcription_ids=False, g2p=None, label_key
         transcription_ids=row["transcription_ids"]
         if type(transcription_ids) is str:
             transcription_ids=eval(transcription_ids)
-        row["labels"]=transcription_ids
+        labels=transcription_ids
     elif g2p:
         label=g2p.transliterate(label)
-        row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
+        labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
     else:
-        row["labels"] = processor.tokenizer(label, return_tensors='np').input_ids[0]
+        labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
+    if decoder_prompt_ids:
+        task_tok_idx = labels.index(TRANSCRIBE_TOKEN_ID)
+        labels = labels[:task_tok_idx]+decoder_prompt_ids+labels[task_tok_idx+1:]
+    row["labels"]=labels
     return row
 
 
@@ -129,6 +143,16 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
     processor = WhisperProcessor.from_pretrained(args.processor or args.model, task="transcribe")
+    # set language prefix tokens
+    # use native method if only one decoding one language
+    decoder_prompt_ids=None
+    if args.language and len(args.language)==1:
+        processor.tokenizer.set_prefix_tokens(
+            language=args.language[0],
+            task='transcribe',
+        )
+    elif args.language:
+        decoder_prompt_ids=get_forced_decoder_ids(args, processor.tokenizer)
     # get a random split name dynamically since we don't know what splits are saved in dataset
     split_key=list(ds.keys())[0]
     if ds[split_key][0]["audio"]["sampling_rate"]!=16_000:
@@ -158,7 +182,13 @@ def load_and_prepare_dataset(args):
         else 'whisper'
     ) if args.g2p else None
     ds = ds.map(
-        lambda b: prepare_dataset(b, processor, transcription_ids=args.transcription_ids, g2p=epitran, label_key=args.label_key),
+        lambda b: prepare_dataset(
+            b, processor,
+            transcription_ids=args.transcription_ids,
+            g2p=epitran,
+            label_key=args.label_key,
+            decoder_prompt_ids=decoder_prompt_ids,
+        ),
         num_proc=4,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
