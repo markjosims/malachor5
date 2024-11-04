@@ -50,13 +50,21 @@ def load_peft_model_for_finetuning(args):
     return model
 
 
-def get_forced_decoder_ids(args, tokenizer):
+def get_forced_decoder_ids(args, tokenizer, ids_only=False):
+    """
+    Get task and language prompt tokens for languages specified by `args.language`
+    and task 'transcribe'. By default returns a list of tuples, [(i, token_id), ...].
+    If `ids_only`, pass a list of token ids sorted by `i`.
+    """
     forced_decoder_ids=set()
     for language in args.language or [None]:
         forced_decoder_ids.update(
                 tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
         )
     forced_decoder_ids=list(forced_decoder_ids)
+    if ids_only:
+        forced_decoder_ids.sort(key=lambda t:t[0])
+        forced_decoder_ids=[t[1] for t in forced_decoder_ids]
     return forced_decoder_ids
 
 
