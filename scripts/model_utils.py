@@ -55,7 +55,7 @@ def get_forced_decoder_ids(args, tokenizer):
     for language in args.language or [None]:
         forced_decoder_ids.update(
                 tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
-            )
+        )
     forced_decoder_ids=list(forced_decoder_ids)
     return forced_decoder_ids
 
