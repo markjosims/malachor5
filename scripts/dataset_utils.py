@@ -10,6 +10,7 @@ from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
 from model_utils import get_forced_decoder_ids
+import numpy as np
 
 DATASET_ARGS = [
     'dataset',
@@ -97,8 +98,8 @@ def prepare_dataset(
     else:
         labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
     if decoder_prompt_ids:
-        task_tok_idx = labels.index(TRANSCRIBE_TOKEN_ID)
-        labels = labels[:task_tok_idx]+decoder_prompt_ids+labels[task_tok_idx+1:]
+        task_tok_idx = np.argwhere(labels==TRANSCRIBE_TOKEN_ID).item()
+        labels = np.concatenate([labels[:task_tok_idx],decoder_prompt_ids,labels[task_tok_idx+1:]])
     row["labels"]=labels
     return row
 
@@ -183,7 +184,8 @@ def load_and_prepare_dataset(args):
     ) if args.g2p else None
     ds = ds.map(
         lambda b: prepare_dataset(
-            b, processor,
+            b,
+            processor,
             transcription_ids=args.transcription_ids,
             g2p=epitran,
             label_key=args.label_key,
