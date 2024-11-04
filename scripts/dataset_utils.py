@@ -28,7 +28,8 @@ DATASET_ARGS = [
     'label_key',
 ]
 TRANSCRIBE_TOKEN_ID=50359
-
+BOS_TOKEN_ID=50258
+EOS_TOKEN_ID=50257
 
 # ------------- #
 # data collator #
@@ -95,11 +96,16 @@ def prepare_dataset(
     elif g2p:
         label=g2p.transliterate(label)
         labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
+    elif decoder_prompt_ids:
+        labels = processor.tokenizer(label, return_tensors='np', add_special_tokens=False).input_ids[0]
+        labels = np.concatenate([
+            [BOS_TOKEN_ID,],
+            decoder_prompt_ids,
+            labels,
+            [EOS_TOKEN_ID,],
+        ])
     else:
         labels = processor.tokenizer(label, return_tensors='np').input_ids[0]
-    if decoder_prompt_ids:
-        task_tok_idx = np.argwhere(labels==TRANSCRIBE_TOKEN_ID).item()
-        labels = np.concatenate([labels[:task_tok_idx],decoder_prompt_ids,labels[task_tok_idx+1:]])
     row["labels"]=labels
     return row
 
