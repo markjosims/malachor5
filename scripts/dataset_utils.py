@@ -10,6 +10,17 @@ from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
 
+DATASET_ARGS = [
+    'dataset',
+    'num_records',
+    'stream',
+    'fleurs_lang',
+    'skip_idcs',
+    'make_split',
+    'processor',
+    'model',
+]
+
 # ------------- #
 # data collator #
 # ------------- #
