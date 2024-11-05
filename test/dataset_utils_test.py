@@ -8,6 +8,7 @@ from dataset_utils import load_and_prepare_dataset, load_eval_datasets, DATASET_
 
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
 FLEURS = 'data/pyarrow-datasets/fl_en'
+TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
 SPECIAL_TOKENS = {
     'en':           {'token': '<|en|>',                 'id': 50259},
     'sw':           {'token': '<|sw|>',                 'id': 50318},
@@ -63,8 +64,8 @@ def test_eval_datasets():
         language=['sw'],
         model='openai/whisper-tiny',
         num_records=50,
-        eval_datasets=[TIRA_ASR_DS, FLEURS],
-        eval_dataset_languages=['sw', 'en']
+        eval_datasets=[TIRA_ASR_DS, FLEURS, TIRA_BILING],
+        eval_dataset_languages=['sw', 'en', 'sw+en']
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
@@ -89,6 +90,17 @@ def test_eval_datasets():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'transcribe', 'bos', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS
+        ),
+        batched=False,
+    )
+
+    assert 'HH20210913' in eval_datasets
+    assert type(eval_datasets['HH20210913']) is Dataset
+    eval_datasets['HH20210913'].map(
+        lambda row: assert_tokens_in_row(
+            row,
+            token_names=['sw', 'en', 'transcribe', 'bos', 'eos', 'notimestamps'],
             special_tokens=SPECIAL_TOKENS
         ),
         batched=False,
