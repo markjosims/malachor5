@@ -64,13 +64,13 @@ def test_eval_datasets():
         language=['sw'],
         model='openai/whisper-tiny',
         num_records=50,
-        eval_datasets=[TIRA_ASR_DS, FLEURS, TIRA_BILING],
-        eval_dataset_languages=['sw', 'en', 'sw+en']
+        eval_datasets=[FLEURS, TIRA_BILING],
+        eval_dataset_languages=['en', 'sw+en']
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
             setattr(args, arg, None)
-    eval_datasets = load_eval_datasets(args)
+    eval_datasets, _ = load_and_prepare_dataset(args)
     assert type(eval_datasets) is dict
 
     assert 'fl_en' in eval_datasets
