@@ -13,6 +13,7 @@ from model_utils import get_forced_decoder_ids
 import numpy as np
 from copy import copy
 import json
+from tqdm import tqdm
 
 DATASET_ARGS = [
     'dataset',
@@ -221,6 +222,7 @@ def load_and_prepare_dataset(args):
     )
 
     if args.eval_datasets:
+        print("Loading additional eval datasets...")
         eval_dataset_dict = load_eval_datasets(args)
         dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
         eval_dataset_dict[dataset_stem]=ds['validation']
@@ -235,7 +237,8 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         eval_dataset_languages = [lang.split('+') for lang in args.eval_dataset_languages]
     eval_dataset_dict = {}
 
-    for dataset, lang in zip(args.eval_datasets, eval_dataset_languages):
+    for dataset, lang in tqdm(zip(args.eval_datasets, eval_dataset_languages), desc='Extra validation datasets'):
+        tqdm.write(f'Preparing {dataset}...')
         dataset_args = copy(args)
         dataset_args.eval_datasets=None
         dataset_args.language=lang
