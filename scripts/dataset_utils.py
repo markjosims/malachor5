@@ -11,6 +11,8 @@ from transformers import WhisperProcessor
 import os
 from model_utils import get_forced_decoder_ids
 import numpy as np
+from copy import copy
+import json
 
 DATASET_ARGS = [
     'dataset',
@@ -31,6 +33,9 @@ TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
 NOTIMESTAMPS_ID=50363
+
+with open('meta/language_codes.json') as f:
+    LANGUAGE_CODES = json.load(f)
 
 # ------------- #
 # data collator #
@@ -217,7 +222,25 @@ def load_and_prepare_dataset(args):
     return ds, processor
 
 def load_eval_datasets(args) -> Dict[str, Dataset]:
-    ...
+    eval_dataset_languages = [
+        args.language for _ in range(len(args.eval_datasets))
+    ]
+    if args.eval_dataset_languages:
+        eval_dataset_languages = [lang.split('+') for lang in args.eval_dataset_languages]
+    eval_dataset_dict = {}
+
+    for dataset, lang in zip(args.eval_datasets, eval_dataset_languages):
+        dataset_args = copy(args)
+        dataset_args.language=lang
+        if 'fleurs' in dataset or 'commonvoice' in dataset:
+            dataset_args.fleurs_lang = iso2_to_fleurs(lang[0])
+        dataset_args.dataset=dataset
+        dataset_args.action='evaluate'
+        dataset_obj, _ = load_and_prepare_dataset(dataset_args)
+        eval_dataset_dict[
+            dataset.removesuffix('/').split('/')[-1]
+        ]=dataset_obj['validation']
+    return eval_dataset_dict
 
 def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
     """
@@ -256,6 +279,27 @@ def build_dataloader(dataset, batch_size):
     )
 
     return dataloader
+
+# --------------------- #
+# Language code helpers #
+# --------------------- #
+
+def iso2_to_fleurs(iso2, raise_error=False):
+    """
+    Attempts to find "fleurs" code for a given language based on its provided iso2 code.
+    If not found, defaults to returning the iso2 code.
+    Set `raise_error=True` to override this and raise an error if no key is found. 
+    """
+    for language in LANGUAGE_CODES:
+        if language.get('iso2', None)==iso2:
+            fleurs=language.get('fleurs', None)
+            if fleurs is None and raise_error:
+                raise KeyError
+            return fleurs or iso2
+
+    if raise_error:
+        raise KeyError
+    return iso2
 
 # ---------------- #
 # Argparse methods #
