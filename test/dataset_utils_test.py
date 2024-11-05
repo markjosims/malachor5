@@ -7,7 +7,7 @@ sys.path.append('scripts')
 from dataset_utils import load_and_prepare_dataset, load_eval_datasets, DATASET_ARGS
 
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
-FLEURS = 'google/fleurs'
+FLEURS = 'data/pyarrow-datasets/fl_en'
 SPECIAL_TOKENS = {
     'en':           {'token': '<|en|>',                 'id': 50259},
     'sw':           {'token': '<|sw|>',                 'id': 50318},
@@ -72,9 +72,9 @@ def test_eval_datasets():
     eval_datasets = load_eval_datasets(args)
     assert type(eval_datasets) is dict
 
-    assert 'fleurs' in eval_datasets
-    assert type(eval_datasets['fleurs']) is Dataset
-    eval_datasets['fleurs'].map(
+    assert 'fl_en' in eval_datasets
+    assert type(eval_datasets['fl_en']) is Dataset
+    eval_datasets['fl_en'].map(
         lambda row: assert_tokens_in_row(
             row,
             token_names=['en', 'transcribe', 'bos', 'eos', 'notimestamps'],
