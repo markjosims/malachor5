@@ -70,7 +70,8 @@ def test_eval_datasets():
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
             setattr(args, arg, None)
-    eval_datasets, _ = load_and_prepare_dataset(args)
+    ds, _ = load_and_prepare_dataset(args)
+    eval_datasets=ds['validation']
     assert type(eval_datasets) is dict
 
     assert 'fl_en' in eval_datasets
