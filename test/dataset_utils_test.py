@@ -1,11 +1,13 @@
 from argparse import Namespace
 from test_utils import assert_tokens_in_row
+from datasets import Dataset
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, DATASET_ARGS
+from dataset_utils import load_and_prepare_dataset, load_eval_datasets, DATASET_ARGS
 
-TIRA_ASR_DS = 'data/pyarrow-datasets/tira-asr-hf'
+TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
+FLEURS = 'google/fleurs'
 SPECIAL_TOKENS = {
     'en':           {'token': '<|en|>',                 'id': 50259},
     'sw':           {'token': '<|sw|>',                 'id': 50318},
@@ -50,6 +52,43 @@ def test_dataset_multi_language():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['en', 'sw', 'transcribe', 'bos', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS
+        ),
+        batched=False,
+    )
+
+def test_eval_datasets():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        model='openai/whisper-tiny',
+        num_records=50,
+        eval_datasets=[TIRA_ASR_DS, FLEURS],
+        eval_dataset_languages=['sw', 'en']
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    eval_datasets = load_eval_datasets(args)
+    assert type(eval_datasets) is dict
+
+    assert 'fleurs' in eval_datasets
+    assert type(eval_datasets['fleurs']) is Dataset
+    eval_datasets['fleurs'].map(
+        lambda row: assert_tokens_in_row(
+            row,
+            token_names=['en', 'transcribe', 'bos', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS
+        ),
+        batched=False,
+    )
+
+    assert 'tira-clean-split' in eval_datasets
+    assert type(eval_datasets['tira-clean-split']) is Dataset
+    eval_datasets['tira-clean-split'].map(
+        lambda row: assert_tokens_in_row(
+            row,
+            token_names=['sw', 'transcribe', 'bos', 'eos', 'notimestamps'],
             special_tokens=SPECIAL_TOKENS
         ),
         batched=False,

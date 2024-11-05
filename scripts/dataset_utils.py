@@ -216,6 +216,8 @@ def load_and_prepare_dataset(args):
     )
     return ds, processor
 
+def load_eval_datasets(args) -> Dict[str, Dataset]:
+    ...
 
 def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
     """
