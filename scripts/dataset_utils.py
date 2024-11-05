@@ -219,6 +219,12 @@ def load_and_prepare_dataset(args):
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
     )
+
+    if args.eval_datasets:
+        eval_dataset_dict = load_eval_datasets(args)
+        dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
+        eval_dataset_dict[dataset_stem]=ds['validation']
+        ds['validation']=eval_dataset_dict
     return ds, processor
 
 def load_eval_datasets(args) -> Dict[str, Dataset]:
@@ -231,6 +237,7 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
 
     for dataset, lang in zip(args.eval_datasets, eval_dataset_languages):
         dataset_args = copy(args)
+        dataset_args.eval_datasets=None
         dataset_args.language=lang
         if 'fleurs' in dataset or 'commonvoice' in dataset:
             dataset_args.fleurs_lang = iso2_to_fleurs(lang[0])
