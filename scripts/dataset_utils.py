@@ -30,6 +30,7 @@ DATASET_ARGS = [
 TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
+NOTIMESTAMPS_ID=50363
 
 # ------------- #
 # data collator #
@@ -58,6 +59,20 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         # cut bos token here as it's append later anyways
         if (labels[:, 0] == self.decoder_start_token_id).all().cpu().item():
             labels = labels[:, 1:]
+
+        if 'decoder_input_ids' in features[0]:
+            decoder_input_ids=[
+                {"input_ids": feature['decoder_input_ids']}
+                for feature in features
+            ]
+            decoder_input_ids=self.processor.tokenizer.pad(
+                decoder_input_ids,
+                padding='max_length',
+                max_length=labels.shape[1],
+                return_tensors='pt',
+            )
+            #decoder_input_ids = decoder_input_ids["input_ids"].masked_fill(decoder_input_ids.attention_mask.ne(1), -100)
+            batch['decoder_input_ids']=decoder_input_ids['input_ids']
 
         batch["labels"] = labels
 
@@ -98,10 +113,9 @@ def prepare_dataset(
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
     elif decoder_prompt_ids:
         label_ids = processor.tokenizer(label, return_tensors='np', add_special_tokens=False).input_ids[0]
-        prefix = [BOS_TOKEN_ID,] + decoder_prompt_ids
+        prefix = [BOS_TOKEN_ID,TRANSCRIBE_TOKEN_ID,50259,NOTIMESTAMPS_ID]
         suffix = [EOS_TOKEN_ID,]
-        label_ids = np.concatenate([prefix, label_ids, suffix])
-        row["decoder_input_ids"]=prefix
+        label_ids = np.concatenate([prefix, decoder_prompt_ids, label_ids, suffix])
     else:
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
     row["labels"]=label_ids
