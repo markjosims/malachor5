@@ -319,4 +319,6 @@ def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--fleurs_lang')
     parser.add_argument('--skip_idcs', nargs='+', type=int)
     parser.add_argument('--make_split', action='store_true')
+    parser.add_argument('--eval_datasets', nargs='+')
+    parser.add_argument('--eval_dataset_languages', nargs='+')
     return parser
