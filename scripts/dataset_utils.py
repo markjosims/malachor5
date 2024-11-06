@@ -129,6 +129,19 @@ def prepare_dataset(
     row["labels"]=label_ids
     return row
 
+def add_decoder_input_ids(
+        row,
+        processor: WhisperProcessor,
+) -> Dataset:
+    special_ids=processor.tokenizer.all_special_ids
+    label_ids=row['labels']
+    prefix=[
+        tok_id for tok_id in label_ids if
+        (tok_id in special_ids) and
+        (tok_id!=EOS_TOKEN_ID)
+    ]
+    row['decoder_input_ids']=prefix
+    return row
 
 def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     """
@@ -229,6 +242,19 @@ def load_and_prepare_dataset(args):
         dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
         eval_dataset_dict[dataset_stem]=ds['validation']
         ds['validation']=eval_dataset_dict
+
+    if 'validation' in ds:
+        ds['validation'] = ds['validation'].map(
+            lambda row: add_decoder_input_ids(row, processor),
+            batched=False,
+            num_proc=4,
+        )
+    if 'test' in ds:
+        ds['test'] = ds['test'].map(
+            lambda row: add_decoder_input_ids(row, processor),
+            batched=False,
+            num_proc=4,
+        )
     return ds, processor
 
 def load_eval_datasets(args) -> Dict[str, Dataset]:
