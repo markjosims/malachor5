@@ -237,7 +237,7 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         eval_dataset_languages = [lang.split('+') for lang in args.eval_dataset_languages]
     eval_dataset_dict = {}
 
-    for dataset, lang in tqdm(zip(args.eval_datasets, eval_dataset_languages), desc='Extra validation datasets'):
+    for dataset, lang in tqdm(list(zip(args.eval_datasets, eval_dataset_languages)), desc='Extra validation datasets'):
         tqdm.write(f'Preparing {dataset}...')
         dataset_args = copy(args)
         dataset_args.eval_datasets=None
