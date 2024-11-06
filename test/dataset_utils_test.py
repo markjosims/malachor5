@@ -4,7 +4,7 @@ from datasets import Dataset
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, load_eval_datasets, DATASET_ARGS
+from dataset_utils import load_and_prepare_dataset, DATASET_ARGS
 
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
 FLEURS = 'data/pyarrow-datasets/fl_en'
