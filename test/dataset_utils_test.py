@@ -106,3 +106,24 @@ def test_eval_datasets():
         ),
         batched=False,
     )
+
+def test_decoder_input_added():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        model='openai/whisper-tiny',
+        num_records=50,
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    ds, _ = load_and_prepare_dataset(args)
+    assert 'decoder_input_ids' in ds['validation'][0]
+    ds['validation'].map(
+        lambda row: assert_tokens_in_row(
+            row,
+            token_names=['sw', 'transcribe', 'bos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS,
+            col='decoder_input_ids'
+        )
+    )
