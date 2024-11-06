@@ -29,6 +29,8 @@ DATASET_ARGS = [
     'load_ds_cache',
     'transcription_ids',
     'label_key',
+    'eval_datasets',
+    'eval_dataset_languages',
 ]
 TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
