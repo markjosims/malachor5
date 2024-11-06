@@ -148,12 +148,13 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False
 
     return batch_metrics
 
-def evaluate_dataset(args, ds_split, trainer, processor):
+def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=True):
     metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
     predictions=trainer.predict(ds_split, metric_key_prefix=metric_key_prefix)
-    # breakpoint()
+    if not save_results_to_disk:
+        return predictions
     labels=predictions.metrics[f'{metric_key_prefix}_labels']
     preds=predictions.metrics[f'{metric_key_prefix}_preds']
     preds_processed=predictions.metrics.get(f'{metric_key_prefix}_preds_processed', None)
