@@ -36,6 +36,17 @@ TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
 NOTIMESTAMPS_ID=50363
+TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
+FLEURS = 'data/pyarrow-datasets/fl_en'
+TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
+SPECIAL_TOKENS = {
+    'en':           {'token': '<|en|>',                 'id': 50259},
+    'sw':           {'token': '<|sw|>',                 'id': 50318},
+    'bos':          {'token': '<|startoftranscript|>',  'id': 50258},
+    'eos':          {'token': '<|endoftext|>',          'id': 50257},
+    'notimestamps': {'token': '<|notimestamps|>',       'id': 50363},
+    'transcribe':   {'token': '<|transcribe|>',         'id': 50359},
+}
 
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
@@ -353,16 +364,3 @@ def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--eval_datasets', nargs='+')
     parser.add_argument('--eval_dataset_languages', nargs='+')
     return parser
-
-
-TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
-FLEURS = 'data/pyarrow-datasets/fl_en'
-TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
-SPECIAL_TOKENS = {
-    'en':           {'token': '<|en|>',                 'id': 50259},
-    'sw':           {'token': '<|sw|>',                 'id': 50318},
-    'bos':          {'token': '<|startoftranscript|>',  'id': 50258},
-    'eos':          {'token': '<|endoftext|>',          'id': 50257},
-    'notimestamps': {'token': '<|notimestamps|>',       'id': 50363},
-    'transcribe':   {'token': '<|transcribe|>',         'id': 50359},
-}
