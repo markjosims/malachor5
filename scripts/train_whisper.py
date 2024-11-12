@@ -3,7 +3,7 @@
 
 from argparse import ArgumentParser
 from typing import Sequence, Optional
-from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
+from accelerate import Accelerator
 import torch
 from jiwer import wer, cer
 import pandas as pd
@@ -261,9 +261,9 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         model = load_whisper_model_for_training_or_eval(args)
         print("Setting model generation config...")
         model = set_generation_config(args, model, processor.tokenizer)
-        print("Making data collator...")
+        print("Building dataloader...")
         data_collator = load_data_collator(model, processor)
-        print("Initializing trainer...")
+        print("Preparing model and dataset with accelerate...")
         trainer = Seq2SeqTrainer(
             args=training_args,
             model=model,
