@@ -33,6 +33,8 @@ DEFAULT_HYPERPARAMS = {
     'report_to': 'tensorboard',
     'predict_with_generate': False,
     'generation_num_beams': 1,
+    'remove_unused_columns': False,
+    'eval_on_start': False,
     # 'debug': 'underflow_overflow', 
 }
 HYPERPARAM_ABBREVIATIONS = {
