@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 import torch
 from tqdm import tqdm
 import pickle
-from dataset_utils import build_dataloader
+from dataset_utils import build_sb_dataloader
 from model_utils import load_lr, sb_model
 from speechbrain.inference.classifiers import EncoderClassifier
 from model_utils import add_sli_args
@@ -57,7 +57,7 @@ def sb_embeddings(
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.sli_batch_size)
+    dataloader = build_sb_dataloader(dataset, args.sli_batch_size)
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -80,7 +80,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_dataloader(dataset, args.sli_batch_size)
+    dataloader = build_sb_dataloader(dataset, args.sli_batch_size)
 
     logits = []
     # [
