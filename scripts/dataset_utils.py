@@ -317,8 +317,10 @@ def dataset_generator(dataset: Dataset) -> Generator:
 def collate_sb(batch):
     return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
 
+def build_dataloaders(ds, args) -> Dict[str, DataLoader]:
+    ...
 
-def build_dataloader(dataset, batch_size):
+def build_sb_dataloader(dataset, batch_size):
     # create a dataloader that returns batches of wav objs
     # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
     dataloader = DataLoader(
