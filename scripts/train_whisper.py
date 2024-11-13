@@ -2,7 +2,7 @@
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
 from argparse import ArgumentParser
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Dict, Tuple, List, Any, Union
 from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
 import torch
 from jiwer import wer, cer
@@ -75,6 +75,32 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         else:
             hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
+
+# --------------------- #
+# custom Trainer object #
+# --------------------- #
+
+class WhisperTrainer(Seq2SeqTrainer):
+    def prediction_step(
+        self,
+        model: torch.nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+        **gen_kwargs,
+    ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        if 'forced_decoder_ids' in inputs:
+            # need to set one array of ids as the decoder prompt for whole batch
+            # expected shape is [(1, ID), (2, ID), ...]
+            forced_decoder_ids = [(i+1, tok_id) for i, tok_id in enumerate(inputs.pop('forced_decoder_ids')[0])]
+            gen_kwargs['forced_decoder_ids']=forced_decoder_ids
+        return super().prediction_step(
+            model,
+            inputs,
+            prediction_loss_only=prediction_loss_only,
+            ignore_keys=ignore_keys,
+            **gen_kwargs,
+        )
 
 # ------------------ #
 # evaluation methods #
@@ -266,7 +292,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         print("Making data collator...")
         data_collator = load_data_collator(model, processor)
         print("Initializing trainer...")
-        trainer = Seq2SeqTrainer(
+        trainer = WhisperTrainer(
             args=training_args,
             model=model,
             data_collator=data_collator,
