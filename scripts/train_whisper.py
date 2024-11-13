@@ -13,6 +13,7 @@ from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
 from model_utils import load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, device_type, DEVICE
 from string_norm import get_remove_oov_char_funct, condense_tones
+from copy import deepcopy
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -177,6 +178,26 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False
     return batch_metrics
 
 def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=True):
+    if type(ds_split) is dict:
+        # evaluate on each dataset in dict
+        predictions_dict = {}
+        for ds_name, ds in tqdm(ds_split.items(), total=len(ds_split), desc='Evaluating datasets'):
+            tqdm.write(f'Evaluating dataset {ds_name}...')
+            ds_args = deepcopy(args)
+            if args.eval_output:
+                ds_args.eval_output = args.eval_output + ds_name
+            else:
+                ds_args.eval_output = os.path.join(
+                    args.output, f'{ds_name}-{args.action}-predictions'
+                )
+            predictions_dict[ds_name]=evaluate_dataset(
+                args=ds_args,
+                ds_split=ds,
+                trainer=trainer,
+                processor=processor,
+                save_results_to_disk=save_results_to_disk,
+            )
+        return predictions_dict
     metric_key_prefix = 'test' if args.action=='test' else 'eval'
     # change metrics to return labels
     trainer.compute_metrics=get_metrics(args, processor=processor, return_decoded=True)
