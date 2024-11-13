@@ -246,18 +246,18 @@ def load_and_prepare_dataset(args):
         eval_dataset_dict[dataset_stem]=ds['validation']
         ds['validation']=eval_dataset_dict
 
-    if 'validation' in ds:
-        ds['validation'] = ds['validation'].map(
-            lambda row: add_decoder_input_ids(row, processor),
-            batched=False,
-            num_proc=4,
-        )
-    if 'test' in ds:
-        ds['test'] = ds['test'].map(
-            lambda row: add_decoder_input_ids(row, processor),
-            batched=False,
-            num_proc=4,
-        )
+    # if 'validation' in ds:
+    #     ds['validation'] = ds['validation'].map(
+    #         lambda row: add_decoder_input_ids(row, processor),
+    #         batched=False,
+    #         num_proc=4,
+    #     )
+    # if 'test' in ds:
+    #     ds['test'] = ds['test'].map(
+    #         lambda row: add_decoder_input_ids(row, processor),
+    #         batched=False,
+    #         num_proc=4,
+    #     )
     return ds, processor
 
 def load_eval_datasets(args) -> Dict[str, Dataset]:
