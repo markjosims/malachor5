@@ -3,7 +3,7 @@ from argparse import Namespace
 import sys
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, WhisperTrainer
-from dataset_utils import load_and_prepare_dataset, FLEURS, SPECIAL_TOKENS, load_data_collator
+from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING
 from model_utils import load_whisper_model_for_training_or_eval
 
 def test_lang_col_generate(tmpdir):
@@ -20,6 +20,8 @@ def test_lang_col_generate(tmpdir):
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
+    args.eval_datasets=[FLEURS, TIRA_BILING]
+    args.eval_dataset_languages=['en', 'sw+en']
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
