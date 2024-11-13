@@ -102,6 +102,16 @@ class WhisperTrainer(Seq2SeqTrainer):
             ignore_keys=ignore_keys,
             **gen_kwargs,
         )
+    
+    def training_step(
+            self,
+            model: torch.nn.Module,
+            inputs: Dict[str, Union[torch.Tensor, Any]]
+        ) -> torch.Tensor:
+        # don't pass forced_decoder_ids during training
+        inputs.pop('forced_decoder_ids', None)
+        return super().training_step(model, inputs)
+
 
 # ------------------ #
 # evaluation methods #
