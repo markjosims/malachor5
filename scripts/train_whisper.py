@@ -289,7 +289,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         model = load_whisper_model_for_training_or_eval(args)
         print("Setting model generation config...")
         model = set_generation_config(args, model, processor.tokenizer)
-        print("Making data collator...")
+        print("Building dataloader...")
         data_collator = load_data_collator(model, processor)
         print("Initializing trainer...")
         trainer = WhisperTrainer(

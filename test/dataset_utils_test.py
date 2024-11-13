@@ -1,10 +1,11 @@
 from argparse import Namespace
 from test_utils import assert_tokens_in_row
 from datasets import Dataset
+import math
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING, SPECIAL_TOKENS
+from dataset_utils import load_and_prepare_dataset, build_dataloaders, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING, SPECIAL_TOKENS
 
 def test_dataset_language():
     args = Namespace(
@@ -115,3 +116,41 @@ def test_decoder_input_added():
             col='decoder_input_ids'
         )
     )
+
+def test_build_dataloader():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        model='openai/whisper-tiny',
+        num_records=50,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=16,
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    ds = load_and_prepare_dataset(args)
+    dl_dict = build_dataloaders(ds, args)
+    assert type(dl_dict) is dict
+    assert 'train' in dl_dict
+    assert 'validation' in dl_dict
+    assert 'test' in dl_dict
+    
+    assert len(dl_dict['train']) == math.ceil(50/8)
+    assert len(dl_dict['validation']) == math.ceil(50/16)
+    assert len(dl_dict['test']) == math.ceil(50/16)
+
+    train_batch = next(iter(dl_dict['train']))
+    assert len(train_batch) == 8
+    assert 'input_features' in train_batch
+    assert 'labels' in train_batch
+
+    validation_batch = next(iter(dl_dict['validation']))
+    assert len(train_batch) == 16
+    assert 'input_features' in validation_batch
+    assert 'labels' in validation_batch
+
+    test_batch = next(iter(dl_dict['test']))
+    assert len(train_batch) == 16
+    assert 'input_features' in test_batch
+    assert 'labels' in test_batch
