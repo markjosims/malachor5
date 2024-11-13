@@ -3,7 +3,7 @@ from argparse import Namespace
 import sys
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, WhisperTrainer
-from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING
+from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import load_whisper_model_for_training_or_eval
 
 def test_lang_col_generate(tmpdir):
@@ -14,9 +14,9 @@ def test_lang_col_generate(tmpdir):
     """
     args = init_parser().parse_args([])
     args.output=str(tmpdir)
-    args.dataset = FLEURS
+    args.dataset = TIRA_ASR_DS
     args.language = ['sw']
-    args.num_records = 50
+    args.num_records = 10
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
@@ -35,10 +35,19 @@ def test_lang_col_generate(tmpdir):
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
         )
-    predictions = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
-    predictions = predictions.predictions
+    predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
     swahili_token = SPECIAL_TOKENS['sw']['id']
-    for pred in predictions:
+    en_token = SPECIAL_TOKENS['en']['id']
+
+    for pred in predictions_dict[FLEURS.split('/')[-1]].predictions:
+        assert en_token in pred
+
+    for pred in predictions_dict[TIRA_ASR_DS.split('/')[-1]].predictions:
         assert swahili_token in pred
+    
+    for pred in predictions_dict[TIRA_BILING.split('/')[-1]].predictions:
+        assert en_token in pred
+        assert swahili_token in pred
+
 
 
