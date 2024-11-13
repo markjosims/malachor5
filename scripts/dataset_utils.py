@@ -79,19 +79,10 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         if (labels[:, 0] == self.decoder_start_token_id).all().cpu().item():
             labels = labels[:, 1:]
 
-        if 'decoder_input_ids' in features[0]:
-            decoder_input_ids=[
-                {"input_ids": feature['decoder_input_ids']}
-                for feature in features
-            ]
-            decoder_input_ids=self.processor.tokenizer.pad(
-                decoder_input_ids,
-                padding='max_length',
-                max_length=labels.shape[1],
-                return_tensors='pt',
+        if 'forced_decoder_ids' in features[0]:
+            batch['forced_decoder_ids']=torch.stack(
+                [torch.tensor(feature['forced_decoder_ids']) for feature in features]
             )
-            #decoder_input_ids = decoder_input_ids["input_ids"].masked_fill(decoder_input_ids.attention_mask.ne(1), -100)
-            batch['decoder_input_ids']=decoder_input_ids['input_ids']
 
         batch["labels"] = labels
 
@@ -135,6 +126,7 @@ def prepare_dataset(
         prefix = [BOS_TOKEN_ID,TRANSCRIBE_TOKEN_ID,50259,NOTIMESTAMPS_ID]
         suffix = [EOS_TOKEN_ID,]
         label_ids = np.concatenate([prefix, decoder_prompt_ids, label_ids, suffix])
+        row['forced_decoder_ids']=decoder_prompt_ids
     else:
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
     row["labels"]=label_ids
@@ -197,12 +189,12 @@ def load_and_prepare_dataset(args):
     # set language prefix tokens
     # use native method if only one decoding one language
     decoder_prompt_ids=None
-    if args.language and len(args.language)==1:
-        processor.tokenizer.set_prefix_tokens(
-            language=args.language[0],
-            task='transcribe',
-        )
-    elif args.language:
+    # if args.language and len(args.language)==1:
+    #     processor.tokenizer.set_prefix_tokens(
+    #         language=args.language[0],
+    #         task='transcribe',
+    #     )
+    if args.language:
         decoder_prompt_ids=get_forced_decoder_ids(args, processor.tokenizer, ids_only=True)
     # get a random split name dynamically since we don't know what splits are saved in dataset
     split_key=list(ds.keys())[0]
