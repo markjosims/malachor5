@@ -1,13 +1,49 @@
 from argparse import ArgumentParser
+from typing import Any, Dict, List, Tuple, Optional, Union
 import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.linear_model import LogisticRegression
 from speechbrain.inference.classifiers import EncoderClassifier
-from transformers import AutomaticSpeechRecognitionPipeline, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
+from transformers import AutomaticSpeechRecognitionPipeline, Seq2SeqTrainer, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
 import pickle
 
 DEVICE = 0 if torch.cuda.is_available() else -1
 device_type = lambda s: int(s) if s!='cpu' else s
+
+# ---------------------- #
+# custom trainer objects #
+# ---------------------- #
+
+class WhisperTrainer(Seq2SeqTrainer):
+    def prediction_step(
+        self,
+        model: torch.nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+        **gen_kwargs,
+    ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        if 'forced_decoder_ids' in inputs:
+            # need to set one array of ids as the decoder prompt for whole batch
+            # expected shape is [(1, ID), (2, ID), ...]
+            forced_decoder_ids = [(i+1, tok_id) for i, tok_id in enumerate(inputs.pop('forced_decoder_ids')[0])]
+            gen_kwargs['forced_decoder_ids']=forced_decoder_ids
+        return super().prediction_step(
+            model,
+            inputs,
+            prediction_loss_only=prediction_loss_only,
+            ignore_keys=ignore_keys,
+            **gen_kwargs,
+        )
+
+    def training_step(
+            self,
+            model: torch.nn.Module,
+            inputs: Dict[str, Union[torch.Tensor, Any]]
+        ) -> torch.Tensor:
+        # don't pass forced_decoder_ids during training
+        inputs.pop('forced_decoder_ids', None)
+        return super().training_step(model, inputs)
 
 # ----------------- #
 # model preparation #

@@ -2,8 +2,8 @@
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
 from argparse import ArgumentParser
-from typing import Sequence, Optional, Dict, Tuple, List, Any, Union
-from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
+from typing import Sequence, Optional
+from transformers import Seq2SeqTrainingArguments
 import torch
 from jiwer import wer, cer
 import pandas as pd
@@ -11,7 +11,7 @@ import os
 from glob import glob
 from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
-from model_utils import load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, device_type, DEVICE
+from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, device_type, DEVICE
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy
 
@@ -76,42 +76,6 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
         else:
             hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
-
-# --------------------- #
-# custom Trainer object #
-# --------------------- #
-
-class WhisperTrainer(Seq2SeqTrainer):
-    def prediction_step(
-        self,
-        model: torch.nn.Module,
-        inputs: Dict[str, Union[torch.Tensor, Any]],
-        prediction_loss_only: bool,
-        ignore_keys: Optional[List[str]] = None,
-        **gen_kwargs,
-    ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
-        if 'forced_decoder_ids' in inputs:
-            # need to set one array of ids as the decoder prompt for whole batch
-            # expected shape is [(1, ID), (2, ID), ...]
-            forced_decoder_ids = [(i+1, tok_id) for i, tok_id in enumerate(inputs.pop('forced_decoder_ids')[0])]
-            gen_kwargs['forced_decoder_ids']=forced_decoder_ids
-        return super().prediction_step(
-            model,
-            inputs,
-            prediction_loss_only=prediction_loss_only,
-            ignore_keys=ignore_keys,
-            **gen_kwargs,
-        )
-    
-    def training_step(
-            self,
-            model: torch.nn.Module,
-            inputs: Dict[str, Union[torch.Tensor, Any]]
-        ) -> torch.Tensor:
-        # don't pass forced_decoder_ids during training
-        inputs.pop('forced_decoder_ids', None)
-        return super().training_step(model, inputs)
-
 
 # ------------------ #
 # evaluation methods #
@@ -260,7 +224,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         chkpnt_model = load_whisper_model_for_training_or_eval(args)
         chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
         data_collator=load_data_collator(chkpnt_model, processor)
-        trainer = Seq2SeqTrainer(
+        trainer = WhisperTrainer(
                     args=training_args,
                     model=chkpnt_model,
                     data_collator=data_collator,
