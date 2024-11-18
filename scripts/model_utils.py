@@ -81,7 +81,7 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
         return load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
-    if args.peft_type == 'LoRA':
+    if args.peft_type.lower() == 'lora':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
         config = LoraConfig(
