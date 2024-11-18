@@ -281,7 +281,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     if not args.all_chkpnts:
         print("Loading model...")
-        model = load_whisper_model_for_training_or_eval(args)
+        model = load_whisper_model_for_training_or_eval(args, processor)
         print("Setting model generation config...")
         model = set_generation_config(args, model, processor.tokenizer)
         print("Building dataloader...")
