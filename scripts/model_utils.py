@@ -15,6 +15,10 @@ device_type = lambda s: int(s) if s!='cpu' else s
 # ---------------------- #
 
 class WhisperTrainer(Seq2SeqTrainer):
+    def __init__(self, *args, token_id_to_train=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.token_id_to_train = token_id_to_train  # ID of the embedding vector to train
+
     def prediction_step(
         self,
         model: torch.nn.Module,
@@ -43,7 +47,17 @@ class WhisperTrainer(Seq2SeqTrainer):
         ) -> torch.Tensor:
         # don't pass forced_decoder_ids during training
         inputs.pop('forced_decoder_ids', None)
-        return super().training_step(model, inputs)
+        loss = super().training_step(model, inputs)
+        # Apply gradient masking for the decoder embeddings
+        if self.token_id_to_train is not None:
+            decoder_input_embeddings = model.model.decoder.embed_tokens.weight
+            # Create a mask with gradients for only the token to be trained
+            mask = torch.zeros_like(decoder_input_embeddings)
+            mask[self.token_id_to_train] = 1
+
+            with torch.no_grad():
+                decoder_input_embeddings.grad *= mask  # Mask gradients
+        return loss
 
 # ----------------- #
 # model preparation #
