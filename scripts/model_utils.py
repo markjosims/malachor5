@@ -130,6 +130,11 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
 
         model = get_peft_model(model, config)
         model.print_trainable_parameters()
+    elif args.peft_type.lower() == 'lang_token':
+        assert len(args.language)==1, "Exactly one language must be passed when fine-tuning language token."
+        print(f"Freezing all parameters except for {args.language[0]} language token.")
+        for param in model.parameters():
+            param.requires_grad=False
     return model
 
 
