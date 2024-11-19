@@ -4,7 +4,7 @@ import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.linear_model import LogisticRegression
 from speechbrain.inference.classifiers import EncoderClassifier
-from transformers import AutomaticSpeechRecognitionPipeline, Seq2SeqTrainer, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer
+from transformers import AutomaticSpeechRecognitionPipeline, Seq2SeqTrainer, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer, WhisperProcessor
 import pickle
 
 DEVICE = 0 if torch.cuda.is_available() else -1
@@ -150,6 +150,16 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
         for param in model.parameters():
             param.requires_grad=False
     return model
+
+def prepare_trainer_for_peft(args, trainer: WhisperTrainer, processor: WhisperProcessor):
+    if args.peft_type == 'lang_token':
+        lang = args.language[0]
+        decoder_ids = processor.get_decoder_prompt_ids(language=lang)
+        # returns list [(1, LANG_ID), (2, TRANSCRIBE_ID), (3, NOTIMESTAMPS_ID)]
+        lang_id = decoder_ids[0][1]
+        trainer.token_id_to_train = lang_id
+        return trainer
+    return trainer
 
 
 def sb_model(args):

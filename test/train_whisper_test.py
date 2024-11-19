@@ -5,7 +5,7 @@ import torch
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
-from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval
+from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
 def test_lang_col_generate(tmpdir):
     """
@@ -79,6 +79,7 @@ def test_lang_token_peft(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
         )
+    trainer = prepare_trainer_for_peft(args, trainer, processor)
     trainer.train()
     swahili_token = SPECIAL_TOKENS['sw']['id']
     for name, param in model.named_parameters():

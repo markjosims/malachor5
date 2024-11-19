@@ -11,7 +11,7 @@ import os
 from glob import glob
 from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
-from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, device_type, DEVICE
+from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy
 
@@ -295,6 +295,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             tokenizer=processor.feature_extractor,
             preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
         )
+        if args.peft_type:
+            trainer = prepare_trainer_for_peft(args, trainer, processor)
     if args.action=='train':
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
