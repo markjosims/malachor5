@@ -1,6 +1,7 @@
 from argparse import Namespace
 
 import sys
+import torch
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
@@ -26,7 +27,7 @@ def test_lang_col_generate(tmpdir):
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
     training_args = get_training_args(args)
-    model = load_whisper_model_for_training_or_eval(args)
+    model = load_whisper_model_for_training_or_eval(args, processor)
     data_collator = load_data_collator(model, processor)
     trainer = WhisperTrainer(
             args=training_args,
@@ -50,4 +51,44 @@ def test_lang_col_generate(tmpdir):
         assert swahili_token in pred
 
 
+def test_lang_token_peft(tmpdir):
+    """
+    Test that setting `--peft_type language_token` freezes gradients
+    for all parameters except embedding weights for given language ID.
+    """
+    args = init_parser().parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 1
 
+    _, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args, processor)
+    data_collator = load_data_collator(model, processor)
+    token_embedding_matrix = model.model.decoder.embed_tokens
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+        )
+    trainer.train()
+    swahili_token = SPECIAL_TOKENS['sw']['id']
+    for name, param in model.named_parameters():
+        if name=='model.decoder.embed_tokens.weight':
+            assert param.requires_grad
+        else:
+            assert not param.requires_grad
+
+    token_embedding_matrix_trained = model.model.decoder.embed_tokens
+    for i, embedding_vector in enumerate(token_embedding_matrix):
+        embedding_vector_trained=token_embedding_matrix_trained[i]
+        if i==swahili_token:
+            assert not torch.equal(embedding_vector, embedding_vector_trained)
+        else:
+            assert torch.equal(embedding_vector, embedding_vector_trained)
