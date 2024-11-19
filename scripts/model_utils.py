@@ -15,9 +15,25 @@ device_type = lambda s: int(s) if s!='cpu' else s
 # ---------------------- #
 
 class WhisperTrainer(Seq2SeqTrainer):
-    def __init__(self, *args, token_id_to_train=None, **kwargs):
+    def __init__(
+            self,
+            *args,
+            token_id_to_train=None,
+            fisher_matrix_path=None,
+            ewc_lambda=1,
+            **kwargs,
+        ):
         super().__init__(*args, **kwargs)
         self.token_id_to_train = token_id_to_train  # ID of the embedding vector to train
+        self.fisher_matrix_path = fisher_matrix_path
+        self.ewc_lambda = ewc_lambda
+        
+        if fisher_matrix_path is not None:
+            self.fisher_matrix = torch.load(fisher_matrix_path)
+            self.previous_params = {name: param.clone().detach() for name, param in self.model.named_parameters() if param.requires_grad}
+        else:
+            self.fisher_matrix = None
+            self.previous_params = None
 
     def prediction_step(
         self,
