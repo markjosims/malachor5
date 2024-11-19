@@ -1,7 +1,5 @@
-from argparse import Namespace
-
-import sys
 import torch
+import sys
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
