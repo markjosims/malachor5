@@ -202,7 +202,7 @@ def add_processor_args(parser: ArgumentParser) -> ArgumentParser:
 def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--model', '-m')
     parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
-    parser.add_argument('--peft_type', choices=['LoRA'])
+    parser.add_argument('--peft_type', choices=['LoRA', 'lang_token'])
     return parser
 
 
