@@ -156,7 +156,7 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
     return model
 
 def prepare_trainer_for_peft(args, trainer: WhisperTrainer, processor: WhisperProcessor):
-    if args.peft_type == 'lang_token':
+    if args.peft_type and args.peft_type.lower() == 'lang_token':
         lang = args.language[0]
         decoder_ids = processor.get_decoder_prompt_ids(language=lang)
         # returns list [(1, LANG_ID), (2, TRANSCRIBE_ID), (3, NOTIMESTAMPS_ID)]
