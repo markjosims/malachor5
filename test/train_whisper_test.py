@@ -1,7 +1,8 @@
 import torch
 import sys
+import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics, calculate_fisher_matrix
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -95,3 +96,38 @@ def test_lang_token_peft(tmpdir):
             assert not torch.equal(embedding_vector, embedding_vector_trained)
         else:
             assert torch.equal(embedding_vector, embedding_vector_trained)
+
+def test_save_fisher_matrix(tmpdir):
+    parser = init_parser()
+    args = parser.parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 1
+    args.action = 'calculate_fisher'
+
+    ds, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args)
+    data_collator = load_data_collator(model, processor)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+        )
+
+    calculate_fisher_matrix(args, trainer)
+    fisher_matrix_path = os.path.join(
+        args.output,
+        os.path.basename(TIRA_ASR_DS)+'_fisher.pt' 
+    )
+    assert os.path.exists(fisher_matrix_path)
+    assert type(torch.load(args.output)) is torch.Tensor
