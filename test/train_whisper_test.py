@@ -76,6 +76,7 @@ def test_lang_token_peft(tmpdir):
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
         )
     trainer = prepare_trainer_for_peft(args, trainer, processor)
     trainer.train()
