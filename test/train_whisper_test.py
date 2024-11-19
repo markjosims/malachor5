@@ -1,7 +1,7 @@
 import torch
 import sys
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, SPECIAL_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -77,6 +77,7 @@ def test_lang_token_peft(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
         )
     trainer = prepare_trainer_for_peft(args, trainer, processor)
     trainer.train()
