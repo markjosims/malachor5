@@ -147,8 +147,12 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
     elif args.peft_type and args.peft_type.lower() == 'lang_token':
         assert len(args.language)==1, "Exactly one language must be passed when fine-tuning language token."
         print(f"Freezing all parameters except for {args.language[0]} language token.")
-        for param in model.parameters():
-            param.requires_grad=False
+        for name, param in model.named_parameters():
+            if name == 'model.decoder.embed_tokens.weight':
+                param.requires_grad=True
+            else:
+                param.requires_grad=False
+        
     return model
 
 def prepare_trainer_for_peft(args, trainer: WhisperTrainer, processor: WhisperProcessor):
