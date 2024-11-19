@@ -131,7 +131,7 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
         return load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
-    if args.peft_type.lower() == 'lora':
+    if args.peft_type and args.peft_type.lower() == 'lora':
         print("Wrapping model with LoRA...")
         # TODO add LoRA args to CLI
         config = LoraConfig(
@@ -144,7 +144,7 @@ def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGenera
 
         model = get_peft_model(model, config)
         model.print_trainable_parameters()
-    elif args.peft_type.lower() == 'lang_token':
+    elif args.peft_type and args.peft_type.lower() == 'lang_token':
         assert len(args.language)==1, "Exactly one language must be passed when fine-tuning language token."
         print(f"Freezing all parameters except for {args.language[0]} language token.")
         for param in model.parameters():
