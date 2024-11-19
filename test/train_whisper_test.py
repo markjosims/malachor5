@@ -63,6 +63,7 @@ def test_lang_token_peft(tmpdir):
     args.num_records = 10
     args.model = 'openai/whisper-tiny'
     args.num_train_epochs = 1
+    args.peft_type = 'lang_token'
 
     _, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
