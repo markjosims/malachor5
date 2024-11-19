@@ -65,7 +65,7 @@ def test_lang_token_peft(tmpdir):
     args.num_train_epochs = 1
     args.peft_type = 'lang_token'
 
-    _, processor = load_and_prepare_dataset(args)
+    ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
     training_args = get_training_args(args)
     model = load_whisper_model_for_training_or_eval(args)
@@ -77,6 +77,7 @@ def test_lang_token_peft(tmpdir):
             data_collator=data_collator,
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
         )
     trainer.train()
     swahili_token = SPECIAL_TOKENS['sw']['id']
