@@ -174,14 +174,10 @@ def test_train_w_ewc(tmpdir):
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
     fisher_matrix_path = calculate_fisher_matrix(args, trainer, model)
-    trainer.train()
-    trainer.save_model()
-    args.model = args.output
-    trained_model = load_whisper_model_for_training_or_eval(args)
 
     ewc_trainer1 = WhisperTrainer(
             args=training_args,
-            model=trained_model,
+            model=model,
             data_collator=data_collator,
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
@@ -193,7 +189,7 @@ def test_train_w_ewc(tmpdir):
     )
     ewc_trainer2 = WhisperTrainer(
             args=training_args,
-            model=trained_model,
+            model=model,
             data_collator=data_collator,
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
@@ -214,6 +210,9 @@ def test_train_w_ewc(tmpdir):
     assert all(type(v) is torch.Tensor for v in ewc_trainer2.previous_params.values())
     assert type(ewc_trainer2.fisher_matrix) is dict
     assert all(type(v) is torch.Tensor for v in ewc_trainer2.fisher_matrix.values())
+
+    ewc_trainer1.train()
+    ewc_trainer2.train()
 
     dataloader = trainer.get_train_dataloader()
     batch = next(iter(dataloader))
