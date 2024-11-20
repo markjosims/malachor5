@@ -74,6 +74,27 @@ class WhisperTrainer(Seq2SeqTrainer):
             with torch.no_grad():
                 decoder_input_embeddings.grad *= mask  # Mask gradients
         return loss
+    
+    def compute_loss(self, model, inputs, return_outputs=False):
+        if return_outputs:
+            loss, outputs = super().compute_loss(self, model, inputs, return_outputs)
+        else:
+            loss = super().compute_loss(self, model, inputs, return_outputs)
+        if self.fisher_matrix is not None and self.previous_params is not None:
+            # EWC Regularization Term
+            ewc_loss = 0.0
+            for name, param in model.named_parameters():
+                if name in self.fisher_matrix:
+                    fisher = self.fisher_matrix[name]
+                    prev_param = self.previous_params[name]
+                    ewc_loss += (fisher * (param - prev_param).pow(2)).sum()
+            
+            # Combine original loss with EWC regularization
+            loss = loss + (self.ewc_lambda * ewc_loss)
+
+        if return_outputs:
+            return loss, outputs
+        return loss
 
 # ----------------- #
 # model preparation #
