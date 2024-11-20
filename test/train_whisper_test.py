@@ -69,7 +69,7 @@ def test_lang_token_peft(tmpdir):
     training_args = get_training_args(args)
     model = load_whisper_model_for_training_or_eval(args)
     data_collator = load_data_collator(model, processor)
-    token_embedding_matrix = model.model.decoder.embed_tokens.weight.detach().clone()
+    param_dict = {name:param.detach().clone() for name,param in model.named_parameters()}
     trainer = WhisperTrainer(
             args=training_args,
             model=model,
@@ -86,16 +86,18 @@ def test_lang_token_peft(tmpdir):
     for name, param in model.named_parameters():
         if name=='model.decoder.embed_tokens.weight':
             assert param.requires_grad
+            for i, embedding_vector_trained in enumerate(param):
+                embedding_vector = param_dict[name][i]
+                if i==swahili_token:
+                    assert not torch.equal(embedding_vector, embedding_vector_trained)
+                else:
+                    assert torch.equal(embedding_vector, embedding_vector_trained)
+            # sanity check, we checked the swahili token embedding
+            assert i>=swahili_token
+
         else:
             assert not param.requires_grad
-
-    token_embedding_matrix_trained = model.model.decoder.embed_tokens.weight
-    for i, embedding_vector in enumerate(token_embedding_matrix):
-        embedding_vector_trained=token_embedding_matrix_trained[i]
-        if i==swahili_token:
-            assert not torch.equal(embedding_vector, embedding_vector_trained)
-        else:
-            assert torch.equal(embedding_vector, embedding_vector_trained)
+            assert torch.equal(param, param_dict[name])
 
 def test_save_fisher_matrix(tmpdir):
     parser = init_parser()
