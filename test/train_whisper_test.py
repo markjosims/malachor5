@@ -139,8 +139,11 @@ def test_lang_token_regularization(tmpdir):
     trainer.embed_center = toy_embed
     trainer.embed_dist_lambda = 1
     loss2 = trainer.training_step(model, batch)
-
     assert loss1.item() < loss2.item()
+
+    trainer.embed_dist_lambda = 100
+    loss3 = trainer.training_step(model, batch)
+    assert loss2.item() < loss3.item()
 
 
 def test_save_fisher_matrix(tmpdir):
