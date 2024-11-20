@@ -100,6 +100,10 @@ def test_lang_token_peft(tmpdir):
             assert torch.equal(param, param_dict[name])
 
 def test_save_fisher_matrix(tmpdir):
+    """
+    Run `calculate_fisher_matrix` and check it outputs
+    a dict of Torch tensors.
+    """
     parser = init_parser()
     args = parser.parse_args([])
     args.output = str(tmpdir)
