@@ -21,7 +21,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             token_id_to_train=None,
             fisher_matrix_path=None,
             ewc_lambda=1,
-            embed_center_path=None,
+            mean_embed_path=None,
             embed_dist_lambda=1,
             **kwargs,
         ):
@@ -37,10 +37,10 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.fisher_matrix = None
             self.previous_params = None
-        if embed_center_path is not None:
-            self.embed_center = torch.load(embed_center_path)
+        if mean_embed_path is not None:
+            self.mean_embed = torch.load(mean_embed_path)
         else:
-            self.embed_center = None
+            self.mean_embed = None
         
 
     def prediction_step(
@@ -99,10 +99,10 @@ class WhisperTrainer(Seq2SeqTrainer):
             
             loss = loss + (self.ewc_lambda * ewc_loss)
         
-        if self.embed_center is not None:
+        if self.mean_embed is not None:
             token_embed = model.model.decoder.embed_tokens.weight[self.token_id_to_train]
             y = torch.tensor([1]) # maximize cosine similarity
-            embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.embed_center.unsqueeze(0), y)
+            embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.mean_embed.unsqueeze(0), y)
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if return_outputs:
