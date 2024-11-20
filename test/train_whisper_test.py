@@ -129,14 +129,28 @@ def test_lang_token_regularization(tmpdir):
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
-        )
+    )
     trainer = prepare_trainer_for_peft(args, trainer, processor)
     dataloader = trainer.get_train_dataloader()
     batch = next(iter(dataloader))
     loss1 = trainer.training_step(model, batch)
     
-    toy_embed = torch.zeros(1024)
-    trainer.embed_center = toy_embed
+    toy_embed = torch.zeros(384)
+    toy_embed_path = os.path.join(tmpdir, 'embed_center.pt')
+    torch.save(toy_embed, toy_embed_path)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            embed_center_path=toy_embed_path,
+            embed_dist_lambda=1,
+    )
+    trainer = prepare_trainer_for_peft(args, trainer, processor)
     trainer.embed_dist_lambda = 1
     loss2 = trainer.training_step(model, batch)
     assert loss1.item() < loss2.item()
