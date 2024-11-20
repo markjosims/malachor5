@@ -77,6 +77,13 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
             hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
 
+# ----------- #
+# EWC methods #
+# ----------- #
+
+def calculate_fisher_matrix(args, trainer):
+    ...
+
 # ------------------ #
 # evaluation methods #
 # ------------------ #
