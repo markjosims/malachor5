@@ -26,7 +26,7 @@ def test_lang_col_generate(tmpdir):
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
     training_args = get_training_args(args)
-    model = load_whisper_model_for_training_or_eval(args, processor)
+    model = load_whisper_model_for_training_or_eval(args)
     data_collator = load_data_collator(model, processor)
     trainer = WhisperTrainer(
             args=training_args,
