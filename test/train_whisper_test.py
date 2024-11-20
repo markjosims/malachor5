@@ -124,7 +124,7 @@ def test_save_fisher_matrix(tmpdir):
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
         )
 
-    calculate_fisher_matrix(args, trainer)
+    calculate_fisher_matrix(args, trainer, model)
     fisher_matrix_path = os.path.join(
         args.output,
         os.path.basename(TIRA_ASR_DS)+'_fisher.pt' 
