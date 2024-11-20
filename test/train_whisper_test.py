@@ -41,9 +41,11 @@ def test_lang_col_generate(tmpdir):
 
     for pred in predictions_dict[FLEURS.split('/')[-1]].predictions:
         assert en_token in pred
+        assert swahili_token not in pred
 
     for pred in predictions_dict[TIRA_ASR_DS.split('/')[-1]].predictions:
         assert swahili_token in pred
+        assert en_token not in pred
     
     for pred in predictions_dict[TIRA_BILING.split('/')[-1]].predictions:
         assert en_token in pred
