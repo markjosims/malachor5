@@ -39,6 +39,8 @@ class WhisperTrainer(Seq2SeqTrainer):
             self.previous_params = None
         if embed_center_path is not None:
             self.embed_center = torch.load(embed_center_path)
+        else:
+            self.embed_center = None
         
 
     def prediction_step(
@@ -95,8 +97,13 @@ class WhisperTrainer(Seq2SeqTrainer):
                     prev_param = self.previous_params[name]
                     ewc_loss += (fisher * (param - prev_param).pow(2)).sum()
             
-            # Combine original loss with EWC regularization
             loss = loss + (self.ewc_lambda * ewc_loss)
+        
+        if self.embed_center is not None:
+            token_embed = model.model.decoder.embed_tokens.weight[self.token_id_to_train]
+            y = torch.tensor([1]) # maximize cosine similarity
+            embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.embed_center.unsqueeze(0), y)
+            loss = loss + (self.embed_dist_lambda * embed_dist_loss)
 
         if return_outputs:
             return loss, outputs
