@@ -101,6 +101,48 @@ def test_lang_token_peft(tmpdir):
             assert not param.requires_grad
             assert torch.equal(param, param_dict[name])
 
+def test_lang_token_regularization(tmpdir):
+    """
+    Test that setting `--peft_type language_token` freezes gradients
+    for all parameters except embedding weights for given language ID.
+    """
+    args = init_parser().parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 1
+    args.peft_type = 'lang_token'
+
+    ds, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args)
+    data_collator = load_data_collator(model, processor)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+        )
+    trainer = prepare_trainer_for_peft(args, trainer, processor)
+    dataloader = trainer.get_train_dataloader()
+    batch = next(iter(dataloader))
+    loss1 = trainer.training_step(model, batch)
+    
+    toy_embed = torch.zeros(1024)
+    trainer.embed_center = toy_embed
+    trainer.embed_dist_lambda = 1
+    loss2 = trainer.training_step(model, batch)
+
+    assert loss1.item() < loss2.item()
+
+
 def test_save_fisher_matrix(tmpdir):
     """
     Run `calculate_fisher_matrix` and check it outputs
