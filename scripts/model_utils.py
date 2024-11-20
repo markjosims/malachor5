@@ -77,9 +77,9 @@ class WhisperTrainer(Seq2SeqTrainer):
     
     def compute_loss(self, model, inputs, return_outputs=False):
         if return_outputs:
-            loss, outputs = super().compute_loss(self, model, inputs, return_outputs)
+            loss, outputs = super().compute_loss(model, inputs, return_outputs)
         else:
-            loss = super().compute_loss(self, model, inputs, return_outputs)
+            loss = super().compute_loss(model, inputs, return_outputs)
         if self.fisher_matrix is not None and self.previous_params is not None:
             # EWC Regularization Term
             ewc_loss = 0.0
