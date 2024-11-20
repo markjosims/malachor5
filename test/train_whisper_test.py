@@ -132,4 +132,7 @@ def test_save_fisher_matrix(tmpdir):
         os.path.basename(TIRA_ASR_DS)+'_fisher.pt' 
     )
     assert os.path.exists(fisher_matrix_path)
-    assert type(torch.load(fisher_matrix_path)) is torch.Tensor
+    fisher_matrix = torch.load(fisher_matrix_path)
+    assert type(fisher_matrix) is dict
+    for val in fisher_matrix.values():
+        assert type(val) is torch.Tensor
