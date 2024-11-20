@@ -81,8 +81,33 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
 # EWC methods #
 # ----------- #
 
-def calculate_fisher_matrix(args, trainer):
-    ...
+def calculate_fisher_matrix(args, trainer, model):
+    fisher_matrix = {
+        name: torch.zeros_like(param)
+        for name, param in model.named_parameters()
+        if param.requires_grad
+    }
+    dataloader = trainer.get_train_dataloader()
+    for batch in dataloader:
+        # normally popped during `WhisperTrainer.training_step()`
+        # need to do manually since we're not using the `training_step()` function
+        batch.pop('forced_decoder_ids', None)
+        inputs = trainer._prepare_inputs(batch)
+        with trainer.compute_loss_context_manager():
+            loss = trainer.compute_loss(model, inputs)
+        loss.backward()
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                fisher_matrix[name] += param.grad.pow(2).detach()
+        model.zero_grad()
+    fisher_matrix = {name: fisher / len(dataloader) for name, fisher in fisher_matrix.items()}
+    fisher_matrix_path = getattr(
+        args,
+        'fisher_matrix_path',
+        os.path.join(args.output, args.dataset.split('/')[-1]+'_fisher.pt'),
+    )
+    torch.save(fisher_matrix, fisher_matrix_path)
+    return fisher_matrix_path
 
 # ------------------ #
 # evaluation methods #
