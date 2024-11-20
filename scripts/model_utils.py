@@ -21,12 +21,15 @@ class WhisperTrainer(Seq2SeqTrainer):
             token_id_to_train=None,
             fisher_matrix_path=None,
             ewc_lambda=1,
+            embed_center_path=None,
+            embed_dist_lambda=1,
             **kwargs,
         ):
         super().__init__(*args, **kwargs)
         self.token_id_to_train = token_id_to_train  # ID of the embedding vector to train
         self.fisher_matrix_path = fisher_matrix_path
         self.ewc_lambda = ewc_lambda
+        self.embed_dist_lambda=embed_dist_lambda
         
         if fisher_matrix_path is not None:
             self.fisher_matrix = torch.load(fisher_matrix_path)
@@ -34,6 +37,9 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.fisher_matrix = None
             self.previous_params = None
+        if embed_center_path is not None:
+            self.embed_center = torch.load(embed_center_path)
+        
 
     def prediction_step(
         self,
