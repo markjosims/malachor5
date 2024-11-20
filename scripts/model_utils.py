@@ -103,7 +103,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             token_embed = model.model.decoder.embed_tokens.weight[self.token_id_to_train]
             y = torch.tensor([1]) # maximize cosine similarity
             embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.embed_center.unsqueeze(0), y)
-            loss = loss + (self.embed_dist_lambda * embed_dist_loss)
+            loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if return_outputs:
             return loss, outputs
