@@ -142,3 +142,82 @@ def test_save_fisher_matrix(tmpdir):
     assert type(fisher_matrix) is dict
     for val in fisher_matrix.values():
         assert type(val) is torch.Tensor
+
+def test_train_w_ewc(tmpdir):
+    """
+    Train model using EWC, check that setting `ewc_lambda` to a higher value
+    returns a higher loss.
+    """
+    parser = init_parser()
+    args = parser.parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 1
+    args.action = 'calculate_fisher'
+
+    ds, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args)
+    data_collator = load_data_collator(model, processor)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+    )
+    fisher_matrix_path = calculate_fisher_matrix(args, trainer, model)
+    trainer.train()
+    trainer.save_model()
+    args.model = args.output
+    trained_model = load_whisper_model_for_training_or_eval(args)
+
+    ewc_trainer1 = WhisperTrainer(
+            args=training_args,
+            model=trained_model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            fisher_matrix_path=fisher_matrix_path,
+            ewc_lambda=0.1
+    )
+    ewc_trainer2 = WhisperTrainer(
+            args=training_args,
+            model=trained_model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            fisher_matrix_path=fisher_matrix_path,
+            ewc_lambda=1_000
+    )
+
+    assert ewc_trainer1.ewc_lambda==0.1
+    assert ewc_trainer1.fisher_matrix_path==fisher_matrix_path
+    assert type(ewc_trainer1.previous_params) is dict
+    assert all(type(v) is torch.Tensor for v in ewc_trainer1.previous_params.values())
+    assert type(ewc_trainer1.fisher_matrix) is dict
+    assert all(type(v) is torch.Tensor for v in ewc_trainer1.fisher_matrix.values())
+    assert ewc_trainer2.ewc_lambda==1_000
+    assert all(type(v) is torch.Tensor for v in ewc_trainer2.previous_params.values())
+    assert type(ewc_trainer2.fisher_matrix) is dict
+    assert all(type(v) is torch.Tensor for v in ewc_trainer2.fisher_matrix.values())
+
+    dataloader = trainer.get_train_dataloader()
+    batch = next(iter(dataloader))
+    loss1 = ewc_trainer1.training_step(model, batch)
+    loss2 = ewc_trainer2.training_step(model, batch)
+
+    assert loss1.item() < loss2.item()
