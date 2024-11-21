@@ -56,6 +56,9 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
     parser.add_argument('--chkpnts', nargs='+')
     parser.add_argument('--eval_output')
+    parser.add_argument('--mean_embed_path')
+    parser.add_argument('--embed_dist_lambda', type=int, default=1)
+    parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'])
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -326,6 +329,9 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
             preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+            mean_embed_path=args.mean_embed_path,
+            embed_dist_lambda=args.embed_dist_lambda,
+            embed_dist_type=args.embed_dist_type,
         )
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)

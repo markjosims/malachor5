@@ -147,7 +147,7 @@ def test_lang_token_regularization(tmpdir):
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
-            embed_center_path=toy_embed_path,
+            mean_embed_path=toy_embed_path,
             embed_dist_lambda=1,
     )
     trainer = prepare_trainer_for_peft(args, trainer, processor)

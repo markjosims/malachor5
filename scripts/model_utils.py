@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import Any, Dict, List, Tuple, Optional, Union
+from typing import Any, Dict, List, Tuple, Optional, Union, Literal
 import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.linear_model import LogisticRegression
@@ -21,15 +21,17 @@ class WhisperTrainer(Seq2SeqTrainer):
             token_id_to_train=None,
             fisher_matrix_path=None,
             ewc_lambda=1,
-            embed_center_path=None,
+            mean_embed_path=None,
             embed_dist_lambda=1,
+            embed_dist_type: Literal['euclidean', 'cosine']='euclidean',
             **kwargs,
         ):
         super().__init__(*args, **kwargs)
         self.token_id_to_train = token_id_to_train  # ID of the embedding vector to train
         self.fisher_matrix_path = fisher_matrix_path
         self.ewc_lambda = ewc_lambda
-        self.embed_dist_lambda=embed_dist_lambda
+        self.embed_dist_lambda = embed_dist_lambda
+        self.embed_dist_type = embed_dist_type
         
         if fisher_matrix_path is not None:
             self.fisher_matrix = torch.load(fisher_matrix_path)
@@ -37,10 +39,10 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.fisher_matrix = None
             self.previous_params = None
-        if embed_center_path is not None:
-            self.embed_center = torch.load(embed_center_path)
+        if mean_embed_path is not None:
+            self.mean_embed = torch.load(mean_embed_path)
         else:
-            self.embed_center = None
+            self.mean_embed = None
         
 
     def prediction_step(
@@ -99,11 +101,15 @@ class WhisperTrainer(Seq2SeqTrainer):
             
             loss = loss + (self.ewc_lambda * ewc_loss)
         
-        if self.embed_center is not None:
+        if self.mean_embed is not None:
             token_embed = model.model.decoder.embed_tokens.weight[self.token_id_to_train]
-            y = torch.tensor([1]) # maximize cosine similarity
-            embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.embed_center.unsqueeze(0), y)
-            loss = loss + (self.embed_dist_lambda * embed_dist_loss)
+            if self.embed_dist_type == 'cosine':
+                y = torch.tensor([1]) # maximize cosine similarity
+                embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.mean_embed.unsqueeze(0), y)
+            else:
+                # self.embed_dist_type == 'euclidean'
+                embed_dist_loss = torch.subtract(token_embed, self.mean_embed).pow(2).sum().sqrt()
+            loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if return_outputs:
             return loss, outputs
