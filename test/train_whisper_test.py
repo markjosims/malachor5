@@ -150,7 +150,9 @@ def test_lang_token_regularization(tmpdir):
             mean_embed_path=toy_embed_path,
             embed_dist_lambda=1,
     )
+    # check euclidean distance
     trainer = prepare_trainer_for_peft(args, trainer, processor)
+    trainer.embed_dist_type='euclidean'
     trainer.embed_dist_lambda = 1
     loss2 = trainer.training_step(model, batch)
     assert loss1.item() < loss2.item()
@@ -158,6 +160,16 @@ def test_lang_token_regularization(tmpdir):
     trainer.embed_dist_lambda = 100
     loss3 = trainer.training_step(model, batch)
     assert loss2.item() < loss3.item()
+
+    # check cosine distance
+    trainer.embed_dist_type='cosine'
+    trainer.embed_dist_lambda = 1
+    loss4 = trainer.training_step(model, batch)
+    assert not torch.equal(loss4, loss2)
+
+    trainer.embed_dist_lambda = 100
+    loss5 = trainer.training_step(model, batch)
+    assert loss4.item() < loss5.item()
 
 
 def test_save_fisher_matrix(tmpdir):
