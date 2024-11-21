@@ -58,7 +58,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--eval_output')
     parser.add_argument('--mean_embed_path')
     parser.add_argument('--embed_dist_lambda', type=int, default=1)
-    parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'])
+    parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'], default='euclidean')
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
