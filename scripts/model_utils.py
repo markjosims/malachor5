@@ -41,7 +41,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             self.fisher_matrix = None
             self.previous_params = None
         if mean_embed_path is not None:
-            print(f"Loading mean embedding from path {mean_embed_path}...")
+            print(f"Loading mean embedding from path {mean_embed_path} for {embed_dist_type} regularization...")
             self.mean_embed = torch.load(mean_embed_path)
         else:
             self.mean_embed = None
