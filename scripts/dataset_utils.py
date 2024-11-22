@@ -261,11 +261,12 @@ def load_and_prepare_dataset(args):
     return ds, processor
 
 def load_eval_datasets(args) -> Dict[str, Dataset]:
-    eval_dataset_languages = [
-        args.language for _ in range(len(args.eval_datasets))
-    ]
     if args.eval_dataset_languages:
         eval_dataset_languages = [lang.split('+') for lang in args.eval_dataset_languages]
+    else:
+        eval_dataset_languages = [
+            args.language for _ in range(len(args.eval_datasets))
+        ]
     eval_dataset_dict = {}
 
     for dataset, lang in tqdm(list(zip(args.eval_datasets, eval_dataset_languages)), desc='Extra validation datasets'):
