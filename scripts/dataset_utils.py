@@ -244,7 +244,7 @@ def load_and_prepare_dataset(args):
         eval_dataset_dict = load_eval_datasets(args)
         dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
         if args.eval_dataset_languages:
-            dataset_stem+='-'+'+'.join(args.language)
+            dataset_stem+='-'+'+'.join(args.language or ['LID'])
         eval_dataset_dict[dataset_stem]=ds['validation']
         ds['validation']=eval_dataset_dict
 
@@ -286,6 +286,7 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         if args.eval_dataset_languages:
             # when specifying language for each dataset, include language in dataset name
             eval_dataset_name+='-'+'+'.join(lang)
+            eval_dataset_name=eval_dataset_name.replace('None', 'LID')
         eval_dataset_dict[eval_dataset_name]=dataset_obj['validation']
     return eval_dataset_dict
 
