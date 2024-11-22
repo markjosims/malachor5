@@ -279,9 +279,12 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         dataset_args.dataset=dataset
         dataset_args.action='evaluate'
         dataset_obj, _ = load_and_prepare_dataset(dataset_args)
-        eval_dataset_dict[
-            dataset.removesuffix('/').split('/')[-1]
-        ]=dataset_obj['validation']
+        
+        eval_dataset_name=dataset.removesuffix('/').split('/')[-1]
+        if args.eval_dataset_languages:
+            # when specifying language for each dataset, include language in dataset name
+            eval_dataset_name+='-'+'+'.join(lang)
+        eval_dataset_dict[eval_dataset_name]=dataset_obj['validation']
     return eval_dataset_dict
 
 def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
