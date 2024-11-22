@@ -243,6 +243,8 @@ def load_and_prepare_dataset(args):
         print("Loading additional eval datasets...")
         eval_dataset_dict = load_eval_datasets(args)
         dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
+        if args.eval_dataset_languages:
+            dataset_stem+='-'+'+'.join(args.language)
         eval_dataset_dict[dataset_stem]=ds['validation']
         ds['validation']=eval_dataset_dict
 
