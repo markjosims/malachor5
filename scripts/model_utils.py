@@ -35,11 +35,13 @@ class WhisperTrainer(Seq2SeqTrainer):
         
         if fisher_matrix_path is not None:
             self.fisher_matrix = torch.load(fisher_matrix_path, map_location=kwargs['args'].device)
+            print(f"Loading fisher matrix from path {fisher_matrix_path}...")
             self.previous_params = {name: param.clone().detach() for name, param in self.model.named_parameters() if param.requires_grad}
         else:
             self.fisher_matrix = None
             self.previous_params = None
         if mean_embed_path is not None:
+            print(f"Loading mean embedding from path {mean_embed_path} for {embed_dist_type} regularization...")
             self.mean_embed = torch.load(mean_embed_path, map_location=kwargs['args'].device)
         else:
             self.mean_embed = None
