@@ -80,9 +80,9 @@ def add_hyperparameter_args(parser: ArgumentParser) -> None:
             hyper_args.add_argument(*flags, type=type(v), default=v)
     return parser
 
-# ----------- #
-# EWC methods #
-# ----------- #
+# -------------------- #
+# Misc trainer actions #
+# -------------------- #
 
 def calculate_fisher_matrix(args, trainer, model):
     fisher_matrix = {
@@ -111,6 +111,9 @@ def calculate_fisher_matrix(args, trainer, model):
     )
     torch.save(fisher_matrix, fisher_matrix_path)
     return fisher_matrix_path
+
+def get_lid_logits(args, trainer, model, processor):
+    ...
 
 # ------------------ #
 # evaluation methods #
