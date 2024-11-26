@@ -323,7 +323,7 @@ def test_get_lid_logits(tmpdir):
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
         )
 
-    get_lid_logits(args, trainer, model, processor)
+    get_lid_logits(args, trainer, model)
     lid_logits_path = os.path.join(
         args.output,
         os.path.basename(TIRA_ASR_DS)+'_lid_logits.pt' 
