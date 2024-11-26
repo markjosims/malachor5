@@ -18,7 +18,7 @@ def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
         assert end>start
 
 def assert_tokens_in_row(row, token_names, col='labels'):
-    language_ids = [SPECIAL_TOKENS_FLAT[language]['id'] for language in token_names]
+    language_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
     labels = row[col]
     for lang_id in language_ids:
         assert lang_id in labels

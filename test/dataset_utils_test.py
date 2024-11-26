@@ -133,3 +133,4 @@ def test_label_prefix_added():
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
+    
