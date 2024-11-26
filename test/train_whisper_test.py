@@ -334,3 +334,4 @@ def test_get_lid_logits(tmpdir):
     assert len(lid_logits)==99
     for val in lid_logits.values():
         assert type(val) is torch.Tensor
+        assert len(val)==args.num_records
