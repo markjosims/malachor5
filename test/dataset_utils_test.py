@@ -13,6 +13,7 @@ def test_dataset_language():
         language=['en'],
         model='openai/whisper-tiny',
         num_records=50,
+        action='evaluate',
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
@@ -33,6 +34,7 @@ def test_dataset_multi_language():
         language=['en', 'sw'],
         model='openai/whisper-tiny',
         num_records=50,
+        action='evaluate',
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
@@ -54,7 +56,8 @@ def test_eval_datasets():
         model='openai/whisper-tiny',
         num_records=50,
         eval_datasets=[FLEURS, TIRA_BILING],
-        eval_dataset_languages=['en', 'sw+en']
+        eval_dataset_languages=['en', 'sw+en'],
+        action='evaluate',
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
@@ -102,6 +105,7 @@ def test_decoder_input_added():
         language=['sw'],
         model='openai/whisper-tiny',
         num_records=50,
+        action='evaluate',
     )
     for arg in DATASET_ARGS:
         if not hasattr(args, arg):
