@@ -110,8 +110,8 @@ def calculate_fisher_matrix(args, trainer, model):
     fisher_matrix_path = getattr(
         args,
         'fisher_matrix_path',
-        os.path.join(args.output, args.dataset.split('/')[-1]+'_fisher.pt'),
-    )
+        None,
+    ) or os.path.join(args.output, args.dataset.split('/')[-1]+'_fisher.pt')
     torch.save(fisher_matrix, fisher_matrix_path)
     return fisher_matrix_path
 
@@ -136,8 +136,8 @@ def get_lid_logits(args, trainer, model):
     lid_logits_path = getattr(
         args,
         'lid_logits_path',
-        os.path.join(args.output, args.dataset.split('/')[-1]+'_lid_logits.pt'),
-    )
+        None,
+    ) or os.path.join(args.output, args.dataset.split('/')[-1]+'_lid_logits.pt')
     torch.save(lid_logits, lid_logits_path)
     return lid_logits_path
 
