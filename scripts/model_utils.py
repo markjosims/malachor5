@@ -120,11 +120,13 @@ class WhisperTrainer(Seq2SeqTrainer):
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if self.lid_loss_alpha is not None:
+            lid_logits = self.get_lid_logits(encoder_outputs=outputs.encoder_last_hidden_state)
+            lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
+
             ground_truth_lid_labels = inputs['labels'][:,0]
-            ground_truth_lid_labels = ground_truth_lid_labels-min(LANG_TOKEN_IDS)
-            ground_truth_lid_mat = torch.nn.functional.one_hot(ground_truth_lid_labels, num_classes=len(LANG_TOKEN_IDS)).float()
-            lid_logits = outputs['logits'][:,0,LANG_TOKEN_IDS]
-            lid_probs = torch.nn.functional.softmax(lid_logits)
+            ground_truth_lid_labels = ground_truth_lid_labels
+            ground_truth_lid_mat = torch.nn.functional.one_hot(ground_truth_lid_labels, num_classes=lid_logits.shape[1]).float()
+
             lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
         if return_outputs:
@@ -149,11 +151,15 @@ class WhisperTrainer(Seq2SeqTrainer):
         elif input_features is not None:
             inputs = {"input_features": input_features[:, :, :num_segment_frames]}
             batch_size = input_features.shape[0]
-        elif encoder_outputs is not None:
-            inputs = {"encoder_outputs": encoder_outputs}
-            batch_size = (
-                encoder_outputs[0].shape[0] if isinstance(encoder_outputs, BaseModelOutput) else encoder_outputs[0]
-            )
+        elif (encoder_outputs is not None) and (
+            isinstance(encoder_outputs, BaseModelOutput) or
+            type(encoder_outputs) is tuple
+        ):
+                inputs = {"encoder_outputs": encoder_outputs}
+                batch_size = encoder_outputs[0].shape[0]
+        elif (encoder_outputs is not None):
+                inputs = {"encoder_outputs": (encoder_outputs,)}
+                batch_size = encoder_outputs.shape[0]
         generation_config = generation_config or self.model.generation_config
         decoder_input_ids = (
             torch.ones((batch_size, 1), device=self.model.device, dtype=torch.long)
