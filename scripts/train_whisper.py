@@ -381,8 +381,12 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='calculate_fisher':
+        trainer.train_dataset=ds['train']
+        trainer.eval_dataset=ds['validation']
         calculate_fisher_matrix(args, trainer, model)
     elif args.action=='get_lid_logits':
+        trainer.train_dataset=ds['train']
+        trainer.eval_dataset=ds['validation']
         get_lid_logits(args, trainer, model)
     else:
         # args.action == 'test'
