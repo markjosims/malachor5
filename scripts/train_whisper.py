@@ -10,7 +10,7 @@ import pandas as pd
 import os
 from glob import glob
 from tqdm import tqdm
-from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
+from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args, LANG_TOKENS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy
@@ -112,8 +112,32 @@ def calculate_fisher_matrix(args, trainer, model):
     torch.save(fisher_matrix, fisher_matrix_path)
     return fisher_matrix_path
 
-def get_lid_logits(args, trainer, model, processor):
-    ...
+def get_lid_logits(args, trainer, model):
+    lid_logits = {
+        lang: [] for lang in LANG_TOKENS
+    }
+    dataloader = trainer.get_train_dataloader()
+    with torch.no_grad():
+        for batch in dataloader:
+            # normally popped during `WhisperTrainer.training_step()`
+            # need to do manually since we're not using the `training_step()` function
+            batch.pop('forced_decoder_ids', None)
+            inputs = trainer._prepare_inputs(batch)
+            outputs = model(**inputs)
+            logits = outputs['logits']
+            for lang, lang_obj in LANG_TOKENS.items():
+                lid_logits[lang].extend(logits[:,0,lang_obj['id']].tolist())
+    for lang in lid_logits:
+        lid_logits[lang]=torch.tensor(lid_logits[lang])
+    lid_logits_path = getattr(
+        args,
+        'lid_logits_path',
+        os.path.join(args.output, args.dataset.split('/')[-1]+'_lid_logits.pt'),
+    )
+    torch.save(lid_logits, lid_logits_path)
+    return lid_logits_path
+
+
 
 # ------------------ #
 # evaluation methods #
