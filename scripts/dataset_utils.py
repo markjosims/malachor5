@@ -9,10 +9,9 @@ from torch.utils.data import DataLoader
 from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
-from model_utils import get_forced_decoder_ids
+from tokenization_utils import *
 import numpy as np
 from copy import copy
-import json
 from tqdm import tqdm
 
 DATASET_ARGS = [
@@ -32,21 +31,6 @@ DATASET_ARGS = [
     'eval_datasets',
     'eval_dataset_languages',
 ]
-TRANSCRIBE_TOKEN_ID=50359
-BOS_TOKEN_ID=50258
-EOS_TOKEN_ID=50257
-NOTIMESTAMPS_ID=50363
-TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
-FLEURS = 'data/pyarrow-datasets/fl_en'
-TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
-with open('meta/whisper_special_tokens.json') as f:
-    SPECIAL_TOKENS = json.load(f)
-LANG_TOKENS = SPECIAL_TOKENS['lang']
-FUNCTIONAL_TOKENS = SPECIAL_TOKENS['functional']
-SPECIAL_TOKENS_FLAT = dict(**LANG_TOKENS, **FUNCTIONAL_TOKENS)
-
-with open('meta/language_codes.json') as f:
-    LANGUAGE_CODES = json.load(f)
 
 # ------------- #
 # data collator #

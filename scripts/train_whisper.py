@@ -10,7 +10,8 @@ import pandas as pd
 import os
 from glob import glob
 from tqdm import tqdm
-from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args, LANG_TOKENS
+from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
+from tokenization_utils import LANG_TOKENS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy

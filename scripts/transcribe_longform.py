@@ -14,7 +14,7 @@ from glob import glob
 import os
 from tqdm import tqdm
 from model_utils import load_whisper_pipeline
-from model_utils import get_forced_decoder_ids
+from tokenization_utils import get_forced_decoder_ids
 from sli import infer_lr
 
 SAMPLE_RATE = 16000
