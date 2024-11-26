@@ -5,7 +5,7 @@ import math
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, build_dataloaders, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING, SPECIAL_TOKENS
+from dataset_utils import load_and_prepare_dataset, build_dataloaders, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING, SPECIAL_TOKENS_FLAT
 
 def test_dataset_language():
     args = Namespace(
@@ -21,8 +21,8 @@ def test_dataset_language():
     ds.map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['en', 'transcribe', 'bos', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS
+            token_names=['en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -41,8 +41,8 @@ def test_dataset_multi_language():
     ds.map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['en', 'sw', 'transcribe', 'bos', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS
+            token_names=['en', 'sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -68,8 +68,8 @@ def test_eval_datasets():
     eval_datasets['fl_en'].map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['en', 'transcribe', 'bos', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS
+            token_names=['en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -79,8 +79,8 @@ def test_eval_datasets():
     eval_datasets['tira-clean-split'].map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['sw', 'transcribe', 'bos', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS
+            token_names=['sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -90,8 +90,8 @@ def test_eval_datasets():
     eval_datasets['HH20210913'].map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['sw', 'en', 'transcribe', 'bos', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS
+            token_names=['sw', 'en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -111,8 +111,8 @@ def test_decoder_input_added():
     ds['validation'].map(
         lambda row: assert_tokens_in_row(
             row,
-            token_names=['sw', 'transcribe', 'bos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS,
+            token_names=['sw', 'transcribe', 'startoftranscript', 'notimestamps'],
+            special_tokens=SPECIAL_TOKENS_FLAT,
             col='decoder_input_ids'
         )
     )

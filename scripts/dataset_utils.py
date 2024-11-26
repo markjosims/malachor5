@@ -39,14 +39,11 @@ NOTIMESTAMPS_ID=50363
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
 FLEURS = 'data/pyarrow-datasets/fl_en'
 TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
-SPECIAL_TOKENS = {
-    'en':           {'token': '<|en|>',                 'id': 50259},
-    'sw':           {'token': '<|sw|>',                 'id': 50318},
-    'bos':          {'token': '<|startoftranscript|>',  'id': 50258},
-    'eos':          {'token': '<|endoftext|>',          'id': 50257},
-    'notimestamps': {'token': '<|notimestamps|>',       'id': 50363},
-    'transcribe':   {'token': '<|transcribe|>',         'id': 50359},
-}
+with open('meta/whisper_special_tokens.json') as f:
+    SPECIAL_TOKENS = json.load(f)
+LANG_TOKENS = SPECIAL_TOKENS['lang']
+FUNCTIONAL_TOKENS = SPECIAL_TOKENS['functional']
+SPECIAL_TOKENS_FLAT = dict(**LANG_TOKENS, **FUNCTIONAL_TOKENS)
 
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
