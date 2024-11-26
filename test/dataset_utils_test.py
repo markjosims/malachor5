@@ -5,7 +5,7 @@ import math
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING, SPECIAL_TOKENS_FLAT
+from dataset_utils import load_and_prepare_dataset, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING
 
 def test_dataset_language():
     args = Namespace(
@@ -23,7 +23,6 @@ def test_dataset_language():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -44,7 +43,6 @@ def test_dataset_multi_language():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['en', 'sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -72,7 +70,6 @@ def test_eval_datasets():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -83,7 +80,6 @@ def test_eval_datasets():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -94,7 +90,6 @@ def test_eval_datasets():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT
         ),
         batched=False,
     )
@@ -116,7 +111,6 @@ def test_decoder_input_added():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'transcribe'],
-            special_tokens=SPECIAL_TOKENS_FLAT,
             col='forced_decoder_ids'
         )
     )
@@ -124,6 +118,18 @@ def test_decoder_input_added():
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'transcribe', 'startoftranscript', 'notimestamps'],
-            special_tokens=SPECIAL_TOKENS_FLAT,
         )
     )
+
+def test_label_prefix_added():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        model='openai/whisper-tiny',
+        num_records=50,
+        action='evaluate',
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    ds, _ = load_and_prepare_dataset(args)
