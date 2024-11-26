@@ -1,5 +1,5 @@
 from argparse import Namespace
-from test_utils import assert_tokens_in_row
+from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with
 from datasets import Dataset
 import math
 
@@ -133,4 +133,15 @@ def test_label_prefix_added():
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
-    
+    ds['validation'].map(
+        lambda row: assert_labels_begin_with(
+            row,
+            token_names=['startoftranscript', 'sw', 'transcribe', 'notimestamps'],
+        )
+    )
+    ds['validation'].map(
+        lambda row: assert_labels_end_with(
+            row,
+            token_names=['eos'],
+        )
+    )
