@@ -104,8 +104,7 @@ def prepare_dataset(
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
     elif decoder_prompt_ids:
         label_ids = processor.tokenizer(label, return_tensors='np', add_special_tokens=False).input_ids[0]
-        suffix = [EOS_TOKEN_ID,]
-        label_ids = np.concatenate([[BOS_TOKEN_ID], decoder_prompt_ids,  [NOTIMESTAMPS_ID], label_ids, suffix])
+        label_ids = np.concatenate([[BOS_TOKEN_ID], decoder_prompt_ids, label_ids, [EOS_TOKEN_ID]])
         row['forced_decoder_ids']=decoder_prompt_ids
     else:
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
