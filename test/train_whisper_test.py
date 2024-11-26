@@ -321,7 +321,7 @@ def test_get_lid_logits(tmpdir):
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
-        )
+    )
 
     get_lid_logits(args, trainer, model)
     lid_logits_path = os.path.join(
@@ -335,3 +335,39 @@ def test_get_lid_logits(tmpdir):
     for val in lid_logits.values():
         assert type(val) is torch.Tensor
         assert len(val)==args.num_records
+
+def test_lid_loss(tmpdir):
+    """
+    Compute loss with LID joint task and check different than ASR loss alone.
+    """
+    parser = init_parser()
+    args = parser.parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 1
+    args.lid_loss_alpha = 0.2
+
+    ds, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args)
+    data_collator = load_data_collator(model, processor)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+            train_dataset=ds['train'],
+            eval_dataset=ds['validation'],
+            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+    )
+    dataloader = trainer.get_train_dataloader()
+    batch = next(iter(dataloader))
+    loss_w_lid = trainer.training_step(model, batch)
+    trainer.lid_loss_alpha = None
+    loss_base = trainer.training_step(model, batch)
+    assert not torch.equal(loss_w_lid, loss_base)
