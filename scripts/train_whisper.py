@@ -51,7 +51,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--ft_peft_model', action='store_true')
     parser.add_argument('--resume_from_checkpoint', action='store_true')
     parser.add_argument('--checkpoint')
-    parser.add_argument('--action', choices=['train', 'evaluate', 'test'], default='train')
+    parser.add_argument('--action', choices=['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_logits'], default='train')
     parser.add_argument('--all_chkpnts', action='store_true')
     parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
     parser.add_argument('--chkpnts', nargs='+')
@@ -59,6 +59,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--mean_embed_path')
     parser.add_argument('--embed_dist_lambda', type=int, default=1)
     parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'], default='euclidean')
+    parser.add_argument('--fisher_matrix_path')
+    parser.add_argument('--lid_logits_path')
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -91,7 +93,7 @@ def calculate_fisher_matrix(args, trainer, model):
         if param.requires_grad
     }
     dataloader = trainer.get_train_dataloader()
-    for batch in dataloader:
+    for batch in tqdm(dataloader, total=len(dataloader), desc='Calculating gradient for each batch in dataset'):
         # normally popped during `WhisperTrainer.training_step()`
         # need to do manually since we're not using the `training_step()` function
         batch.pop('forced_decoder_ids', None)
@@ -118,7 +120,7 @@ def get_lid_logits(args, trainer, model):
     }
     dataloader = trainer.get_train_dataloader()
     with torch.no_grad():
-        for batch in dataloader:
+        for batch in tqdm(dataloader, total=len(dataloader), desc='Calculating LID logits for each batch in dataset'):
             # normally popped during `WhisperTrainer.training_step()`
             # need to do manually since we're not using the `training_step()` function
             batch.pop('forced_decoder_ids', None)
@@ -126,7 +128,8 @@ def get_lid_logits(args, trainer, model):
             outputs = model(**inputs)
             logits = outputs['logits']
             for lang, lang_obj in LANG_TOKENS.items():
-                lid_logits[lang].extend(logits[:,0,lang_obj['id']].tolist())
+                lid_logits[lang].extend(logits[:,0,lang_obj['id']].detach().tolist())
+            del logits
     for lang in lid_logits:
         lid_logits[lang]=torch.tensor(lid_logits[lang])
     lid_logits_path = getattr(
@@ -378,7 +381,14 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
-
+    elif args.action=='calculate_fisher':
+        trainer.train_dataset=ds['train']
+        trainer.eval_dataset=ds['validation']
+        calculate_fisher_matrix(args, trainer, model)
+    elif args.action=='get_lid_logits':
+        trainer.train_dataset=ds['train']
+        trainer.eval_dataset=ds['validation']
+        get_lid_logits(args, trainer, model)
     else:
         # args.action == 'test'
         evaluate_dataset(args, ds['test'], trainer, processor)
