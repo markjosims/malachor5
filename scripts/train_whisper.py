@@ -128,7 +128,8 @@ def get_lid_logits(args, trainer, model):
             outputs = model(**inputs)
             logits = outputs['logits']
             for lang, lang_obj in LANG_TOKENS.items():
-                lid_logits[lang].extend(logits[:,0,lang_obj['id']].tolist())
+                lid_logits[lang].extend(logits[:,0,lang_obj['id']].detach().tolist())
+            del logits
     for lang in lid_logits:
         lid_logits[lang]=torch.tensor(lid_logits[lang])
     lid_logits_path = getattr(
