@@ -39,15 +39,15 @@ def test_lang_col_generate(tmpdir):
     swahili_token = LANG_TOKENS['sw']['id']
     en_token = LANG_TOKENS['en']['id']
 
-    for pred in predictions_dict[FLEURS.split('/')[-1]].predictions:
+    for pred in predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions:
         assert en_token in pred
         assert swahili_token not in pred
 
-    for pred in predictions_dict[TIRA_ASR_DS.split('/')[-1]].predictions:
+    for pred in predictions_dict[TIRA_ASR_DS.split('/')[-1]+'-sw'].predictions:
         assert swahili_token in pred
         assert en_token not in pred
     
-    for pred in predictions_dict[TIRA_BILING.split('/')[-1]].predictions:
+    for pred in predictions_dict[TIRA_BILING.split('/')[-1]+'-sw+en'].predictions:
         assert en_token in pred
         assert swahili_token in pred
 
@@ -348,7 +348,6 @@ def test_lid_loss(tmpdir):
     args.num_records = 10
     args.model = 'openai/whisper-tiny'
     args.num_train_epochs = 1
-    args.lid_loss_alpha = 0.2
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
@@ -364,6 +363,7 @@ def test_lid_loss(tmpdir):
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            lid_loss_alpha=0.2,
     )
     dataloader = trainer.get_train_dataloader()
     batch = next(iter(dataloader))
