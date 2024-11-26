@@ -1,5 +1,5 @@
 from argparse import Namespace
-from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with
+from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with, assert_tokens_appear_once
 from datasets import Dataset
 import math
 
@@ -143,5 +143,11 @@ def test_label_prefix_added():
         lambda row: assert_labels_end_with(
             row,
             token_names=['eos'],
+        )
+    )
+    ds['validation'].map(
+        lambda row: assert_tokens_appear_once(
+            row,
+            token_names=['startoftranscript', 'sw', 'transcribe', 'notimestamps', 'eos'],
         )
     )

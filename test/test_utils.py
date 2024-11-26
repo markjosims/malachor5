@@ -26,9 +26,15 @@ def assert_tokens_in_row(row, token_names, col='labels'):
 def assert_labels_begin_with(row, token_names, col='labels'):
     tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
     labels = row[col]
-    assert labels[:len(tok_ids)]==tok_ids
+    assert labels[:len(tok_ids)]==tok_ids, labels
 
 def assert_labels_end_with(row, token_names, col='labels'):
     tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
     labels = row[col]
-    assert labels[-len(tok_ids):]==tok_ids
+    assert labels[-len(tok_ids):]==tok_ids, labels
+
+def assert_tokens_appear_once(row, token_names, col='labels'):
+    tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
+    labels = row[col]
+    for tok_id in tok_ids:
+            assert labels.count(tok_id)==1, tok_id

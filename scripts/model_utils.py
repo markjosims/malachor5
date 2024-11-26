@@ -6,6 +6,8 @@ from sklearn.linear_model import LogisticRegression
 from speechbrain.inference.classifiers import EncoderClassifier
 from transformers import AutomaticSpeechRecognitionPipeline, Seq2SeqTrainer, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer, WhisperProcessor
 import pickle
+from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
+
 
 DEVICE = 0 if torch.cuda.is_available() else -1
 device_type = lambda s: int(s) if s!='cpu' else s
@@ -24,6 +26,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             mean_embed_path=None,
             embed_dist_lambda=1,
             embed_dist_type: Literal['euclidean', 'cosine']='euclidean',
+            lid_loss_alpha=None,
             **kwargs,
         ):
         super().__init__(*args, **kwargs)
@@ -32,6 +35,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         self.ewc_lambda = ewc_lambda
         self.embed_dist_lambda = embed_dist_lambda
         self.embed_dist_type = embed_dist_type
+        self.lid_loss_alpha = lid_loss_alpha
         
         if fisher_matrix_path is not None:
             self.fisher_matrix = torch.load(fisher_matrix_path, map_location=kwargs['args'].device)
@@ -88,8 +92,8 @@ class WhisperTrainer(Seq2SeqTrainer):
         return loss
     
     def compute_loss(self, model, inputs, return_outputs=False):
-        if return_outputs:
-            loss, outputs = super().compute_loss(model, inputs, return_outputs)
+        if return_outputs or (self.lid_loss_alpha is not None):
+            loss, outputs = super().compute_loss(model, inputs, return_outputs=True)
         else:
             loss = super().compute_loss(model, inputs, return_outputs)
         if self.fisher_matrix is not None and self.previous_params is not None:
@@ -113,6 +117,14 @@ class WhisperTrainer(Seq2SeqTrainer):
                 embed_dist_loss = torch.subtract(token_embed, self.mean_embed).pow(2).sum().sqrt()
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
+        if self.lid_loss_alpha is not None:
+            ground_truth_lid_labels = inputs['labels'][:,0]
+            ground_truth_lid_labels = ground_truth_lid_labels-min(LANG_TOKEN_IDS)
+            ground_truth_lid_mat = torch.nn.functional.one_hot(ground_truth_lid_labels, num_classes=len(LANG_TOKEN_IDS)).float()
+            lid_logits = outputs['logits'][:,0,LANG_TOKEN_IDS]
+            lid_probs = torch.nn.functional.softmax(lid_logits)
+            lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
+            loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
         if return_outputs:
             return loss, outputs
         return loss
@@ -156,24 +168,6 @@ def load_peft_model_for_finetuning(args):
     print("Merging PEFT model for further finetuning...")
     model = model.merge_and_unload()
     return model
-
-
-def get_forced_decoder_ids(args, tokenizer, ids_only=False):
-    """
-    Get task and language prompt tokens for languages specified by `args.language`
-    and task 'transcribe'. By default returns a list of tuples, [(i, token_id), ...].
-    If `ids_only`, pass a list of token ids sorted by `i`.
-    """
-    forced_decoder_ids=set()
-    for language in args.language or [None]:
-        forced_decoder_ids.update(
-                tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
-        )
-    forced_decoder_ids=list(forced_decoder_ids)
-    if ids_only:
-        forced_decoder_ids.sort(key=lambda t:t[0])
-        forced_decoder_ids=[t[1] for t in forced_decoder_ids]
-    return forced_decoder_ids
 
 
 def set_generation_config(args, model, tokenizer):
