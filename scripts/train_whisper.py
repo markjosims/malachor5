@@ -126,11 +126,10 @@ def get_lid_logits(args, trainer, model):
             # need to do manually since we're not using the `training_step()` function
             batch.pop('forced_decoder_ids', None)
             inputs = trainer._prepare_inputs(batch)
-            outputs = model(**inputs)
-            logits = outputs['logits']
+            batch_logits = trainer.get_lid_logits(inputs.input_features)
             for lang, lang_obj in LANG_TOKENS.items():
-                lid_logits[lang].extend(logits[:,0,lang_obj['id']].detach().tolist())
-            del logits
+                lid_logits[lang].extend(batch_logits[:,lang_obj['id']].detach().tolist())
+            del batch_logits
     for lang in lid_logits:
         lid_logits[lang]=torch.tensor(lid_logits[lang])
     lid_logits_path = getattr(
