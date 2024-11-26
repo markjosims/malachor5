@@ -93,7 +93,7 @@ def calculate_fisher_matrix(args, trainer, model):
         if param.requires_grad
     }
     dataloader = trainer.get_train_dataloader()
-    for batch in dataloader:
+    for batch in tqdm(dataloader, total=len(dataloader), desc='Calculating gradient for each batch in dataset'):
         # normally popped during `WhisperTrainer.training_step()`
         # need to do manually since we're not using the `training_step()` function
         batch.pop('forced_decoder_ids', None)
@@ -120,7 +120,7 @@ def get_lid_logits(args, trainer, model):
     }
     dataloader = trainer.get_train_dataloader()
     with torch.no_grad():
-        for batch in dataloader:
+        for batch in tqdm(dataloader, total=len(dataloader), desc='Calculating LID logits for each batch in dataset'):
             # normally popped during `WhisperTrainer.training_step()`
             # need to do manually since we're not using the `training_step()` function
             batch.pop('forced_decoder_ids', None)
