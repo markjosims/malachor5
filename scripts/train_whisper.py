@@ -5,13 +5,14 @@ from argparse import ArgumentParser
 from typing import Sequence, Optional
 from transformers import Seq2SeqTrainingArguments
 import torch
+import numpy as np
 from jiwer import wer, cer
 import pandas as pd
 import os
 from glob import glob
 from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
-from tokenization_utils import LANG_TOKENS
+from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy
@@ -52,7 +53,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--ft_peft_model', action='store_true')
     parser.add_argument('--resume_from_checkpoint', action='store_true')
     parser.add_argument('--checkpoint')
-    parser.add_argument('--action', choices=['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_logits'], default='train')
+    parser.add_argument('--action', choices=['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_probs'], default='train')
     parser.add_argument('--all_chkpnts', action='store_true')
     parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
     parser.add_argument('--chkpnts', nargs='+')
@@ -115,8 +116,8 @@ def calculate_fisher_matrix(args, trainer, model):
     torch.save(fisher_matrix, fisher_matrix_path)
     return fisher_matrix_path
 
-def get_lid_logits(args, trainer, model):
-    lid_logits = {
+def get_lid_probs(args, trainer, model):
+    lid_probs = {
         lang: [] for lang in LANG_TOKENS
     }
     dataloader = trainer.get_train_dataloader()
@@ -126,18 +127,22 @@ def get_lid_logits(args, trainer, model):
             # need to do manually since we're not using the `training_step()` function
             batch.pop('forced_decoder_ids', None)
             inputs = trainer._prepare_inputs(batch)
-            batch_logits = trainer.get_lid_logits(inputs.input_features)
+            batch_logits = trainer.get_lid_probs(inputs.input_features)
+            non_lang_mask = torch.ones_like(batch_logits[0], dtype=torch.bool)
+            non_lang_mask[LANG_TOKEN_IDS] = False
+            batch_logits[:, non_lang_mask] = -np.inf
+            batch_probs=batch_logits.softmax(dim=1)
             for lang, lang_obj in LANG_TOKENS.items():
-                lid_logits[lang].extend(batch_logits[:,lang_obj['id']].detach().tolist())
-            del batch_logits
-    for lang in lid_logits:
-        lid_logits[lang]=torch.tensor(lid_logits[lang])
+                lid_probs[lang].extend(batch_probs[:,lang_obj['id']].detach().tolist())
+            del batch_logits, batch_probs
+    for lang in lid_probs:
+        lid_probs[lang]=torch.tensor(lid_probs[lang])
     lid_logits_path = getattr(
         args,
         'lid_logits_path',
         None,
     ) or os.path.join(args.output, args.dataset.split('/')[-1]+'_lid_logits.pt')
-    torch.save(lid_logits, lid_logits_path)
+    torch.save(lid_probs, lid_logits_path)
     return lid_logits_path
 
 
@@ -385,10 +390,10 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
         calculate_fisher_matrix(args, trainer, model)
-    elif args.action=='get_lid_logits':
+    elif args.action=='get_lid_probs':
         trainer.train_dataset=ds['train']
         trainer.eval_dataset=ds['validation']
-        get_lid_logits(args, trainer, model)
+        get_lid_probs(args, trainer, model)
     else:
         # args.action == 'test'
         evaluate_dataset(args, ds['test'], trainer, processor)

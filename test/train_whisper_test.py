@@ -2,7 +2,7 @@ import torch
 import sys
 import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics, calculate_fisher_matrix, get_lid_logits
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics, calculate_fisher_matrix, get_lid_probs
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -292,9 +292,9 @@ def test_train_w_ewc(tmpdir):
 
     assert loss1.item() < loss2.item()
 
-def test_get_lid_logits(tmpdir):
+def test_get_lid_probs(tmpdir):
     """
-    Run `get_lid_logits` and check it outputs
+    Run `get_lid_probs` and check it outputs
     a dict of Torch tensors.
     """
     parser = init_parser()
@@ -305,7 +305,7 @@ def test_get_lid_logits(tmpdir):
     args.num_records = 10
     args.model = 'openai/whisper-tiny'
     args.num_train_epochs = 1
-    args.action = 'get_lid_logits'
+    args.action = 'get_lid_probs'
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
@@ -323,7 +323,7 @@ def test_get_lid_logits(tmpdir):
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
 
-    get_lid_logits(args, trainer, model)
+    get_lid_probs(args, trainer, model)
     lid_logits_path = os.path.join(
         args.output,
         os.path.basename(TIRA_ASR_DS)+'_lid_logits.pt' 
