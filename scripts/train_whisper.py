@@ -63,7 +63,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'], default='euclidean')
     parser.add_argument('--fisher_matrix_path')
     parser.add_argument('--lid_logits_path')
-    parser.add_argument('--lid_loss_alpha')
+    parser.add_argument('--lid_loss_alpha', type=int)
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
