@@ -127,7 +127,7 @@ def get_lid_probs(args, trainer, model):
             # need to do manually since we're not using the `training_step()` function
             batch.pop('forced_decoder_ids', None)
             inputs = trainer._prepare_inputs(batch)
-            batch_logits = trainer.get_lid_probs(inputs.input_features)
+            batch_logits = trainer.get_lid_logits(inputs.input_features)
             non_lang_mask = torch.ones_like(batch_logits[0], dtype=torch.bool)
             non_lang_mask[LANG_TOKEN_IDS] = False
             batch_logits[:, non_lang_mask] = -np.inf
