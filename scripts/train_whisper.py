@@ -59,10 +59,11 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--chkpnts', nargs='+')
     parser.add_argument('--eval_output')
     parser.add_argument('--mean_embed_path')
-    parser.add_argument('--embed_dist_lambda', type=int, default=1)
+    parser.add_argument('--embed_dist_lambda', type=float, default=1)
     parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'], default='euclidean')
     parser.add_argument('--fisher_matrix_path')
     parser.add_argument('--lid_logits_path')
+    parser.add_argument('--lid_loss_alpha', type=float)
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -367,6 +368,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             mean_embed_path=args.mean_embed_path,
             embed_dist_lambda=args.embed_dist_lambda,
             embed_dist_type=args.embed_dist_type,
+            lid_loss_alpha=args.lid_loss_alpha,
         )
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)

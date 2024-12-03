@@ -112,7 +112,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         if self.mean_embed is not None:
             token_embed = model.model.decoder.embed_tokens.weight[self.token_id_to_train]
             if self.embed_dist_type == 'cosine':
-                y = torch.tensor([1]) # maximize cosine similarity
+                y = torch.tensor([1], device=token_embed.device) # maximize cosine similarity
                 embed_dist_loss = torch.nn.functional.cosine_embedding_loss(token_embed.unsqueeze(0), self.mean_embed.unsqueeze(0), y)
             else:
                 # self.embed_dist_type == 'euclidean'
