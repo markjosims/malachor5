@@ -2,10 +2,13 @@
 <preferences version="1.1"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/Prefs_v1.1.xsd">
     <pref key="FrameSize">
-        <Object class="java.awt.Dimension">1440,900</Object>
+        <Object class="java.awt.Dimension">1550,838</Object>
     </pref>
     <pref key="LayoutManager.SelectedTabIndex">
-        <Int>7</Int>
+        <Int>6</Int>
+    </pref>
+    <pref key="LayoutManager.MediaAreaWidth">
+        <Int>352</Int>
     </pref>
     <pref key="LayoutManager.VisibleMultiTierViewer">
         <String>mpi.eudico.client.annotator.viewer.TimeLineViewer</String>
@@ -13,14 +16,20 @@
     <pref key="SegmentationViewer.ZoomLevel">
         <Float>109.0</Float>
     </pref>
+    <pref key="InterlinearizationMode.LeftTopBottomSplit">
+        <Double>0.12953367875647667</Double>
+    </pref>
     <pref key="MultiTierViewer.ActiveTierName">
-        <String>SHA</String>
+        <String>HIM</String>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>1316878</Long>
+        <Long>1730110</Long>
+    </pref>
+    <pref key="LayoutManager.MediaAreaHeight">
+        <Int>250</Int>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
-        <Float>109.0</Float>
+        <Float>99.00001</Float>
     </pref>
     <pref key="LayoutManager.CurrentMode">
         <Int>1</Int>
@@ -29,14 +38,26 @@
         <Int>3000</Int>
     </pref>
     <prefGroup key="TranscriptionMode.Temp.TierColors">
+        <pref key="Gloss">
+            <Object class="java.awt.Color">90,90,0</Object>
+        </pref>
         <pref key="Translation">
             <Object class="java.awt.Color">90,160,0</Object>
+        </pref>
+        <pref key="default">
+            <Object class="java.awt.Color">0,90,90</Object>
         </pref>
         <pref key="Word">
             <Object class="java.awt.Color">0,0,90</Object>
         </pref>
+        <pref key="Annotation (other)">
+            <Object class="java.awt.Color">160,0,160</Object>
+        </pref>
         <pref key="IPA Transcription">
             <Object class="java.awt.Color">160,160,90</Object>
+        </pref>
+        <pref key="Tira orthography">
+            <Object class="java.awt.Color">0,160,0</Object>
         </pref>
         <pref key="label">
             <Object class="java.awt.Color">160,0,0</Object>
@@ -47,18 +68,6 @@
         <pref key="HIM">
             <Object class="java.awt.Color">160,90,160</Object>
         </pref>
-        <pref key="Gloss">
-            <Object class="java.awt.Color">90,90,0</Object>
-        </pref>
-        <pref key="default">
-            <Object class="java.awt.Color">0,90,90</Object>
-        </pref>
-        <pref key="Annotation (other)">
-            <Object class="java.awt.Color">160,0,160</Object>
-        </pref>
-        <pref key="Tira orthography">
-            <Object class="java.awt.Color">0,160,0</Object>
-        </pref>
         <pref key="PET">
             <Object class="java.awt.Color">0,90,0</Object>
         </pref>
@@ -66,6 +75,9 @@
             <Object class="java.awt.Color">90,160,160</Object>
         </pref>
     </prefGroup>
+    <pref key="IGTViewerRenderInfo.headerWidth">
+        <Int>100</Int>
+    </pref>
     <prefGroup key="CommentViewer.Columns">
         <pref key="Sender">
             <Int>0</Int>
@@ -98,6 +110,11 @@
             <Int>75</Int>
         </pref>
     </prefGroup>
+    <prefGroup key="InterlinearizationMode.LexiconPanelPrefs">
+        <pref key="LexiconPanel.SelectedLexicon">
+            <String>none</String>
+        </pref>
+    </prefGroup>
     <pref key="SegmentationViewer.ActiveTier">
         <String>SHA</String>
     </pref>
@@ -119,16 +136,20 @@
     <pref key="MediaControlVolume">
         <Float>1.0</Float>
     </pref>
+    <pref key="GridViewer.TierName">
+        <String>HIM</String>
+    </pref>
     <pref key="FrameLocation">
-        <Object class="java.awt.Point">0,0</Object>
+        <Object class="java.awt.Point">-7,-7</Object>
     </pref>
     <prefGroup key="IndividualPlayerMuteSoloSettings"/>
     <pref key="TimeLineViewer.ZoomLevel">
-        <Float>109.0</Float>
+        <Float>99.00001</Float>
     </pref>
     <prefList key="TranscriptionTable.NonEditableTiers"/>
+    <prefList key="InterlinearizationConfigurations"/>
     <pref key="SelectionBeginTime">
-        <Long>1314025</Long>
+        <Long>1726514</Long>
     </pref>
     <pref key="TM.SignalViewer.ZoomLevel">
         <Float>5.0</Float>
@@ -138,7 +159,7 @@
             <String>http://lux17.mpi.nl/aamlr/</String>
         </pref>
         <pref key="source_audio">
-            <String>/Users/markjos/projects/malachor5/data/elan_outputs/HH20210913.wav</String>
+            <String>C:/projects/malachor5/data/HH20210913.wav</String>
         </pref>
     </prefGroup>
     <prefList key="MultiTierViewer.HiddenTiers">
@@ -153,21 +174,24 @@
         <Float>1.0</Float>
     </pref>
     <prefGroup key="TranscriptionTable.TierMap"/>
+    <pref key="InterlinearizationEditor.FontSize">
+        <Int>12</Int>
+    </pref>
     <pref key="TimeScaleBeginTime">
-        <Long>1309507</Long>
+        <Long>1721287</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>1314144</Long>
+        <Long>1726554</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="Gloss">
             <Object class="java.awt.Color">90,90,0</Object>
         </pref>
-        <pref key="Translation">
-            <Object class="java.awt.Color">90,160,0</Object>
-        </pref>
         <pref key="default">
             <Object class="java.awt.Color">0,90,90</Object>
+        </pref>
+        <pref key="Translation">
+            <Object class="java.awt.Color">90,160,0</Object>
         </pref>
         <pref key="Word">
             <Object class="java.awt.Color">0,0,90</Object>
@@ -214,6 +238,9 @@
     <pref key="LayoutManager.SplitPaneDividerLocation">
         <Int>105</Int>
     </pref>
+    <pref key="InterlinearizationMode.LeftRightSplit">
+        <Double>0.19401041666666666</Double>
+    </pref>
     <prefList key="CommentViewer.Columns.Hidden">
         <String>Sender</String>
         <String>Recipient</String>
@@ -221,5 +248,6 @@
     <pref key="SegmentationManager.SelectedTabIndex">
         <Int>0</Int>
     </pref>
+    <prefGroup key="InterlinearizationConfigurations.ExcludedTierConfigurations"/>
     <prefList key="TranscriptionTable.HiddenTiers"/>
 </preferences>
