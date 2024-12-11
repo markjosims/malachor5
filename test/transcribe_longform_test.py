@@ -22,7 +22,7 @@ def test_vad():
     """
     wav = load_and_resample(SAMPLE_WAVPATH)
     vad_out = perform_vad(wav)
-    assert_chunk_dict_shape(vad_out, 'vad_chunks')
+    assert_chunk_dict_shape(vad_out, chunks_key='vad_chunks')
 
 def test_asr():
     """
