@@ -161,6 +161,22 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         dataset = dataset.select(range(args.num_records))
     return dataset
 
+def load_sli_dataset(args):
+    ds = load_dataset_safe(args)
+    sli_map_path = getattr(
+        args,
+        'sli_map_path',
+        os.path.join(args.dataset, 'sli_map.json')
+    )
+    with open(sli_map_path) as fh:
+        sli_map = json.load(fh)
+    args.sli_map = sli_map
+    args.sli_label2id={}
+    args.sli_id2label={}
+    for language in sli_map:
+        args.sli_label2id[language['label']]=language['id']
+        args.sli_id2label[language['id']]=language['label']
+    return ds, args
 
 def load_and_prepare_dataset(args):
     ds = load_dataset_safe(args)
