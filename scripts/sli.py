@@ -141,7 +141,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
 def load_embeddings(args, dataset):
     if getattr(args, 'embeds_path', None):
         embeds = torch.load(args.embeds_path)
-    elif getattr(args, 'embed_api', 'sb') == 'hf':
+    elif getattr(args, 'embed_api', None) == 'hf':
         embeds = hf_embeddings(args, dataset)
     else:
         embeds = sb_embeddings(args, dataset)
