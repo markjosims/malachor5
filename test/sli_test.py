@@ -8,6 +8,10 @@ from dataset_utils import load_sli_dataset
 import torch
 
 def test_load_embeddings():
+    """
+    `load_embeddings` should return a torch tensor with embeddings
+    for each row in the dataset
+    """
     args = init_argparser().parse_args([])
     args.dataset = TIRA_DRZ
     args.num_records = 3
@@ -19,6 +23,10 @@ def test_load_embeddings():
     assert sb_embeddings.shape[-1] == 256
     
 def test_load_sli_dataset():
+    """
+    Should load a HuggingFace dataset as well as a json object
+    for mapping SLI labels and ids
+    """
     args = init_argparser().parse_args([])
     args.dataset = TIRA_DRZ
     args.num_records = 1
