@@ -30,7 +30,7 @@ def init_argparser() -> ArgumentParser:
     parser.add_argument('--device', '-d')
     parser=add_sli_args(parser)
     parser.set_defaults(func=empty_command)
-    commands=parser.add_subparsers('command')
+    commands=parser.add_subparsers(title='command')
 
     train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
     train_lr_parser.add_argument('--embeds_path')
