@@ -95,9 +95,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     df = get_runs_df(run_dirs)
     print("Adding metadata from experiment names...")
-    cols_orig = df.colnames
+    cols_orig = df.columns
     df = add_df_columns(df)
-    new_cols = [col for col in df.colnames if col not in cols_orig]
+    new_cols = [col for col in df.columns if col not in cols_orig]
     print(f"\tAdded columns: {new_cols}")
 
     print(f"Saving to {args.output}...")
