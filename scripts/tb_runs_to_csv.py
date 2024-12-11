@@ -3,7 +3,7 @@ from tbparse import SummaryReader
 import pandas as pd
 import os
 from datetime import datetime
-import seaborn as sb
+from tqdm import tqdm
 from argparse import ArgumentParser
 from typing import Sequence, Optional
 import re
@@ -31,7 +31,7 @@ def get_latest_run(run_dir: str) -> str:
 
 def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
     df_list = []
-    for run_dir in run_dirs:
+    for run_dir in tqdm(run_dirs):
         run_path = get_latest_run(run_dir)
         run_name = os.path.basename(run_dir)
         reader = SummaryReader(run_path)
@@ -86,11 +86,20 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     args = parser.parse_args(argv)
 
     run_dirs = []
+    print("Globbing runs...")
     for globstr in args.globstr:
         run_dirs.extend(glob(globstr))
+    print(f"\tFound {len(run_dirs)} runs.")
 
     df = get_runs_df(run_dirs)
+    print("Adding metadata from experiment names...")
+    cols_orig = df.colnames
     df = add_df_columns(df)
+    new_cols = [col for col in df.colnames if col not in cols_orig]
+    print(f"\tAdded columns: {new_cols}")
+
+    print(f"Saving to {args.output}...")
     df.to_csv(args.output, index=False)
+    print("\tDone!")
     return 0
 
