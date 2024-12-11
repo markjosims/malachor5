@@ -43,7 +43,7 @@ def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
 
 def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     # lid loss alpha col
-    get_lid_loss_alpha = lambda s: float(re.search(r'lid-alpha-([\d.]+)').groups()[0]) if 'lid-alpha-' in s else None
+    get_lid_loss_alpha = lambda s: float(re.search(r'lid-alpha-([\d.]+)', s).groups()[0]) if 'lid-alpha-' in s else None
     df['lid_loss_alpha']=df['experiment_name'].apply(get_lid_loss_alpha)
 
     df['LoRA'] = df['experiment_name'].str.contains('LoRA')
@@ -68,7 +68,7 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
         df['experiment_name'].str.contains('cosine'),
         'embedding_distance_regularization_type'
     ] = 'cosine'
-    get_regdist_lmd = lambda s: float(re.search(r'regdist-lmd-([\d.]+)').groups()[0]) if 'regdist-lmd-' in s else None
+    get_regdist_lmd = lambda s: float(re.search(r'regdist-lmd-([\d.]+)', s).groups()[0]) if 'regdist-lmd-' in s else None
     df['distance_regularization_lambda'] = df['experiment_name'].apply(get_regdist_lmd)
     return df
 
