@@ -5,6 +5,7 @@ BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
 NOTIMESTAMPS_ID=50363
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
+TIRA_DRZ = 'data/tira-drz'
 FLEURS = 'data/pyarrow-datasets/fl_en'
 TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
 with open('meta/whisper_special_tokens.json') as f:
