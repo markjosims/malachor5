@@ -103,3 +103,5 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print("\tDone!")
     return 0
 
+if __name__ == '__main__':
+    main()
