@@ -263,8 +263,11 @@ def prepare_trainer_for_peft(args, trainer: WhisperTrainer, processor: WhisperPr
 
 
 def sb_model(args):
+    if args.device==-1:
+        # torch uses -1 to represent CPU, SpeechBrain uses 'cpu'
+        args.device='cpu'
     model = EncoderClassifier.from_hparams(
-        source=args.sli_model,
+        source=args.sli_embed_model,
         savedir=args.sb_savedir,
         run_opts={"device":torch.device(args.device)},
     )
@@ -274,7 +277,7 @@ def sb_model(args):
 def load_lr(args) -> LogisticRegression:
     with open(args.lr_model, 'rb') as f:
         lr_dict = pickle.load(f)
-    args.sli_model=lr_dict['embed_model']
+    args.sli_embed_model=lr_dict['embed_model']
     args.embed_api=lr_dict['embed_api']
     lr_model=lr_dict['lr_model']
     return args, lr_model
@@ -303,7 +306,7 @@ def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--sli_model')
-    parser.add_argument('--sli_model_type', choices=['hf', 'sb'], default='sb')
-    parser.add_argument('--sb_savedir', default='speechbrain')
+    parser.add_argument('--sli_embed_model')
+    parser.add_argument('--embed_api', choices=['hf', 'sb'], default='sb')
+    parser.add_argument('--sb_savedir', default='models/speechbrain')
     return parser

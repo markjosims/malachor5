@@ -7,8 +7,8 @@ from argparse import ArgumentParser
 import torch
 from tqdm import tqdm
 import pickle
-from dataset_utils import build_sb_dataloader
-from model_utils import load_lr, sb_model
+from dataset_utils import build_sb_dataloader, load_sli_dataset, add_dataset_args
+from model_utils import load_lr, sb_model, DEVICE
 from speechbrain.inference.classifiers import EncoderClassifier
 from model_utils import add_sli_args
 
@@ -25,10 +25,11 @@ def empty_command(args) -> int:
 
 def init_argparser() -> ArgumentParser:
     parser = ArgumentParser("Script for running SLI experiment")
-    parser.add_argument('--dataset', '-D')
     parser.add_argument('--output', '-o')
-    parser.add_argument('--device', '-d')
+    parser.add_argument('--device', '-D', default=DEVICE)
+    parser.add_argument('--batch_size', type=int, default=8)
     parser=add_sli_args(parser)
+    parser=add_dataset_args(parser)
     parser.set_defaults(func=empty_command)
     commands=parser.add_subparsers(title='command')
 
@@ -47,9 +48,10 @@ def sb_embeddings(
         dataset,
         model: Optional[EncoderClassifier]=None
     ) -> torch.Tensor:
-    sli_model=getattr(args, 'sli_model', 'speechbrain/lang-id-voxlingua107-ecapa')
+    if getattr(args, 'sli_embed_model', None) is None:
+        args.sli_embed_model='speechbrain/lang-id-voxlingua107-ecapa'
     if model is None:
-        print(f"Loading SpeechBrain model {sli_model} for extracting embeddings.")
+        print(f"Loading SpeechBrain model {args.sli_embed_model} for extracting embeddings.")
         model = sb_model(args)
     if type(dataset) is DatasetDict:
         embedding_dict={}
@@ -57,7 +59,7 @@ def sb_embeddings(
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.sli_batch_size)
+    dataloader = build_sb_dataloader(dataset, args.batch_size)
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -68,10 +70,12 @@ def sb_embeddings(
     return embedding_tensor
 
 def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
+    if getattr(args, 'sli_embed_model', None) is None:
+        args.sli_embed_model='facebook/mms-lid-256'
     if model is None:
-        print(f"Loading HuggingFace model {args.sli_model} for extracting embeddings.")
-        model = Wav2Vec2ForSequenceClassification.from_pretrained(args.sli_model)
-        proc = Wav2Vec2FeatureExtractor.from_pretrained(args.sli_model)
+        print(f"Loading HuggingFace model {args.sli_embed_model} for extracting embeddings.")
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(args.sli_embed_model)
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(args.sli_embed_model)
         model.to(torch.device(args.device))
 
     if type(dataset) is DatasetDict:
@@ -80,7 +84,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.sli_batch_size)
+    dataloader = build_sb_dataloader(dataset, args.batch_size)
 
     logits = []
     # [
@@ -134,11 +138,14 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
         hidden_states.append(batch_hidden_states)
 
     # logits are simple
+    breakpoint()
     logits = torch.concat(logits).cpu()
 
     return logits, hidden_states
 
-def load_embeddings(args, dataset):
+def load_embeddings(args, dataset=None):
+    if dataset is None:
+        dataset, args = load_sli_dataset(args)
     if getattr(args, 'embeds_path', None):
         embeds = torch.load(args.embeds_path)
     elif getattr(args, 'embed_api', None) == 'hf':
@@ -166,7 +173,7 @@ def train_logreg(args, dataset) -> int:
     
     lr_dict = {
         'lr_model': lr,
-        'embed_model': args.sli_model,
+        'embed_model': args.sli_embed_model,
         'embed_api': args.embed_api
     }
 

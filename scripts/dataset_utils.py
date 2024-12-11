@@ -3,8 +3,8 @@ from datasets import Audio, Dataset, DatasetDict, load_dataset, load_from_disk
 from speechbrain.dataio.batch import PaddedBatch
 import torch
 from dataclasses import dataclass
-from typing import Any, Dict, Generator, List, Union
-from argparse import ArgumentParser
+from typing import Any, Dict, Generator, List, Union, Tuple
+from argparse import ArgumentParser, Namespace
 from torch.utils.data import DataLoader
 from string_norm import get_epitran
 from transformers import WhisperProcessor
@@ -161,7 +161,7 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
         dataset = dataset.select(range(args.num_records))
     return dataset
 
-def load_sli_dataset(args):
+def load_sli_dataset(args) -> Tuple[Union[Dataset, DatasetDict], Namespace]:
     ds = load_dataset_safe(args)
     sli_map_path = getattr(
         args,
