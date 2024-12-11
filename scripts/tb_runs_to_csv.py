@@ -81,6 +81,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--globstr', '-g', nargs='+')
     parser.add_argument('--output', '-o')
 
+    return parser
+
 def main(argv: Optional[Sequence[str]]=None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
