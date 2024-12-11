@@ -9,7 +9,7 @@ SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_load_and_resample():
     """
-    `load_and_resample` should return a single-channel numpy array of samples
+    `load_and_resample` should return a single-channel torch tensor of samples
     """
     wav = load_and_resample(SAMPLE_WAVPATH, to_mono=True, flatten=False)
     assert type(wav) is torch.Tensor
