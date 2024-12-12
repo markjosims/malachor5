@@ -69,7 +69,7 @@ def test_return_wavslices():
 def test_sli():
     """
     `perform_sli` should accept an `annotations` dict with
-    a list of wav slices and add the `sli_label` key to each chunk
+    a list of wav slices and add the `sli_pred` key to each chunk
     in the list
     """
     ...
