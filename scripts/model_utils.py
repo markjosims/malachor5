@@ -12,6 +12,7 @@ import numpy as np
 
 
 DEVICE = 0 if torch.cuda.is_available() else -1
+LOGREG_PATH = 'models/voxlingua_logreg.pkl'
 device_type = lambda s: int(s) if s!='cpu' else s
 
 # ---------------------- #
@@ -274,7 +275,7 @@ def sb_model(args):
     return model
 
 
-def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwargs) -> LogisticRegression:
+def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwargs) -> Tuple[LogisticRegression, Namespace]:
     if lr_model is None:
         lr_model = args.lr_model
     with open(lr_model, 'rb') as f:
@@ -284,8 +285,11 @@ def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwar
         if 'batch_size' not in kwargs:
             kwargs['batch_size']=8
         args=Namespace(**kwargs)
-    args.sli_embed_model=lr_dict['embed_model']
+    args.embed_model=lr_dict['embed_model']
     args.embed_api=lr_dict['embed_api']
+    args.sli_map=lr_dict['sli_map']
+    args.sli_id2label=lr_dict['sli_id2label']
+    args.sli_label2id=lr_dict['sli_label2id']
     return lr_obj, args
 
 
