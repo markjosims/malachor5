@@ -2,7 +2,7 @@
 <preferences version="1.1"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/Prefs_v1.1.xsd">
     <pref key="FrameSize">
-        <Object class="java.awt.Dimension">1440,792</Object>
+        <Object class="java.awt.Dimension">1440,900</Object>
     </pref>
     <pref key="LayoutManager.SelectedTabIndex">
         <Int>7</Int>
@@ -11,10 +11,10 @@
         <String>mpi.eudico.client.annotator.viewer.TimeLineViewer</String>
     </pref>
     <pref key="MultiTierViewer.ActiveTierName">
-        <String>IPA Transcription</String>
+        <String>SHA</String>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>159090</Long>
+        <Long>170600</Long>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
         <Float>100.0</Float>
@@ -73,7 +73,7 @@
         <String>AAM-LR Phone level audio segmentation</String>
     </pref>
     <pref key="FrameLocation">
-        <Object class="java.awt.Point">0,25</Object>
+        <Object class="java.awt.Point">0,0</Object>
     </pref>
     <pref key="TimeLineViewer.ZoomLevel">
         <Float>100.0</Float>
@@ -82,7 +82,7 @@
         <Object class="java.awt.Rectangle">570,300,300,300</Object>
     </pref>
     <pref key="SelectionBeginTime">
-        <Long>157250</Long>
+        <Long>170590</Long>
     </pref>
     <prefGroup key="AAM-LR Phone level audio segmentation">
         <pref key="base_url">
@@ -101,10 +101,10 @@
         <String>MAR</String>
     </prefList>
     <pref key="TimeScaleBeginTime">
-        <Long>151690</Long>
+        <Long>170310</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>157500</Long>
+        <Long>170590</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="NIN">
