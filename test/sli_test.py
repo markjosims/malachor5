@@ -5,7 +5,7 @@ from sli import train_logreg, infer_lr, init_argparser, load_embeddings
 from model_utils import load_lr
 from tokenization_utils import TIRA_SLI, SB_VOXLINGUA
 from datasets import Dataset
-from dataset_utils import load_sli_dataset
+from dataset_utils import load_sli_dataset, load_dataset_safe
 import torch
 import numbers
 import pickle
@@ -86,5 +86,22 @@ def test_train_logreg(tmp_path):
     assert 'embed_api' in lr_dict and lr_dict['embed_api'] == 'sb'
     assert 'scores' in lr_dict and isinstance(lr_dict['scores'], numbers.Number)
 
-# def test_infer_lr():
-#     ...
+def test_infer_lr(tmp_path):
+    """
+    `infer_lr` should accept an audio dataset and return the dataset
+    with an additional column named `sli_pred`
+    """
+    args = init_argparser().parse_args([])
+    args.dataset = TIRA_SLI
+    args.num_records = 20
+    args.embed_api = 'sb'
+    args.output=tmp_path/'logreg.pkl'
+    train_logreg(args)
+    args.lr_model=args.output
+    ds_out = infer_lr(args)
+    for split in ds_out.values():
+        assert 'sli_preds' in split.column_names
+        for pred in split['sli_preds']:
+            assert pred in ['TIC', 'ENG']
+    
+
