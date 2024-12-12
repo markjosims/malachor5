@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import Any, Dict, List, Tuple, Optional, Union, Literal
 import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
@@ -274,13 +274,19 @@ def sb_model(args):
     return model
 
 
-def load_lr(args) -> LogisticRegression:
-    with open(args.lr_model, 'rb') as f:
+def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwargs) -> LogisticRegression:
+    if lr_model is None:
+        lr_model = args.lr_model
+    with open(lr_model, 'rb') as f:
         lr_dict = pickle.load(f)
+    lr_obj=lr_dict['lr_model']
+    if args is None:
+        if 'batch_size' not in kwargs:
+            kwargs['batch_size']=8
+        args=Namespace(**kwargs)
     args.sli_embed_model=lr_dict['embed_model']
     args.embed_api=lr_dict['embed_api']
-    lr_model=lr_dict['lr_model']
-    return args, lr_model
+    return lr_obj, args
 
 
 # ---------------- #
