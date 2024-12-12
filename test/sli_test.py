@@ -55,6 +55,11 @@ def test_load_lr():
     ...
 
 def test_train_logreg(tmp_path):
+    """
+    `train_logreg` should save a dictionary with the LogReg object,
+    the model and API used for generating embeddings,
+    and the classification accuracy obtained on the test set.
+    """
     args = init_argparser().parse_args([])
     args.dataset = TIRA_SLI
     args.num_records = 20
