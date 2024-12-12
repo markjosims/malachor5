@@ -5,7 +5,8 @@ BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
 NOTIMESTAMPS_ID=50363
 TIRA_ASR_DS = 'data/pyarrow-datasets/tira-clean-split'
-TIRA_DRZ = 'data/tira-drz'
+TIRA_DRZ = 'data/pyarrow-datasets/tira-drz'
+TIRA_SLI = 'data/pyarrow-datasets/tira-sli'
 FLEURS = 'data/pyarrow-datasets/fl_en'
 TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
 with open('meta/whisper_special_tokens.json') as f:
@@ -14,6 +15,7 @@ LANG_TOKENS = SPECIAL_TOKENS['lang']
 LANG_TOKEN_IDS = [lang_obj['id'] for lang_obj in LANG_TOKENS.values()]
 FUNCTIONAL_TOKENS = SPECIAL_TOKENS['functional']
 SPECIAL_TOKENS_FLAT = dict(**LANG_TOKENS, **FUNCTIONAL_TOKENS)
+SB_VOXLINGUA = 'speechbrain/lang-id-voxlingua107-ecapa'
 
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)

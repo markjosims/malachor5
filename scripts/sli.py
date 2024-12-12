@@ -157,7 +157,9 @@ def load_embeddings(args, dataset=None):
 # logistic regression #
 # ------------------- #
 
-def train_logreg(args, dataset) -> int:
+def train_logreg(args, dataset=None) -> int:
+    if dataset is None:
+        dataset, args = load_sli_dataset(args)
     embeds = load_embeddings(args, dataset)
 
     train_labels=dataset['train']['label']
@@ -173,7 +175,11 @@ def train_logreg(args, dataset) -> int:
     lr_dict = {
         'lr_model': lr,
         'embed_model': args.sli_embed_model,
-        'embed_api': args.embed_api
+        'embed_api': args.embed_api,
+        'scores': scores,
+        'sli_map': args.sli_map,
+        'sli_label2id': args.sli_label2id,
+        'sli_id2label': args.sli_id2label,
     }
 
     with open(args.output, 'wb') as f:
