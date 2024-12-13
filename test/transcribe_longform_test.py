@@ -2,9 +2,11 @@ import torch
 
 from test_utils import assert_chunk_dict_shape
 
+import numpy as np
 import sys
 sys.path.append('scripts')
 from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample
+from dataset_utils import build_sb_dataloader
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_load_and_resample():
@@ -14,6 +16,19 @@ def test_load_and_resample():
     wav = load_and_resample(SAMPLE_WAVPATH, to_mono=True, flatten=False)
     assert type(wav) is torch.Tensor
     assert len(wav.shape)==2
+
+def test_chunk_dataloader():
+    """
+    `build_sb_dataloader` should accept a list of chunks containing wav slices
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    dataloader = build_sb_dataloader(vad_chunks, batch_size=2, dataset_type='chunk_list')
+    assert len(dataloader) == len(vad_chunks)//2
+    batch = next(iter(dataloader))
+    assert type(batch) is torch.Tensor
+    assert len(batch) == 2
 
 def test_vad():
     """
@@ -35,6 +50,9 @@ def test_asr():
     assert_chunk_dict_shape(asr_out)
     assert 'text' in asr_out
     assert type(asr_out['text']) is str
+    for chunk in asr_out['chunks']:
+        assert 'text' in chunk
+        assert type(chunk['text']) is str
 
 def test_drz():
     """

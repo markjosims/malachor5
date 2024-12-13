@@ -312,7 +312,8 @@ def collate_dataset(batch):
     return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
 
 def collate_chunks(batch):
-    return PaddedBatch(batch).wav.data
+    wavs=[{'wav':row['wav'].squeeze()} for row in batch]
+    return PaddedBatch(wavs).wav.data
 
 def build_sb_dataloader(dataset, batch_size, dataset_type: Literal['hf_dataset', 'chunk_list']='hf_dataset'):
     # create a dataloader that returns batches of wav objs

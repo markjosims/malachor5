@@ -2,7 +2,7 @@ import torch.utils
 from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 from sklearn.linear_model import LogisticRegression
 from datasets import DatasetDict, Dataset
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence, Union, Dict, Literal
 from argparse import ArgumentParser
 import torch
 from tqdm import tqdm
@@ -59,7 +59,7 @@ def sb_embeddings(
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.batch_size)
+    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', None))
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -84,7 +84,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.batch_size)
+    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', None))
 
     logits = []
     # [

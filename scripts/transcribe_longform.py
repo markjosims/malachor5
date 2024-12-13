@@ -111,8 +111,13 @@ def perform_sli(
         lr_model: Optional[str]=None,
         **kwargs
 ):
-    dataset = chunks_to_dataset(chunks)
-    output_dataset = infer_lr(args=args, dataset=dataset, lr_model=lr_model, **kwargs)
+    output_dataset = infer_lr(
+        args=args,
+        dataset=chunks,
+        lr_model=lr_model,
+        dataset_type='chunk_list',
+        **kwargs
+    )
     for chunk, sli_pred in zip(chunks, output_dataset['sli_pred']):
         chunk['sli_pred']=sli_pred
     return chunks
@@ -199,9 +204,6 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
         # default to setting length of 200ms
         end=start+200
     return start, end
-
-def chunks_to_dataset(chunks):
-    ...
 
 # ---- #
 # main #
