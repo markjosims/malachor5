@@ -111,16 +111,17 @@ def perform_sli(
         lr_model: Optional[str]=None,
         **kwargs
 ):
-    output_dataset = infer_lr(
+    """
+    Simple wrapper for `infer_lr` that always passes `dataset_type='chunk_list'`
+    """
+    return infer_lr(
         args=args,
         dataset=chunks,
         lr_model=lr_model,
         dataset_type='chunk_list',
         **kwargs
     )
-    for chunk, sli_pred in zip(chunks, output_dataset['sli_pred']):
-        chunk['sli_pred']=sli_pred
-    return chunks
+
 # ------------ #
 # ELAN methods #
 # ------------ #
