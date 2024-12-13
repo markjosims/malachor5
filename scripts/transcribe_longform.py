@@ -44,8 +44,11 @@ def perform_asr(
         pipe = pipeline("automatic-speech-recognition", model=model_path)
     if type(audio) is torch.Tensor:
         audio = audio[0,:].numpy()
-    if type(audio) is list and type(audio[0]) is torch.Tensor:
-        audio = [chunk[0,:].numpy() for chunk in audio]
+    if type(audio) is list:
+        if type(audio[0]['wav']) is torch.Tensor:
+            for chunk in audio:
+                chunk['wav']=chunk['wav'][0,:].numpy()
+        audio = [chunk['wav'] for chunk in audio]
     result = pipe(
         audio,
         return_timestamps=return_timestamps,
