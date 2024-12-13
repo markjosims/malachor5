@@ -5,8 +5,9 @@ from test_utils import assert_chunk_dict_shape
 import numpy as np
 import sys
 sys.path.append('scripts')
-from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample
+from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli
 from dataset_utils import build_sb_dataloader
+from model_utils import LOGREG_PATH
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_load_and_resample():
@@ -90,4 +91,11 @@ def test_sli():
     a list of wav slices and add the `sli_pred` key to each chunk
     in the list
     """
-    ...
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    sli_chunks = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    for chunk in sli_chunks:
+        assert 'sli_pred' in chunk
+        assert chunk['sli_pred'] in ('TIC', 'ENG')
+    
