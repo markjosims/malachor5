@@ -1,5 +1,5 @@
 from typing import Optional, Sequence, Dict, List, Union, Any, Tuple
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from transformers import Pipeline, pipeline, WhisperTokenizer
 import pandas as pd
 from pyannote.audio import Pipeline as PyannotePipeline
@@ -105,6 +105,22 @@ def diarize(
             chunk['wav']=wav_slice
     return annotations
 
+def perform_sli(
+        chunks: List[Dict[str, torch.Tensor]] = dict(),
+        args: Optional[Namespace]=None,
+        lr_model: Optional[str]=None,
+        **kwargs
+):
+    """
+    Simple wrapper for `infer_lr` that always passes `dataset_type='chunk_list'`
+    """
+    return infer_lr(
+        args=args,
+        dataset=chunks,
+        lr_model=lr_model,
+        dataset_type='chunk_list',
+        **kwargs
+    )
 
 # ------------ #
 # ELAN methods #

@@ -3,7 +3,7 @@ from datasets import Audio, Dataset, DatasetDict, load_dataset, load_from_disk
 from speechbrain.dataio.batch import PaddedBatch
 import torch
 from dataclasses import dataclass
-from typing import Any, Dict, Generator, List, Union, Tuple
+from typing import Any, Dict, Generator, List, Union, Tuple, Literal
 from argparse import ArgumentParser, Namespace
 from torch.utils.data import DataLoader
 from string_norm import get_epitran
@@ -308,16 +308,23 @@ def dataset_generator(dataset: Dataset) -> Generator:
         yield row['audio']
 
 
-def collate_sb(batch):
+def collate_dataset(batch):
     return PaddedBatch([{'wav':row['audio']['array']} for row in batch]).wav.data
 
-def build_sb_dataloader(dataset, batch_size):
+def collate_chunks(batch):
+    wavs=[{'wav':row['wav'].squeeze()} for row in batch]
+    return PaddedBatch(wavs).wav.data
+
+def build_sb_dataloader(dataset, batch_size, dataset_type: Literal['hf_dataset', 'chunk_list']='hf_dataset'):
     # create a dataloader that returns batches of wav objs
-    # dataset = dataset.map(lambda row: {'wav': row['audio']['array']})
+    if dataset_type == 'hf_dataset':
+        collate_fn=collate_dataset
+    else:
+        collate_fn=collate_chunks
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
-        collate_fn=collate_sb
+        collate_fn=collate_fn
     )
 
     return dataloader

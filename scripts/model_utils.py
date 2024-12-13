@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import Any, Dict, List, Tuple, Optional, Union, Literal
 import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
@@ -12,6 +12,12 @@ import numpy as np
 
 
 DEVICE = 0 if torch.cuda.is_available() else -1
+LOGREG_PATH = 'models/voxlingua_logreg.pkl'
+LR_ARG_DEFAULTS = {
+    'batch_size': 8,
+    'device': DEVICE,
+    'sb_savedir': 'models/speechbrain',
+}
 device_type = lambda s: int(s) if s!='cpu' else s
 
 # ---------------------- #
@@ -274,13 +280,23 @@ def sb_model(args):
     return model
 
 
-def load_lr(args) -> LogisticRegression:
-    with open(args.lr_model, 'rb') as f:
+def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwargs) -> Tuple[LogisticRegression, Namespace]:
+    if lr_model is None:
+        lr_model = args.lr_model
+    with open(lr_model, 'rb') as f:
         lr_dict = pickle.load(f)
-    args.sli_embed_model=lr_dict['embed_model']
+    lr_obj=lr_dict['lr_model']
+    if args is None:
+        for k, v in LR_ARG_DEFAULTS.items():
+            if k not in kwargs:
+                kwargs[k]=v
+        args=Namespace(**kwargs)
+    args.embed_model=lr_dict['embed_model']
     args.embed_api=lr_dict['embed_api']
-    lr_model=lr_dict['lr_model']
-    return args, lr_model
+    args.sli_map=lr_dict['sli_map']
+    args.sli_id2label=lr_dict['sli_id2label']
+    args.sli_label2id=lr_dict['sli_label2id']
+    return lr_obj, args
 
 
 # ---------------- #

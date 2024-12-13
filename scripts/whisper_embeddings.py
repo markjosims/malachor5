@@ -6,7 +6,7 @@ from speechbrain.inference.classifiers import EncoderClassifier
 from datasets import load_dataset, load_from_disk, Audio, IterableDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from dataset_utils import collate_sb
+from dataset_utils import collate_dataset
 from model_utils import sb_model
 import torch
 import json
@@ -81,7 +81,7 @@ def get_dataloader(args, language: Optional[str]=None) -> DataLoader:
         proc = WhisperProcessor.from_pretrained(args.model, language=language)
         collate_fn = lambda batch: collate_whisper(batch, proc, args.device)
     else:
-        collate_fn = collate_sb
+        collate_fn = collate_dataset
 
     return DataLoader(
         ds,
