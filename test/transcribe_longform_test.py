@@ -94,8 +94,39 @@ def test_sli():
     wav = load_and_resample(SAMPLE_WAVPATH)
     vad_out = perform_vad(wav, return_wav_slices=True)
     vad_chunks = vad_out['vad_chunks']
-    sli_chunks = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    sli_chunks, args = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
     for chunk in sli_chunks:
         assert 'sli_pred' in chunk
         assert chunk['sli_pred'] in ('TIC', 'ENG')
-    
+
+def test_vad_sli_asr_pipeline():
+    """
+    First, segement audio with `perform_vad`.
+    Then perform SLI on vad chunks with `perform_sli`.
+    Then pass chunks to `perform_asr`
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    sli_chunks, args = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    asr_chunks = perform_asr(audio=sli_chunks, sli_map=args.sli_map)
+    for chunk in asr_chunks:
+        assert 'text' in chunk
+        assert type(chunk['text']) is str
+        if chunk['sli_pred'] == 'ENG':
+            assert '<|en|>' in chunk['text']
+        else:
+            assert '<|sw|>' in chunk['text']
+
+def test_vad_asr_pipeline():
+    """
+    Test that `perform_asr` can handle being passed a list of audio segments
+    such as those output by `perform_vad` or `diarize`
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    asr_out = perform_asr(audio=vad_chunks, model_path='openai/whisper-tiny')
+    for chunk in asr_out:
+        assert 'text' in chunk
+        assert type(chunk['text']) is str

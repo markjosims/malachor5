@@ -120,7 +120,7 @@ def test_infer_lr():
     args.num_records = 20
     args.embed_api = 'sb'
     args.lr_model=LOGREG_PATH
-    ds_out = infer_lr(args)
+    ds_out, args = infer_lr(args)
     for split in ds_out.values():
         assert 'sli_preds' in split.column_names
         for pred in split['sli_preds']:
