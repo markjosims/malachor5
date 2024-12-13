@@ -37,7 +37,7 @@ def perform_asr(
         model_path: str = ASR_URI,
         return_timestamps = True,
         generate_kwargs=None,
-        sli_dict=None,
+        sli_map=None,
         **kwargs,
 ) -> str:
     if not pipe:
