@@ -11,10 +11,10 @@
         <String>mpi.eudico.client.annotator.viewer.TimeLineViewer</String>
     </pref>
     <pref key="MultiTierViewer.ActiveTierName">
-        <String>SHA</String>
+        <String>HIM</String>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>170600</Long>
+        <Long>289545</Long>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
         <Float>100.0</Float>
@@ -57,6 +57,9 @@
             <Int>75</Int>
         </pref>
     </prefGroup>
+    <pref key="SegmentationViewer.ActiveTier">
+        <String>PET</String>
+    </pref>
     <prefList key="CommentViewer.Columns.Order">
         <String>Start Time</String>
         <String>End Time</String>
@@ -82,7 +85,7 @@
         <Object class="java.awt.Rectangle">570,300,300,300</Object>
     </pref>
     <pref key="SelectionBeginTime">
-        <Long>170590</Long>
+        <Long>287905</Long>
     </pref>
     <prefGroup key="AAM-LR Phone level audio segmentation">
         <pref key="base_url">
@@ -101,10 +104,10 @@
         <String>MAR</String>
     </prefList>
     <pref key="TimeScaleBeginTime">
-        <Long>170310</Long>
+        <Long>282245</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>170590</Long>
+        <Long>287645</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="NIN">
@@ -151,4 +154,7 @@
         <String>Sender</String>
         <String>Recipient</String>
     </prefList>
+    <pref key="SegmentationManager.SelectedTabIndex">
+        <Int>0</Int>
+    </pref>
 </preferences>
