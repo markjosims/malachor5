@@ -109,7 +109,7 @@ def test_vad_sli_asr_pipeline():
     vad_out = perform_vad(wav, return_wav_slices=True)
     vad_chunks = vad_out['vad_chunks']
     sli_chunks, args = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
-    asr_chunks = perform_asr(audio=sli_chunks, sli_dict=args.sli_map)
+    asr_chunks = perform_asr(audio=sli_chunks, sli_map=args.sli_map)
     for chunk in asr_chunks:
         assert 'text' in chunk
         assert type(chunk['text']) is str
