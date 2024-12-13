@@ -117,3 +117,16 @@ def test_vad_sli_asr_pipeline():
             assert '<|en|>' in chunk['text']
         else:
             assert '<|sw|>' in chunk['text']
+
+def test_vad_asr_pipeline():
+    """
+    Test that `perform_asr` can handle being passed a list of audio segments
+    such as those output by `perform_vad` or `diarize`
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    asr_out = perform_asr(audio=vad_chunks, model_path='openai/whisper-tiny')
+    for chunk in asr_out:
+        assert 'text' in chunk
+        assert type(chunk['text']) is str
