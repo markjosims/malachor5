@@ -192,7 +192,14 @@ def infer_lr(args=None, dataset=None, lr_model:Optional[str]=None, **kwargs):
     if dataset is None:
         dataset, _ = load_sli_dataset(args)
     embeds = load_embeddings(args, dataset)
-    if type(embeds) is dict:
+    # using list of chunks
+    if getattr(args, 'dataset_type', None) == 'chunk_list':
+        outputs = lr.predict(embeds)
+        labels = [args.sli_id2label[out] for out in outputs]
+        for chunk, label in zip(dataset, labels):
+            chunk['sli_pred']=label
+    # using either HF Dataset or DatasetDict
+    elif type(embeds) is dict:
         for split_name, split_embeds in embeds.items():
             outputs = lr.predict(split_embeds)
             labels = [args.sli_id2label[out] for out in outputs]
