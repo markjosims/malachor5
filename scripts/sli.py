@@ -59,7 +59,7 @@ def sb_embeddings(
             embedding_dict[split]=sb_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', None))
+    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', 'hf_dataset'))
 
     embeddings = []
     for batch in tqdm(dataloader):
@@ -84,7 +84,7 @@ def hf_embeddings(args, dataset, model=None) -> torch.Tensor:
             embedding_dict[split]=hf_embeddings(args, dataset[split], model)
         return embedding_dict
 
-    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', None))
+    dataloader = build_sb_dataloader(dataset, args.batch_size, getattr(args, 'dataset_type', 'hf_dataset'))
 
     logits = []
     # [
