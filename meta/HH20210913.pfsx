@@ -23,7 +23,7 @@
         <String>MAR</String>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>1948606</Long>
+        <Long>1956227</Long>
     </pref>
     <pref key="LayoutManager.MediaAreaHeight">
         <Int>250</Int>
@@ -142,18 +142,14 @@
     <pref key="FrameLocation">
         <Object class="java.awt.Point">0,0</Object>
     </pref>
-    <prefGroup key="IndividualPlayerMuteSoloSettings">
-        <pref key="HH20210913.wav">
-            <String>mute</String>
-        </pref>
-    </prefGroup>
+    <prefGroup key="IndividualPlayerMuteSoloSettings"/>
     <pref key="TimeLineViewer.ZoomLevel">
         <Float>99.00001</Float>
     </pref>
     <prefList key="TranscriptionTable.NonEditableTiers"/>
     <prefList key="InterlinearizationConfigurations"/>
     <pref key="SelectionBeginTime">
-        <Long>1948596</Long>
+        <Long>1956227</Long>
     </pref>
     <pref key="TM.SignalViewer.ZoomLevel">
         <Float>5.0</Float>
@@ -182,10 +178,10 @@
         <Int>12</Int>
     </pref>
     <pref key="TimeScaleBeginTime">
-        <Long>1939263</Long>
+        <Long>1949480</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>1948606</Long>
+        <Long>1956176</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="Gloss">
