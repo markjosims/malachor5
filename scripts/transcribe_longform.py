@@ -40,6 +40,27 @@ def perform_asr(
         sli_map=None,
         **kwargs,
 ) -> str:
+    if sli_map:
+        if type(audio) is not list:
+            raise ValueError('Must pass list of audio chunks if passing `sli_map`')
+        pipelines = {}
+        result = []
+        for language_obj in sli_map:
+            sli_label=language_obj['label']
+            chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
+            model_for_language = language_obj['whisper_checkpoint']
+            if model_for_language not in pipelines:
+                pipelines[model_for_language]=pipeline("automatic-speech-recognition", model=model_for_language)
+            language_code=language_obj['whisper_lang_code']
+            generate_kwargs=generate_kwargs if generate_kwargs else {}
+            generate_kwargs['language']=language_code
+            result.extend(perform_asr(
+                audio=chunks_with_language,
+                pipe=pipelines[model_for_language],
+                generate_kwargs=generate_kwargs,
+                return_timestamps=return_timestamps,
+            ))
+        return result
     if not pipe:
         pipe = pipeline("automatic-speech-recognition", model=model_path)
     if type(audio) is torch.Tensor:
