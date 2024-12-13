@@ -209,7 +209,7 @@ def infer_lr(args=None, dataset=None, lr_model:Optional[str]=None, **kwargs):
         labels = [args.sli_id2label[out] for out in outputs]
         dataset = dataset.add_column("sli_preds", labels) 
 
-    return dataset
+    return dataset, args
 
 # ---- #
 # Main #
