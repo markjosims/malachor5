@@ -13,6 +13,11 @@ import numpy as np
 
 DEVICE = 0 if torch.cuda.is_available() else -1
 LOGREG_PATH = 'models/voxlingua_logreg.pkl'
+LR_ARG_DEFAULTS = {
+    'batch_size': 8,
+    'device': DEVICE,
+    'sb_savedir': 'models/speechbrain',
+}
 device_type = lambda s: int(s) if s!='cpu' else s
 
 # ---------------------- #
@@ -282,8 +287,9 @@ def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwar
         lr_dict = pickle.load(f)
     lr_obj=lr_dict['lr_model']
     if args is None:
-        if 'batch_size' not in kwargs:
-            kwargs['batch_size']=8
+        for k, v in LR_ARG_DEFAULTS.items():
+            if k not in kwargs:
+                kwargs[k]=v
         args=Namespace(**kwargs)
     args.embed_model=lr_dict['embed_model']
     args.embed_api=lr_dict['embed_api']
