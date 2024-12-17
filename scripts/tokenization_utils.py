@@ -22,7 +22,7 @@ with open('meta/language_codes.json') as f:
 
 def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
     """
-    Get task and language prompt tokens for languages specified by `.language`
+    Get task and language prompt tokens for languages specified by `language` arg
     and task 'transcribe'. By default returns a list of tuples, [(i, token_id), ...].
     If `ids_only`, pass a list of token ids sorted by `i`.
     """
@@ -33,7 +33,7 @@ def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
                 tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
         )
     forced_decoder_ids=list(forced_decoder_ids)
+    forced_decoder_ids.sort(key=lambda t:t[0])
     if ids_only:
-        forced_decoder_ids.sort(key=lambda t:t[0])
         forced_decoder_ids=[t[1] for t in forced_decoder_ids]
     return forced_decoder_ids
