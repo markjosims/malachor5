@@ -54,13 +54,23 @@ def perform_asr(
             language_code=language_obj['whisper_lang_code']
             generate_kwargs=generate_kwargs if generate_kwargs else {}
             generate_kwargs['language']=language_code
-            result.extend(perform_asr(
+            language_result = perform_asr(
                 audio=chunks_with_language,
                 pipe=pipelines[model_for_language],
                 generate_kwargs=generate_kwargs,
                 return_timestamps=return_timestamps,
-            ))
-        return result
+                **kwargs
+            )
+            for vad_chunk, result_chunk in zip(chunks_with_language, language_result):
+                vad_chunk.update(**result_chunk)
+
+        # # combine asr result with audio chunks
+        # # first make sure both lists are sorted by starting timestamp
+        # audio.sort(key=lambda d:d['timestamp'][0])
+        # result.sort(key=lambda d:d['timestamp'][0])
+        # for audio_chunk, asr_chunk in zip(audio, result):
+        #     audio_chunk['text']=asr_chunk['text']
+        return audio
     if not pipe:
         pipe = pipeline("automatic-speech-recognition", model=model_path)
     if type(audio) is torch.Tensor:
