@@ -113,6 +113,7 @@ def test_vad_sli_asr_pipeline():
     for chunk in asr_chunks:
         assert 'text' in chunk
         assert type(chunk['text']) is str
+        assert 'sli_pred' in chunk
         if chunk['sli_pred'] == 'ENG':
             assert '<|en|>' in chunk['text']
         else:
