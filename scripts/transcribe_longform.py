@@ -62,15 +62,8 @@ def perform_asr(
                 return_timestamps=return_timestamps,
                 **kwargs
             )
-            for vad_chunk, result_chunk in zip(chunks_with_language, language_result):
-                vad_chunk.update(**result_chunk)
-
-        # # combine asr result with audio chunks
-        # # first make sure both lists are sorted by starting timestamp
-        # audio.sort(key=lambda d:d['timestamp'][0])
-        # result.sort(key=lambda d:d['timestamp'][0])
-        # for audio_chunk, asr_chunk in zip(audio, result):
-        #     audio_chunk['text']=asr_chunk['text']
+            for orig_chunk, result_chunk in zip(chunks_with_language, language_result):
+                orig_chunk.update(**result_chunk)
         return audio
     if not pipe:
         pipe = pipeline("automatic-speech-recognition", model=model_path)
