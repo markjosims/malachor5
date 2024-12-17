@@ -104,20 +104,62 @@ def test_vad_sli_asr_pipeline():
     First, segement audio with `perform_vad`.
     Then perform SLI on vad chunks with `perform_sli`.
     Then pass chunks to `perform_asr`
+    To test language selection is having an effect on output,
+    run twice with different language maps
     """
     wav = load_and_resample(SAMPLE_WAVPATH)
     vad_out = perform_vad(wav, return_wav_slices=True)
     vad_chunks = vad_out['vad_chunks']
-    sli_chunks, args = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
-    asr_chunks = perform_asr(audio=sli_chunks, sli_map=args.sli_map)
-    for chunk in asr_chunks:
+    sli_chunks, _ = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    sli_map1 = [
+        {
+            "language": "Tira",
+            "label": "TIC",
+            "id": 0,
+            "whisper_lang_code": "swahili",
+            "whisper_checkpoint": "openai/whisper-tiny"
+        },
+        {
+            "language": "English",
+            "label": "ENG",
+            "id": 1,
+            "whisper_lang_code": "english",
+            "whisper_checkpoint": "openai/whisper-tiny"
+        }
+    ]
+    asr_chunks1 = perform_asr(audio=sli_chunks, sli_map=sli_map1)
+    for chunk in asr_chunks1:
         assert 'text' in chunk
         assert type(chunk['text']) is str
         assert 'sli_pred' in chunk
-        if chunk['sli_pred'] == 'ENG':
-            assert '<|en|>' in chunk['text']
-        else:
-            assert '<|sw|>' in chunk['text']
+
+    # run ASR again with swapped languages
+    sli_map2 = [
+        {
+            "language": "Tira",
+            "label": "TIC",
+            "id": 0,
+            "whisper_lang_code": "english",
+            "whisper_checkpoint": "openai/whisper-tiny"
+        },
+        {
+            "language": "English",
+            "label": "ENG",
+            "id": 1,
+            "whisper_lang_code": "swahili",
+            "whisper_checkpoint": "openai/whisper-tiny"
+        }
+    ]
+    asr_chunks2 = perform_asr(audio=sli_chunks, sli_map=sli_map2)
+    for chunk in asr_chunks2:
+        assert 'sli_pred' in chunk
+        assert 'text' in chunk
+        assert type(chunk['text']) is str
+
+    text1=' '.join(chunk['text'] for chunk in asr_chunks1)
+    text2=' '.join(chunk['text'] for chunk in asr_chunks2)
+    assert text1!=text2
+
 
 def test_vad_asr_pipeline():
     """
