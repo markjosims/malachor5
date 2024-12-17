@@ -16,6 +16,7 @@ from tqdm import tqdm
 from model_utils import load_whisper_pipeline
 from tokenization_utils import get_forced_decoder_ids
 from sli import infer_lr
+from copy import deepcopy
 
 SAMPLE_RATE = 16000
 DIARIZE_URI = "pyannote/speaker-diarization-3.1"
@@ -42,10 +43,10 @@ def perform_asr(
 ) -> str:
     if sli_map:
         tokenizer=WhisperTokenizer.from_pretrained(model_path)
+        audio=deepcopy(audio)
         if type(audio) is not list:
             raise ValueError('Must pass list of audio chunks if passing `sli_map`')
         pipelines = {}
-        result = []
         for language_obj in sli_map:
             sli_label=language_obj['label']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
