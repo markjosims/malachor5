@@ -20,14 +20,15 @@ SB_VOXLINGUA = 'speechbrain/lang-id-voxlingua107-ecapa'
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
 
-def get_forced_decoder_ids(args, tokenizer, ids_only=False):
+def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
     """
-    Get task and language prompt tokens for languages specified by `args.language`
+    Get task and language prompt tokens for languages specified by `.language`
     and task 'transcribe'. By default returns a list of tuples, [(i, token_id), ...].
     If `ids_only`, pass a list of token ids sorted by `i`.
     """
     forced_decoder_ids=set()
-    for language in args.language or [None]:
+    language_list = language if type(language) is list else [language]
+    for language in language_list or [None]:
         forced_decoder_ids.update(
                 tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
         )

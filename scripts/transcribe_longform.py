@@ -41,6 +41,7 @@ def perform_asr(
         **kwargs,
 ) -> str:
     if sli_map:
+        tokenizer=WhisperTokenizer.from_pretrained(model_path)
         if type(audio) is not list:
             raise ValueError('Must pass list of audio chunks if passing `sli_map`')
         pipelines = {}
@@ -53,7 +54,7 @@ def perform_asr(
                 pipelines[model_for_language]=pipeline("automatic-speech-recognition", model=model_for_language)
             language_code=language_obj['whisper_lang_code']
             generate_kwargs=generate_kwargs if generate_kwargs else {}
-            generate_kwargs['language']=language_code
+            generate_kwargs['forced_decoder_ids']=get_forced_decoder_ids(language=language_code, tokenizer=tokenizer)#['language']=language_code
             language_result = perform_asr(
                 audio=chunks_with_language,
                 pipe=pipelines[model_for_language],
@@ -355,7 +356,7 @@ def annotate(args) -> int:
     if args.strategy != "drz-only":
         asr_pipe = load_whisper_pipeline(args)
         tokenizer = WhisperTokenizer.from_pretrained(args.model)
-        forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
+        forced_decoder_ids=get_forced_decoder_ids(tokenizer, args.language)
     else:
         asr_pipe=None
         tokenizer=None

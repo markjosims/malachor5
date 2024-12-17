@@ -221,7 +221,7 @@ def load_peft_model_for_finetuning(args):
 
 
 def set_generation_config(args, model, tokenizer):
-    forced_decoder_ids=get_forced_decoder_ids(args, tokenizer)
+    forced_decoder_ids=get_forced_decoder_ids(tokenizer, args.language)
     model.generation_config.forced_decoder_ids = forced_decoder_ids
     return model
 
