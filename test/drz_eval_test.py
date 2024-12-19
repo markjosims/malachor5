@@ -88,10 +88,12 @@ def test_diarization_metrics():
         'tira missed detection': 0.5,   # 0.5 seconds of Tira missed
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.5,            # 0.5 seconds of correct Tira detection
+        'tira total': 1.0,              # 1.0 second of Tira speech
         'eng false alarm': 0.5,         # 0.5 seconds of English falsely detected
         'eng missed detection': 0.0,    # no missed detection for English
-        'eng confusion': 0.5,           # 0.5 seconds of English-Tira confusion
-        'eng correct': 1.0,             # 1.0 second of correct English detection
+        'eng confusion': 1.0,           # 1.0 seconds of English-Tira confusion
+        'eng correct': 0.5,             # 0.5 second of correct English detection
+        'eng total': 1.5,               # 1.5 seconds of English speech
     }
     assert metrics['MAR'] == {
         'total': 0.5,                   # 0.5 seconds of speech for MAR
@@ -101,34 +103,48 @@ def test_diarization_metrics():
         'tira missed detection': 0.0,   # no Tira missed
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.0,            # no correct Tira detection
+        'tira total': 0.0,              # no Tira speech
         'eng missed detection': 0.0,    # no missed detection for English
         'eng confusion': 0.0,           # no English-Tira confusion
         'eng correct': 0.5,             # 0.5 seconds of correct English detection
+        'eng total': 0.5,               # 0.5 seconds of English speech
     }
     assert metrics['HIM'] == {
         'total': 2.0,                   # 2.0 seconds of speech for HIM
         'missed detection': 0.5,        # 0.5 seconds of missed detection for HIM
-        'confusion': 0.5,               # 1.0 second language confusion
-        'correct': 1.0,                 # 0.5 seconds of correct detection
+        'confusion': 1.0,               # 1.0 second language confusion
+        'correct': 0.5,                 # 0.5 seconds of correct detection
         'tira missed detection': 0.5,   # 0.5 seconds of missed detection for Tira
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.5,            # no correct Tira detection
+        'tira total': 1.0,              # 1.0 second of Tira speech
         'eng missed detection': 0.0,    # no missed detection for English
-        'eng confusion': 0.5,           # 0.5 seconds of English-Tira confusion
+        'eng confusion': 1.0,           # 1.0 second of English-Tira confusion
         'eng correct': 0.0,             # no correct English detection
+        'eng total': 1.0,               # 1.0 second of English speech
     }
 
     metrics_df = get_diarization_metrics(ref, hyp, return_df=True)
-    assert metrics_df.shape == (3, 6)
+    assert metrics_df.shape == (3, 16)
     comp_df = pd.DataFrame({
         'total': [2.5, 0.5, 2.0],
         'missed detection': [0.5, 0.0, 0.5],
         'false alarm': [0.5, np.nan, np.nan],
-        'confusion': [1.0, 0.0, 0.5],
-        'correct': [1.0, 0.5, 1.0],
+        'confusion': [1.0, 0.0, 1.0],
+        'correct': [1.0, 0.5, 0.5],
         'identification error rate': [0.8, np.nan, np.nan],
+        'eng false alarm': [0.5, np.nan, np.nan],
+        'eng missed detection': [0.0, 0.0, 0.0],
+        'eng confusion': [1.0, 0.0, 1.0],
+        'eng correct': [0.5, 0.5, 0.0],
+        'eng total': [1.5, 0.5, 1.0],
+        'tira false alarm': [0.0, np.nan, np.nan],
+        'tira missed detection': [0.5, 0.0, 0.5],
+        'tira confusion': [0.0, 0.0, 0.0],
+        'tira correct': [0.5, 0.0, 0.5],
+        'tira total': [1.0, 0.0, 1.0],
     }, index=['combined', 'MAR', 'HIM'])
-    assert pd.DataFrame.equals(
-        metrics_df.sort_index(axis=1).sort_index(axis=0),
-        comp_df.sort_index(axis=1).sort_index(axis=0),
-    )
+    metrics_df=metrics_df.sort_index(axis=0).sort_index(axis=1)
+    comp_df=comp_df.sort_index(axis=0).sort_index(axis=1)
+    for col in comp_df.columns:
+        assert pd.Series.equals(metrics_df[col], comp_df[col])
