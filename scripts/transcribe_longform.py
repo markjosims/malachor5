@@ -142,7 +142,7 @@ def perform_sli(
         args: Optional[Namespace]=None,
         lr_model: Optional[str]=None,
         **kwargs
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], Namespace]:
     """
     Simple wrapper for `infer_lr` that always passes `dataset_type='chunk_list'`
     """
