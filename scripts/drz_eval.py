@@ -49,6 +49,7 @@ def get_diarization_metrics(
         ref: Union[str, Elan.Eaf, Dict[str, Annotation]],
         hyp: Union[str, Elan.Eaf, Annotation],
         return_df: bool = False,
+        return_pct: bool = True,
     ) -> Dict[str, Dict[str, float]]:
     """
     `ref` is a path to an Elan file, an Eaf object, or dictionary of pyannote `Annotation` objects
@@ -97,6 +98,19 @@ def get_diarization_metrics(
             metrics[f'{lang_str} total'] = lang_der['total']
 
         metrics_dict[speaker]=metrics
+    if return_pct:
+        for speaker, metrics in metrics_dict.items():
+            for key, value in metrics.copy().items():
+                if key in ('total', 'tira total', 'eng total'):
+                    continue
+                if 'rate' in key:
+                    continue
+                total = metrics['total']
+                if 'eng' in key:
+                    total = metrics['eng total']
+                elif 'tic' in key:
+                    total = metrics['tira total']
+                metrics[key+' rate'] = value/total
     if return_df:
         metrics_df = pd.DataFrame.from_dict(metrics_dict, orient='index')
         return metrics_df

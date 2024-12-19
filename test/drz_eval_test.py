@@ -75,7 +75,7 @@ def test_diarization_metrics():
     # confusion of English for Tira from 3.5 to 4.5
     hyp[Segment(3.5, 4.5)] = 'TIC'
 
-    metrics = get_diarization_metrics(ref, hyp)
+    metrics = get_diarization_metrics(ref, hyp, return_pct=False)
 
     assert metrics['combined'] == {
         'total': 2.5,                   # 2.5 seconds of speech overall
@@ -124,7 +124,7 @@ def test_diarization_metrics():
         'eng total': 1.0,               # 1.0 second of English speech
     }
 
-    metrics_df = get_diarization_metrics(ref, hyp, return_df=True)
+    metrics_df = get_diarization_metrics(ref, hyp, return_df=True, return_pct=False)
     assert metrics_df.shape == (3, 16)
     comp_df = pd.DataFrame({
         'total': [2.5, 0.5, 2.0],
