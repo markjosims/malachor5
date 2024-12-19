@@ -1,8 +1,11 @@
 from pympi import Elan
 from pyannote.core import Annotation, Segment, Timeline
 from pyannote.metrics.diarization import IdentificationErrorRate
-from typing import Union, Dict
+from typing import Union, Dict, Sequence, Optional
 import pandas as pd
+from argparse import ArgumentParser
+import os
+from glob import glob
 
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
     """
@@ -115,3 +118,49 @@ def get_diarization_metrics(
         metrics_df = pd.DataFrame.from_dict(metrics_dict, orient='index')
         return metrics_df
     return metrics_dict
+
+def average_metrics_by_speaker(metrics_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Given a DataFrame of diarization metrics for each speaker in a file,
+    adds rows for average metrics across all speakers.
+    """
+    average_metrics = []
+    for speaker in metrics_df['speaker']:
+        speaker_df = metrics_df[metrics_df['speaker']==speaker]
+        speaker_metrics = speaker_df.mean()
+        speaker_metrics['file']='average'
+        average_metrics.append(speaker_metrics)
+    average_metrics_df = pd.DataFrame(average_metrics)
+    metrics_df = pd.concat([metrics_df, average_metrics_df])
+    return metrics_df
+
+def init_parser() -> ArgumentParser:
+    parser = ArgumentParser(description="Evaluate diarization metrics.")
+    parser.add_argument('reference', type=str, help="Path to the reference Elan file or directory.")
+    parser.add_argument('hypothesis', type=str, help="Path to the hypothesis Elan file or directory.")
+    parser.add_argument('output', type=str, help="Path to the output file to save the results.")
+    return parser
+
+def main(argv: Optional[Sequence[str]]=None) -> int:
+    parser = init_parser()
+    args = parser.parse_args(argv)
+
+    if os.path.isdir(args.ref):
+        ref = glob(args.ref+'/*.eaf')
+        hyp = glob(args.hyp+'/*.eaf')
+        df_list = []
+        for ref_path, hyp_path in zip(ref, hyp):
+            file_metrics = get_diarization_metrics(ref_path, hyp_path, return_df=True)
+            file_metrics=file_metrics.reset_index(names=['speaker'])
+            file_metrics['file']=os.path.basename(ref_path)
+            df_list.append(file_metrics)
+        df = pd.concat(df_list)
+        df = average_metrics_by_speaker(df)
+        df.to_csv(args.output)
+        return 0
+    metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True)
+    metrics.to_csv(args.output)
+    return 0
+
+if __name__ == '__main__':
+    main()
