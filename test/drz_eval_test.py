@@ -90,8 +90,8 @@ def test_diarization_metrics():
         'tira correct': 0.5,            # 0.5 seconds of correct Tira detection
         'eng false alarm': 0.5,         # 0.5 seconds of English falsely detected
         'eng missed detection': 0.0,    # no missed detection for English
-        'eng confusion': 1.0,           # 1.0 second of English-Tira confusion
-        'eng correct': 0.5,             # 0.5 seconds of correct English detection
+        'eng confusion': 0.5,           # 0.5 seconds of English-Tira confusion
+        'eng correct': 1.0,             # 1.0 second of correct English detection
     }
     assert metrics['MAR'] == {
         'total': 0.5,                   # 0.5 seconds of speech for MAR
