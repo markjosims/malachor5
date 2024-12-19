@@ -2,6 +2,8 @@ from glob import glob
 import os
 from pyannote.core import *
 from pympi import Elan
+import pandas as pd
+import numpy as np
 
 import sys
 sys.path.append('scripts')
@@ -95,3 +97,18 @@ def test_diarization_metrics():
         'confusion': 0.5,               # 1.0 second language confusion
         'correct': 1.0,                 # 0.5 seconds of correct detection
     }
+
+    metrics_df = get_diarization_metrics(ref, hyp, return_df=True)
+    assert metrics_df.shape == (3, 6)
+    comp_df = pd.DataFrame({
+        'total': [2.5, 0.5, 2.0],
+        'missed detection': [0.5, 0.0, 0.5],
+        'false alarm': [0.5, np.nan, np.nan],
+        'confusion': [1.0, 0.0, 0.5],
+        'correct': [1.0, 0.5, 1.0],
+        'diarization error rate': [0.8, np.nan, np.nan],
+    }, index=['combined', 'MAR', 'HIM'])
+    assert pd.DataFrame.equals(
+        metrics_df.sort_index(axis=1).sort_index(axis=0),
+        comp_df.sort_index(axis=1).sort_index(axis=0),
+    )

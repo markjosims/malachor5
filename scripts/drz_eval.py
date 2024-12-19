@@ -2,6 +2,7 @@ from pympi import Elan
 from pyannote.core import Annotation, Segment, Timeline
 from pyannote.metrics.diarization import DiarizationErrorRate
 from typing import Union, Dict
+import pandas as pd
 
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
     """
@@ -47,6 +48,7 @@ def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
 def get_diarization_metrics(
         ref: Union[str, Elan.Eaf, Dict[str, Annotation]],
         hyp: Union[str, Elan.Eaf, Annotation],
+        return_df: bool = False,
     ) -> Dict[str, Dict[str, float]]:
     """
     `ref` is a path to an Elan file, an Eaf object, or dictionary of pyannote `Annotation` objects
@@ -78,4 +80,7 @@ def get_diarization_metrics(
             metrics.pop('false alarm')
             metrics.pop('diarization error rate')
         metrics_dict[speaker]=metrics
+    if return_df:
+        metrics_df = pd.DataFrame.from_dict(metrics_dict, orient='index')
+        return metrics_df
     return metrics_dict
