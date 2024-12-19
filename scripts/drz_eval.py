@@ -1,6 +1,6 @@
 from pympi import Elan
 from pyannote.core import Annotation, Segment, Timeline
-from pyannote.metrics.diarization import DiarizationErrorRate
+from pyannote.metrics.diarization import IdentificationErrorRate
 from typing import Union, Dict
 import pandas as pd
 
@@ -65,7 +65,7 @@ def get_diarization_metrics(
         ref = elan_to_pyannote(ref)
     if type(hyp) in (str, Elan.Eaf):
         hyp = elan_to_pyannote(hyp)['combined']
-    der = DiarizationErrorRate()
+    der = IdentificationErrorRate(collar=0.0)
     metrics_dict = {}
     for speaker, annotation in ref.items():
         if speaker == 'verbose':
@@ -78,7 +78,23 @@ def get_diarization_metrics(
         if speaker != 'combined':
             # don't measure false alarm or DER for individual speakers
             metrics.pop('false alarm')
-            metrics.pop('diarization error rate')
+            metrics.pop('identification error rate')
+        # add language-specific metrics
+        for lang in ['ENG', 'TIC']:
+            lang_str = 'tira' if lang=='TIC' else 'eng'
+            if speaker == 'combined':
+                # for false alarm compare `ref` all segments
+                # to `hyp` with only `lang` segments
+                hyp_lang = hyp.subset([lang])
+                metrics[f'{lang_str} false alarm'] = der(annotation, hyp_lang, detailed=True, uem=uem)['false alarm']
+            # for correct, confusion and missed detection, compare `ref` w/ only `lang` segments
+            # to `hyp` w/ all segments
+            ref_lang = annotation.subset([lang])
+            lang_der = der(ref_lang, hyp, detailed=True, uem=uem)
+            metrics[f'{lang_str} correct'] = lang_der['correct']
+            metrics[f'{lang_str} confusion'] = lang_der['confusion']
+            metrics[f'{lang_str} missed detection'] = lang_der['missed detection']
+
         metrics_dict[speaker]=metrics
     if return_df:
         metrics_df = pd.DataFrame.from_dict(metrics_dict, orient='index')

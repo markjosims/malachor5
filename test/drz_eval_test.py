@@ -83,7 +83,7 @@ def test_diarization_metrics():
         'false alarm': 0.5,             # 0.5 seconds of English falsely detected
         'confusion': 1.0,               # 1.0 seconds of confusion between English and Tira
         'correct': 1.0,                 # 1.0 seconds of correct detection
-        'diarization error rate': 0.8,  # (0.5 + 0.5 + 1.0) / 2.5 = 0.8
+        'identification error rate': 0.8,  # (0.5 + 0.5 + 1.0) / 2.5 = 0.8
         'tira false alarm': 0.0,        # no false alarms for Tira
         'tira missed detection': 0.5,   # 0.5 seconds of Tira missed
         'tira confusion': 0.0,          # no Tira-English confusion
@@ -110,7 +110,7 @@ def test_diarization_metrics():
         'missed detection': 0.5,        # 0.5 seconds of missed detection for HIM
         'confusion': 0.5,               # 1.0 second language confusion
         'correct': 1.0,                 # 0.5 seconds of correct detection
-        'tira missed detection': 0.0,   # no Tira missed
+        'tira missed detection': 0.5,   # 0.5 seconds of missed detection for Tira
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.5,            # no correct Tira detection
         'eng missed detection': 0.0,    # no missed detection for English
@@ -126,7 +126,7 @@ def test_diarization_metrics():
         'false alarm': [0.5, np.nan, np.nan],
         'confusion': [1.0, 0.0, 0.5],
         'correct': [1.0, 0.5, 1.0],
-        'diarization error rate': [0.8, np.nan, np.nan],
+        'identification error rate': [0.8, np.nan, np.nan],
     }, index=['combined', 'MAR', 'HIM'])
     assert pd.DataFrame.equals(
         metrics_df.sort_index(axis=1).sort_index(axis=0),
