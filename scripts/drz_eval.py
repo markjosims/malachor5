@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 import os
 from glob import glob
 
-def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
+def elan_to_pyannote(eaf: Union[str, Elan.Eaf], tgt_tiers: Optional[Sequence[str]]=None) -> Dict[str, Annotation]:
     """
     Returns a dict of pyannote `Annotation` objects from an Elan file.
     The label for each annotation segment is the language being spoken for that interval.
@@ -24,9 +24,10 @@ def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
         'verbose': Annotation(),
     }
 
-    tiers = eaf.get_tier_names()
-    speaker_tiers = [t for t in tiers if len(t)==3 and t.isupper()]
-    for speaker in speaker_tiers:
+    if not tgt_tiers:
+        tiers = eaf.get_tier_names()
+        tgt_tiers = [t for t in tiers if len(t)==3 and t.isupper()]
+    for speaker in tgt_tiers:
         annotations_dict[speaker]=Annotation()
         speaker_annotations = eaf.get_annotation_data_for_tier(speaker)
         for start_ms, end_ms, val in speaker_annotations:
