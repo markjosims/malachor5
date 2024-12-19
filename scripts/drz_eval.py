@@ -1,5 +1,6 @@
 from pympi import Elan
 from pyannote.core import Annotation, Segment, Timeline
+from pyannote.metrics.diarization import DiarizationErrorRate
 from typing import Union, Dict
 
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
@@ -42,3 +43,39 @@ def elan_to_pyannote(eaf: Union[str, Elan.Eaf]) -> Dict[str, Annotation]:
             annotations_dict['combined'][Segment(start, end)] = val
             annotations_dict['verbose'][Segment(start, end)] = f'{val} ({speaker})'
     return annotations_dict
+
+def get_diarization_metrics(
+        ref: Union[str, Elan.Eaf, Dict[str, Annotation]],
+        hyp: Union[str, Elan.Eaf, Annotation],
+    ) -> Dict[str, Dict[str, float]]:
+    """
+    `ref` is a path to an Elan file, an Eaf object, or dictionary of pyannote `Annotation` objects
+    from the `elan_to_pyannote` function.
+    `hyp` is a path to an Elan file, an Eaf object, or a pyannote `Annotation` object.
+    Assume that `ref` contains tiers for multiple speakers but `hyp` contains a single tier
+    reflecting VAD+SLI output.
+    Returns a dictionary for each speaker tier in the reference, containing
+    a dictionary of diarization metrics for that speaker tier,
+    as well as a 'combined' key for overall metrics.
+    Not that the 'confusion' metric here is language confusion, not speaker confusion.
+    """
+    if type(ref) in (str, Elan.Eaf):
+        ref = elan_to_pyannote(ref)
+    if type(hyp) in (str, Elan.Eaf):
+        hyp = elan_to_pyannote(hyp)['combined']
+    der = DiarizationErrorRate()
+    metrics_dict = {}
+    for speaker, annotation in ref.items():
+        if speaker == 'verbose':
+            continue
+        if speaker == 'combined':
+            uem=hyp.get_timeline().union(annotation.get_timeline())
+        else:
+            uem=annotation.get_timeline()
+        metrics = der(annotation, hyp, detailed=True, uem=uem)
+        if speaker != 'combined':
+            # don't measure false alarm or DER for individual speakers
+            metrics.pop('false alarm')
+            metrics.pop('diarization error rate')
+        metrics_dict[speaker]=metrics
+    return metrics_dict
