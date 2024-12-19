@@ -1,11 +1,11 @@
 import torch
 
 from test_utils import assert_chunk_dict_shape
-
+from pympi import Elan
 import numpy as np
 import sys
 sys.path.append('scripts')
-from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli
+from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf
 from dataset_utils import build_sb_dataloader
 from model_utils import LOGREG_PATH
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
@@ -173,3 +173,18 @@ def test_vad_asr_pipeline():
     for chunk in asr_out:
         assert 'text' in chunk
         assert type(chunk['text']) is str
+
+def test_pipeout_to_eaf():
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_chunks = vad_out['vad_chunks']
+    vad_eaf = pipeout_to_eaf(vad_chunks, label='vad')
+    assert type(vad_eaf) is Elan.Eaf
+
+    sli_out, _ = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    sli_eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred')
+    assert type(sli_eaf) is Elan.Eaf
+
+    asr_out = perform_asr(wav, model_path='openai/whisper-tiny')
+    asr_eaf = pipeout_to_eaf(asr_out['chunks'])
+    assert type(asr_eaf) is Elan.Eaf

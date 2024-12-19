@@ -238,6 +238,25 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
         end=start+200
     return start, end
 
+# ------------ #
+# Elan helpers #
+# ------------ #
+
+def pipeout_to_eaf(
+        chunk_list: List[Dict[str, Any]],
+        chunk_key: str = 'text',
+        tier_name: str = 'asr',
+        eaf: Elan.Eaf = Elan.Eaf(),
+        label: Optional[str] = None,
+) -> Elan.Eaf:
+    eaf.add_tier(tier_name)
+    for chunk in chunk_list:
+        start_ms = sec_to_ms(chunk['timestamp'][0])
+        end_ms = sec_to_ms(chunk['timestamp'][1])
+        val = label if label else chunk[chunk_key]
+        eaf.add_annotation(tier_name, start_ms, end_ms, val)
+    return eaf
+
 # ---- #
 # main #
 # ---- #
