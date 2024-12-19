@@ -94,6 +94,7 @@ def get_diarization_metrics(
             metrics[f'{lang_str} correct'] = lang_der['correct']
             metrics[f'{lang_str} confusion'] = lang_der['confusion']
             metrics[f'{lang_str} missed detection'] = lang_der['missed detection']
+            metrics[f'{lang_str} total'] = lang_der['total']
 
         metrics_dict[speaker]=metrics
     if return_df:
