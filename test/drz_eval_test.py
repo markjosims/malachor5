@@ -84,18 +84,42 @@ def test_diarization_metrics():
         'confusion': 1.0,               # 1.0 seconds of confusion between English and Tira
         'correct': 1.0,                 # 1.0 seconds of correct detection
         'diarization error rate': 0.8,  # (0.5 + 0.5 + 1.0) / 2.5 = 0.8
+        'tira false alarm': 0.0,        # no false alarms for Tira
+        'tira missed detection': 0.5,   # 0.5 seconds of Tira missed
+        'tira confusion': 0.0,          # no Tira-English confusion
+        'tira correct': 0.5,            # 0.5 seconds of correct Tira detection
+        'eng false alarm': 0.5,         # 0.5 seconds of English falsely detected
+        'eng missed detection': 0.0,    # no missed detection for English
+        'eng confusion': 1.0,           # 1.0 second of English-Tira confusion
+        'eng correct': 0.5,             # 0.5 seconds of correct English detection
     }
     assert metrics['MAR'] == {
         'total': 0.5,                   # 0.5 seconds of speech for MAR
         'missed detection': 0.0,        # no missed detections
         'confusion': 0.0,               # no language confusion
         'correct': 0.5,                 # 0.5 seconds of correct detection
+        'tira false alarm': 0.0,        # no false alarms for Tira
+        'tira missed detection': 0.0,   # no Tira missed
+        'tira confusion': 0.0,          # no Tira-English confusion
+        'tira correct': 0.0,            # no correct Tira detection
+        'eng false alarm': 0.0,         # no English falsely detected
+        'eng missed detection': 0.0,    # no missed detection for English
+        'eng confusion': 0.0,           # no English-Tira confusion
+        'eng correct': 0.5,             # 0.5 seconds of correct English detection
     }
     assert metrics['HIM'] == {
         'total': 2.0,                   # 2.0 seconds of speech for HIM
         'missed detection': 0.5,        # 0.5 seconds of missed detection for HIM
         'confusion': 0.5,               # 1.0 second language confusion
         'correct': 1.0,                 # 0.5 seconds of correct detection
+        'tira false alarm': 0.0,        # no false alarms for Tira
+        'tira missed detection': 0.0,   # no Tira missed
+        'tira confusion': 0.0,          # no Tira-English confusion
+        'tira correct': 0.5,            # no correct Tira detection
+        'eng false alarm': 0.0,         # no English falsely detected
+        'eng missed detection': 0.0,    # no missed detection for English
+        'eng confusion': 0.5,           # 0.5 seconds of English-Tira confusion
+        'eng correct': 0.0,             # no correct English detection
     }
 
     metrics_df = get_diarization_metrics(ref, hyp, return_df=True)
