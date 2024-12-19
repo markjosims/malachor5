@@ -98,11 +98,9 @@ def test_diarization_metrics():
         'missed detection': 0.0,        # no missed detections
         'confusion': 0.0,               # no language confusion
         'correct': 0.5,                 # 0.5 seconds of correct detection
-        'tira false alarm': 0.0,        # no false alarms for Tira
         'tira missed detection': 0.0,   # no Tira missed
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.0,            # no correct Tira detection
-        'eng false alarm': 0.0,         # no English falsely detected
         'eng missed detection': 0.0,    # no missed detection for English
         'eng confusion': 0.0,           # no English-Tira confusion
         'eng correct': 0.5,             # 0.5 seconds of correct English detection
@@ -112,11 +110,9 @@ def test_diarization_metrics():
         'missed detection': 0.5,        # 0.5 seconds of missed detection for HIM
         'confusion': 0.5,               # 1.0 second language confusion
         'correct': 1.0,                 # 0.5 seconds of correct detection
-        'tira false alarm': 0.0,        # no false alarms for Tira
         'tira missed detection': 0.0,   # no Tira missed
         'tira confusion': 0.0,          # no Tira-English confusion
         'tira correct': 0.5,            # no correct Tira detection
-        'eng false alarm': 0.0,         # no English falsely detected
         'eng missed detection': 0.0,    # no missed detection for English
         'eng confusion': 0.5,           # 0.5 seconds of English-Tira confusion
         'eng correct': 0.0,             # no correct English detection
