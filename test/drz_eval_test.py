@@ -8,7 +8,10 @@ import numpy as np
 import sys
 sys.path.append('scripts')
 from drz_eval import elan_to_pyannote, get_diarization_metrics
+from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
 from tokenization_utils import TIRA_LONGFORM
+from model_utils import LOGREG_PATH
+SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_elan_to_pyannote_tiers():
     """
@@ -148,3 +151,20 @@ def test_diarization_metrics():
     comp_df=comp_df.sort_index(axis=0).sort_index(axis=1)
     for col in comp_df.columns:
         assert pd.Series.equals(metrics_df[col], comp_df[col])
+
+def test_perform_sli_and_evaluate():
+    """
+    Not checking any outputs, just making sure that the pipeline runs without errors.
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    assert type(vad_out) is dict
+    vad_chunks = vad_out['vad_chunks']
+    sli_out, _ = perform_sli(vad_chunks, lr_model=LOGREG_PATH)
+    assert type(sli_out) is list
+    eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='sli')
+    assert type(eaf) is Elan.Eaf
+    pyannote_dict = elan_to_pyannote(eaf, tgt_tiers=['sli'])
+    assert type(pyannote_dict) is dict
+    metrics = get_diarization_metrics(pyannote_dict, pyannote_dict['combined'], return_df=True)
+    assert type(metrics) is pd.DataFrame
