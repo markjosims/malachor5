@@ -5,7 +5,7 @@ from pympi import Elan
 import numpy as np
 import sys
 sys.path.append('scripts')
-from transcribe_longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf
+from longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf
 from dataset_utils import build_sb_dataloader
 from model_utils import LOGREG_PATH
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'

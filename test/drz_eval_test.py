@@ -8,7 +8,7 @@ import numpy as np
 import sys
 sys.path.append('scripts')
 from drz_eval import elan_to_pyannote, get_diarization_metrics, evaluate_diarization, init_parser
-from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
+from longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
 from tokenization_utils import TIRA_LONGFORM
 from model_utils import LOGREG_PATH
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'

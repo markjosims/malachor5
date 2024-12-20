@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 import sys
 sys.path.append('scripts')
-from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf, VAD_URI
+from longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf, VAD_URI
 
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf], tgt_tiers: Optional[Sequence[str]]=None) -> Dict[str, Annotation]:
     """
