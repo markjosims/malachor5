@@ -86,9 +86,10 @@ def get_diarization_metrics(
             uem=annotation.get_timeline()
         metrics = calc_metric(annotation, hyp, detailed=True, uem=uem)
         if speaker != 'combined':
-            # don't measure false alarm or IER for individual speakers
+            # don't measure false alarm or IER/DER for individual speakers
             metrics.pop('false alarm')
-            metrics.pop('identification error rate')
+            metrics.pop('identification error rate', None)
+            metrics.pop('diarization error rate', None)
         # add language-specific metrics
         for lang in ['ENG', 'TIC']:
             lang_str = 'tira' if lang=='TIC' else 'eng'
