@@ -7,7 +7,7 @@ import numpy as np
 
 import sys
 sys.path.append('scripts')
-from drz_eval import elan_to_pyannote, get_diarization_metrics
+from drz_eval import elan_to_pyannote, get_diarization_metrics, evaluate_diarization, init_parser
 from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
 from tokenization_utils import TIRA_LONGFORM
 from model_utils import LOGREG_PATH
@@ -168,3 +168,18 @@ def test_perform_sli_and_evaluate():
     assert type(pyannote_dict) is dict
     metrics = get_diarization_metrics(pyannote_dict, pyannote_dict['combined'], return_df=True)
     assert type(metrics) is pd.DataFrame
+
+def test_perform_sli_directory(tmpdir):
+    parser = init_parser()
+    args = parser.parse_args([])
+    args.wav = os.path.join(TIRA_LONGFORM, 'wav')
+    args.ref = os.path.join(TIRA_LONGFORM, 'eaf')
+    args.logreg = LOGREG_PATH
+    args.output = os.path.join(tmpdir, 'output.csv')
+    result = evaluate_diarization(args)
+    assert result == 0
+    assert os.path.exists(args.output)
+    df = pd.read_csv(args.output)
+    assert type(df) is pd.DataFrame
+    assert df.shape == (8, 17)
+    assert 'average' in df['file'].values
