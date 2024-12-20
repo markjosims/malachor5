@@ -3,6 +3,7 @@ from argparse import ArgumentParser, Namespace
 from transformers import Pipeline, pipeline, WhisperTokenizer
 import pandas as pd
 from pyannote.audio import Pipeline as PyannotePipeline
+from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core import Segment
 from eaf_to_script import write_script
@@ -20,7 +21,7 @@ from copy import deepcopy
 
 SAMPLE_RATE = 16000
 DIARIZE_URI = "pyannote/speaker-diarization-3.1"
-VAD_URI = "pyannote/voice-activity-detection"
+VAD_URI = "pyannote/segmentation-3.0"
 ASR_URI = "openai/whisper-large-v3"
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
 
@@ -89,10 +90,20 @@ def perform_vad(
         vad_uri: str = VAD_URI,
         annotations: Dict[str, Any] = dict(),
         return_wav_slices: bool = False,
+        min_duration_on: float = 0.0,
+        min_duration_off: float = 0.0,
 ):
 
     if not pipe:
-        pipe = PyannotePipeline.from_pretrained(vad_uri)
+        #pipe = PyannotePipeline.from_pretrained(vad_uri)
+        pipe = VoiceActivityDetection(segmentation=vad_uri)
+        hyperparams = {
+            # remove speech regions shorter than that many seconds.
+            "min_duration_on": min_duration_on,
+            # fill non-speech regions shorter than that many seconds.
+            "min_duration_off": min_duration_off
+        }
+        pipe.instantiate(hyperparams)
 
     with ProgressHook() as hook:
         result = pipe(
