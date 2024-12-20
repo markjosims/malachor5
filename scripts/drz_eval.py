@@ -6,6 +6,7 @@ import pandas as pd
 from argparse import ArgumentParser
 import os
 from glob import glob
+from tqdm import tqdm
 
 import sys
 sys.path.append('scripts')
@@ -155,7 +156,11 @@ def evaluate_diarization(args):
             # perform VAD+SLI on each file in `wav` directory
             wavs = sorted(glob(args.wav+'/*.wav'))
             hyp=[]
-            for wav_fp in wavs:
+            for wav_fp in tqdm(
+                wavs,
+                desc=f"Performing {'VAD and SLI' if args.logreg else 'VAD'} on audio files"
+            ):
+                tqdm.write(wav_fp)
                 wav = load_and_resample(wav_fp)
                 vad_out = perform_vad(wav, return_wav_slices=True)
                 if args.logreg:
@@ -165,16 +170,18 @@ def evaluate_diarization(args):
                     eaf = pipeout_to_eaf(vad_out['vad_chunks'], label='vad', tier_name='vad')
                 hyp.append(eaf)
         df_list = []
-        for ref_path, hyp_path in zip(ref, hyp):
+        for ref_path, hyp_path in tqdm(zip(ref, hyp), desc='Getting diarization metrics', total=len(ref)):
             file_metrics = get_diarization_metrics(ref_path, hyp_path, return_df=True)
             file_metrics=file_metrics.reset_index(names=['speaker'])
             file_metrics['file']=os.path.basename(ref_path)
             df_list.append(file_metrics)
         df = pd.concat(df_list)
         df = average_metrics_by_speaker(df)
+        print(f"Saving metrics to {args.output}")
         df.to_csv(args.output)
         return 0
     metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True)
+    print(f"Saving metrics to {args.output}")
     metrics.to_csv(args.output)
     return 0
 
