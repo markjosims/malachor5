@@ -193,13 +193,13 @@ def test_diarization_metrics_vad():
     vad_metrics = get_diarization_metrics(ref=sli_eaf, hyp=vad_eaf, task='vad')
     assert type(vad_metrics) is dict
     keys = [
-        'total', 'missed detection', 'false alarm', 'correct', 'diarization error rate',
+        'total', 'missed detection', 'false alarm', 'correct', 'detection error rate',
         'tira missed detection', 'eng missed detection',
     ]
     for key in keys:
         assert key in vad_metrics['combined']
         assert type(vad_metrics['combined'][key]) in [float, int]
 
-    if key not in ('false alarm', 'diarization error rate'):
-        assert key in vad_metrics['HIM']
-        assert type(vad_metrics['HIM'][key]) in [float, int]
+        if key not in ('false alarm', 'detection error rate'):
+            assert key in vad_metrics['HIM']
+            assert type(vad_metrics['HIM'][key]) in [float, int]
