@@ -171,7 +171,12 @@ def evaluate_diarization(args):
                 hyp.append(eaf)
         df_list = []
         for ref_path, hyp_path in tqdm(zip(ref, hyp), desc='Getting diarization metrics', total=len(ref)):
-            file_metrics = get_diarization_metrics(ref_path, hyp_path, return_df=True)
+            file_metrics = get_diarization_metrics(
+                ref_path,
+                hyp_path,
+                return_df=True,
+                task='sli' if args.logreg else 'vad',
+            )
             file_metrics=file_metrics.reset_index(names=['speaker'])
             file_metrics['file']=os.path.basename(ref_path)
             df_list.append(file_metrics)
