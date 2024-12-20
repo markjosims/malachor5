@@ -60,6 +60,7 @@ def get_diarization_metrics(
         task: Literal['sli', 'vad'] = 'sli',
         return_df: bool = False,
         return_pct: bool = True,
+        collar: float = 0.0,
     ) -> Dict[str, Dict[str, float]]:
     """
     `ref` is a path to an Elan file, an Eaf object, or dictionary of pyannote `Annotation` objects
@@ -77,7 +78,7 @@ def get_diarization_metrics(
     if type(hyp) in (str, Elan.Eaf):
         # assuming for now that `hyp` Elan object contains a tier with the name of the task performed
         hyp = elan_to_pyannote(hyp, tgt_tiers=[task,])['combined']
-    calc_metric = IdentificationErrorRate() if task=='sli' else DiarizationErrorRate()
+    calc_metric = IdentificationErrorRate(collar=collar) if task=='sli' else DiarizationErrorRate(collar=collar)
     metrics_dict = {}
     for speaker, annotation in ref.items():
         if speaker == 'verbose':
@@ -177,6 +178,7 @@ def evaluate_diarization(args):
                 hyp_path,
                 return_df=True,
                 task='sli' if args.logreg else 'vad',
+                collar=args.collar,
             )
             file_metrics=file_metrics.reset_index(names=['speaker'])
             file_metrics['file']=os.path.basename(ref_path)
@@ -186,7 +188,7 @@ def evaluate_diarization(args):
         print(f"Saving metrics to {args.output}")
         df.to_csv(args.output, index=False)
         return 0
-    metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True)
+    metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True, collar=args.collar)
     print(f"Saving metrics to {args.output}")
     metrics.to_csv(args.output, index=False)
     return 0
@@ -199,6 +201,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--wav', '-w', type=str, help="Path to the directory containing the audio files.")
     parser.add_argument('--logreg', '-l', type=str, help="Path to the logreg model.")
     parser.add_argument('--vad_uri', type=str, help="URI for the VAD model.", default=VAD_URI)
+    parser.add_argument('--collar', '-c', type=float, help="Collar for diarization metrics.", default=0.0)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
