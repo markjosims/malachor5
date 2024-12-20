@@ -11,6 +11,7 @@ from tqdm import tqdm
 import sys
 sys.path.append('scripts')
 from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
+from model_utils import VAD_URI
 
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf], tgt_tiers: Optional[Sequence[str]]=None) -> Dict[str, Annotation]:
     """
@@ -162,7 +163,7 @@ def evaluate_diarization(args):
             ):
                 tqdm.write(wav_fp)
                 wav = load_and_resample(wav_fp)
-                vad_out = perform_vad(wav, return_wav_slices=True)
+                vad_out = perform_vad(wav, return_wav_slices=True, vad_uri=args.vad_uri)
                 if args.logreg:
                     sli_out, _ = perform_sli(vad_out['vad_chunks'], lr_model=args.logreg)
                     eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='sli')
@@ -192,6 +193,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--output', '-o', type=str, help="Path to the output file to save the results.")
     parser.add_argument('--wav', '-w', type=str, help="Path to the directory containing the audio files.")
     parser.add_argument('--logreg', '-l', type=str, help="Path to the logreg model.")
+    parser.add_argument('--vad_uri', type=str, help="URI for the VAD model.", default=VAD_URI)
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
