@@ -92,6 +92,7 @@ def get_diarization_metrics(
         # add language-specific metrics
         for lang in ['ENG', 'TIC']:
             lang_str = 'tira' if lang=='TIC' else 'eng'
+            # only calculate false alarm when considering all speakers combined
             if speaker == 'combined' and task=='sli':
                 # for false alarm compare `ref` all segments
                 # to `hyp` with only `lang` segments
