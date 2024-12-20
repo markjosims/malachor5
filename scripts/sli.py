@@ -36,6 +36,10 @@ def init_argparser() -> ArgumentParser:
     train_lr_parser=commands.add_parser('train_lr', help=train_logreg.__doc__)
     train_lr_parser.add_argument('--embeds_path')
     train_lr_parser.set_defaults(func=train_logreg)
+
+    lr_summary_parser=commands.add_parser('lr_summary', help=lr_summary.__doc__)
+    lr_summary_parser.add_argument('--lr_model')
+    lr_summary_parser.set_defaults(func=lr_summary)
     
     return parser
 
@@ -210,6 +214,15 @@ def infer_lr(args=None, dataset=None, lr_model:Optional[str]=None, **kwargs):
         dataset = dataset.add_column("sli_preds", labels) 
 
     return dataset, args
+
+def lr_summary(args=None) -> int:
+    # load logreg model and print scores and sli map to stdout
+    with open(args.lr_model, 'rb') as f:
+        lr_dict = pickle.load(f)
+    print(f"Classification accuracy: {lr_dict['scores']}")
+    print(f"SLI map: {lr_dict['sli_map']}")
+    print(f"Embedding model: {lr_dict['embed_model']}")
+    return 0
 
 # ---- #
 # Main #
