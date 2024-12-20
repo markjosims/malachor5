@@ -183,3 +183,23 @@ def test_perform_sli_directory(tmpdir):
     assert type(df) is pd.DataFrame
     assert df.shape == (8, 17)
     assert 'average' in df['file'].values
+
+def test_diarization_metrics_vad():
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    vad_out = perform_vad(wav, return_wav_slices=True)
+    vad_eaf = pipeout_to_eaf(vad_out['vad_chunks'], label='vad', tier_name='vad')
+    sli_out, _ = perform_sli(vad_out['vad_chunks'], lr_model=LOGREG_PATH)
+    sli_eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='HIM')
+    vad_metrics = get_diarization_metrics(ref=sli_eaf, hyp=vad_eaf, task='vad')
+    assert type(vad_metrics) is dict
+    keys = [
+        'total', 'missed detection', 'false alarm', 'correct', 'diarization error rate',
+        'tira missed detection', 'eng missed detection',
+    ]
+    for key in keys:
+        assert key in vad_metrics['combined']
+        assert type(vad_metrics['combined'][key]) in [float, int]
+
+    if key not in ('false alarm', 'diarization error rate'):
+        assert key in vad_metrics['HIM']
+        assert type(vad_metrics['HIM'][key]) in [float, int]
