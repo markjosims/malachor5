@@ -86,12 +86,13 @@ def perform_asr(
 def perform_vad(
         audio: torch.Tensor,
         pipe: Optional[PyannotePipeline] = None,
+        vad_uri: str = VAD_URI,
         annotations: Dict[str, Any] = dict(),
         return_wav_slices: bool = False,
 ):
 
     if not pipe:
-        pipe = PyannotePipeline.from_pretrained(VAD_URI)
+        pipe = PyannotePipeline.from_pretrained(vad_uri)
 
     with ProgressHook() as hook:
         result = pipe(
