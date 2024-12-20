@@ -75,7 +75,8 @@ def get_diarization_metrics(
     if type(ref) in (str, Elan.Eaf):
         ref = elan_to_pyannote(ref)
     if type(hyp) in (str, Elan.Eaf):
-        hyp = elan_to_pyannote(hyp)['combined']
+        # assuming for now that `hyp` Elan object contains a tier with the name of the task performed
+        hyp = elan_to_pyannote(hyp, tgt_tiers=[task,])['combined']
     calc_metric = IdentificationErrorRate() if task=='sli' else DiarizationErrorRate()
     metrics_dict = {}
     for speaker, annotation in ref.items():
