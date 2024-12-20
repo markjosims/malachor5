@@ -62,6 +62,7 @@ def get_diarization_metrics(
         return_df: bool = False,
         return_pct: bool = True,
         collar: float = 0.0,
+        skip_overlap: bool = False,
     ) -> Dict[str, Dict[str, float]]:
     """
     `ref` is a path to an Elan file, an Eaf object, or dictionary of pyannote `Annotation` objects
@@ -79,7 +80,8 @@ def get_diarization_metrics(
     if type(hyp) in (str, Elan.Eaf):
         # assuming for now that `hyp` Elan object contains a tier with the name of the task performed
         hyp = elan_to_pyannote(hyp, tgt_tiers=[task,])['combined']
-    calc_metric = IdentificationErrorRate(collar=collar) if task=='sli' else DetectionErrorRate(collar=collar)
+    calc_metric = IdentificationErrorRate(collar=collar, skip_overlap=skip_overlap) if task=='sli'\
+        else DetectionErrorRate(collar=collar, skip_overlap=skip_overlap)
     metrics_dict = {}
     for speaker, annotation in ref.items():
         if speaker == 'verbose':
@@ -189,6 +191,7 @@ def evaluate_diarization(args):
                 return_df=True,
                 task='sli' if args.logreg else 'vad',
                 collar=args.collar,
+                skip_overlap=args.skip_overlap,
             )
             file_metrics=file_metrics.reset_index(names=['speaker'])
             file_metrics['file']=os.path.basename(ref_path)
@@ -198,7 +201,7 @@ def evaluate_diarization(args):
         print(f"Saving metrics to {args.output}")
         df.to_csv(args.output, index=False)
         return 0
-    metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True, collar=args.collar)
+    metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True, collar=args.collar, skip_overlap=args.skip_overlap)
     print(f"Saving metrics to {args.output}")
     metrics.to_csv(args.output, index=False)
     return 0
@@ -212,6 +215,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--logreg', '-l', type=str, help="Path to the logreg model.")
     parser.add_argument('--vad_uri', type=str, help="URI for the VAD model.", default=VAD_URI)
     parser.add_argument('--collar', '-c', type=float, help="Collar for diarization metrics.", default=0.0)
+    parser.add_argument('--skip_overlap', action='store_true', help="Skip overlapping segments in diarization metrics.")
     return parser
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
