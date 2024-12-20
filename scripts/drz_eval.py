@@ -178,11 +178,11 @@ def evaluate_diarization(args):
         df = pd.concat(df_list)
         df = average_metrics_by_speaker(df)
         print(f"Saving metrics to {args.output}")
-        df.to_csv(args.output)
+        df.to_csv(args.output, index=False)
         return 0
     metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True)
     print(f"Saving metrics to {args.output}")
-    metrics.to_csv(args.output)
+    metrics.to_csv(args.output, index=False)
     return 0
 
 def init_parser() -> ArgumentParser:
