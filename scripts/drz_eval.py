@@ -158,8 +158,11 @@ def evaluate_diarization(args):
             for wav_fp in wavs:
                 wav = load_and_resample(wav_fp)
                 vad_out = perform_vad(wav, return_wav_slices=True)
-                sli_out, _ = perform_sli(vad_out['vad_chunks'], lr_model=args.logreg)
-                eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='sli')
+                if args.logreg:
+                    sli_out, _ = perform_sli(vad_out['vad_chunks'], lr_model=args.logreg)
+                    eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='sli')
+                else:
+                    eaf = pipeout_to_eaf(vad_out['vad_chunks'], label='vad', tier_name='vad')
                 hyp.append(eaf)
         df_list = []
         for ref_path, hyp_path in zip(ref, hyp):
