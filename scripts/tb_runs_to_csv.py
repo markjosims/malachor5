@@ -91,6 +91,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print("Globbing runs...")
     for globstr in args.globstr:
         run_dirs.extend(glob(globstr))
+    # remove any filepaths that aren't directories
+    run_dirs = [run_dir for run_dir in run_dirs if os.path.isdir(run_dir)]
     print(f"\tFound {len(run_dirs)} runs.")
 
     df = get_runs_df(run_dirs)
