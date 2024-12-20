@@ -7,6 +7,10 @@ from argparse import ArgumentParser
 import os
 from glob import glob
 
+import sys
+sys.path.append('scripts')
+from transcribe_longform import perform_vad, perform_sli, load_and_resample, pipeout_to_eaf
+
 def elan_to_pyannote(eaf: Union[str, Elan.Eaf], tgt_tiers: Optional[Sequence[str]]=None) -> Dict[str, Annotation]:
     """
     Returns a dict of pyannote `Annotation` objects from an Elan file.
@@ -114,7 +118,7 @@ def get_diarization_metrics(
                     total = metrics['eng total']
                 elif 'tic' in key:
                     total = metrics['tira total']
-                metrics[key+' rate'] = value/total
+                metrics[key+' rate'] = value/total if total!=0 else 0
     if return_df:
         metrics_df = pd.DataFrame.from_dict(metrics_dict, orient='index')
         return metrics_df
@@ -128,27 +132,30 @@ def average_metrics_by_speaker(metrics_df: pd.DataFrame) -> pd.DataFrame:
     average_metrics = []
     for speaker in metrics_df['speaker']:
         speaker_df = metrics_df[metrics_df['speaker']==speaker]
-        speaker_metrics = speaker_df.mean()
+        speaker_metrics = speaker_df.mean(numeric_only=True)
+        speaker_metrics['speaker']=speaker
         speaker_metrics['file']='average'
         average_metrics.append(speaker_metrics)
     average_metrics_df = pd.DataFrame(average_metrics)
     metrics_df = pd.concat([metrics_df, average_metrics_df])
     return metrics_df
 
-def init_parser() -> ArgumentParser:
-    parser = ArgumentParser(description="Evaluate diarization metrics.")
-    parser.add_argument('reference', type=str, help="Path to the reference Elan file or directory.")
-    parser.add_argument('hypothesis', type=str, help="Path to the hypothesis Elan file or directory.")
-    parser.add_argument('output', type=str, help="Path to the output file to save the results.")
-    return parser
-
-def main(argv: Optional[Sequence[str]]=None) -> int:
-    parser = init_parser()
-    args = parser.parse_args(argv)
-
+def evaluate_diarization(args):
     if os.path.isdir(args.ref):
-        ref = glob(args.ref+'/*.eaf')
-        hyp = glob(args.hyp+'/*.eaf')
+        # assuming files have same basename so calling sort will make sure they correspond
+        ref = sorted(glob(args.ref+'/*.eaf'))
+        if args.hyp:
+            hyp = sorted(glob(args.hyp+'/*.eaf'))
+        else:
+            # perform VAD+SLI on each file in `wav` directory
+            wavs = sorted(glob(args.wav+'/*.wav'))
+            hyp=[]
+            for wav_fp in wavs:
+                wav = load_and_resample(wav_fp)
+                vad_out = perform_vad(wav, return_wav_slices=True)
+                sli_out, _ = perform_sli(vad_out['vad_chunks'], lr_model=args.logreg)
+                eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred', tier_name='sli')
+                hyp.append(eaf)
         df_list = []
         for ref_path, hyp_path in zip(ref, hyp):
             file_metrics = get_diarization_metrics(ref_path, hyp_path, return_df=True)
@@ -162,6 +169,20 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     metrics = get_diarization_metrics(args.ref, args.hyp, return_df=True)
     metrics.to_csv(args.output)
     return 0
+
+def init_parser() -> ArgumentParser:
+    parser = ArgumentParser(description="Evaluate diarization metrics.")
+    parser.add_argument('--ref', '-r', type=str, help="Path to the reference Elan file or directory.")
+    parser.add_argument('--hyp', type=str, help="Path to the hypothesis Elan file or directory.")
+    parser.add_argument('--output', '-o', type=str, help="Path to the output file to save the results.")
+    parser.add_argument('--wav', '-w', type=str, help="Path to the directory containing the audio files.")
+    parser.add_argument('--logreg', '-l', type=str, help="Path to the logreg model.")
+    return parser
+
+def main(argv: Optional[Sequence[str]]=None) -> int:
+    parser = init_parser()
+    args = parser.parse_args(argv)
+    return evaluate_diarization(args)
 
 if __name__ == '__main__':
     main()
