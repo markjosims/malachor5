@@ -1,7 +1,7 @@
 from pympi import Elan
 from pyannote.core import Annotation, Segment, Timeline
-from pyannote.metrics.diarization import IdentificationErrorRate
-from typing import Union, Dict, Sequence, Optional
+from pyannote.metrics.diarization import IdentificationErrorRate, DiarizationErrorRate
+from typing import Union, Dict, Sequence, Optional, Literal
 import pandas as pd
 from argparse import ArgumentParser
 import os
@@ -56,6 +56,7 @@ def elan_to_pyannote(eaf: Union[str, Elan.Eaf], tgt_tiers: Optional[Sequence[str
 def get_diarization_metrics(
         ref: Union[str, Elan.Eaf, Dict[str, Annotation]],
         hyp: Union[str, Elan.Eaf, Annotation],
+        task: Literal['sli', 'vad'] = 'sli',
         return_df: bool = False,
         return_pct: bool = True,
     ) -> Dict[str, Dict[str, float]]:
@@ -74,7 +75,7 @@ def get_diarization_metrics(
         ref = elan_to_pyannote(ref)
     if type(hyp) in (str, Elan.Eaf):
         hyp = elan_to_pyannote(hyp)['combined']
-    der = IdentificationErrorRate(collar=0.0)
+    calc_metric = IdentificationErrorRate() if task=='sli' else DiarizationErrorRate()
     metrics_dict = {}
     for speaker, annotation in ref.items():
         if speaker == 'verbose':
@@ -83,27 +84,29 @@ def get_diarization_metrics(
             uem=hyp.get_timeline().union(annotation.get_timeline())
         else:
             uem=annotation.get_timeline()
-        metrics = der(annotation, hyp, detailed=True, uem=uem)
+        metrics = calc_metric(annotation, hyp, detailed=True, uem=uem)
         if speaker != 'combined':
-            # don't measure false alarm or DER for individual speakers
+            # don't measure false alarm or IER for individual speakers
             metrics.pop('false alarm')
             metrics.pop('identification error rate')
         # add language-specific metrics
         for lang in ['ENG', 'TIC']:
             lang_str = 'tira' if lang=='TIC' else 'eng'
-            if speaker == 'combined':
+            if speaker == 'combined' and task=='sli':
                 # for false alarm compare `ref` all segments
                 # to `hyp` with only `lang` segments
                 hyp_lang = hyp.subset([lang])
-                metrics[f'{lang_str} false alarm'] = der(annotation, hyp_lang, detailed=True, uem=uem)['false alarm']
+                metrics[f'{lang_str} false alarm'] = calc_metric(annotation, hyp_lang, detailed=True, uem=uem)['false alarm']
             # for correct, confusion and missed detection, compare `ref` w/ only `lang` segments
             # to `hyp` w/ all segments
             ref_lang = annotation.subset([lang])
-            lang_der = der(ref_lang, hyp, detailed=True, uem=uem)
+            lang_der = calc_metric(ref_lang, hyp, detailed=True, uem=uem)
             metrics[f'{lang_str} correct'] = lang_der['correct']
-            metrics[f'{lang_str} confusion'] = lang_der['confusion']
-            metrics[f'{lang_str} missed detection'] = lang_der['missed detection']
             metrics[f'{lang_str} total'] = lang_der['total']
+            metrics[f'{lang_str} missed detection'] = lang_der['missed detection']
+            # only makes sense to measure confusion for SLI task
+            if task == 'sli':
+                metrics[f'{lang_str} confusion'] = lang_der['confusion']
 
         metrics_dict[speaker]=metrics
     if return_pct:
