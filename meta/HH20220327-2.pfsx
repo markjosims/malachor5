@@ -14,7 +14,7 @@
         <String>PET</String>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>1098129</Long>
+        <Long>0</Long>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
         <Float>70.0</Float>
@@ -88,7 +88,7 @@
         <Object class="java.awt.Rectangle">570,300,300,300</Object>
     </pref>
     <pref key="SelectionBeginTime">
-        <Long>1093900</Long>
+        <Long>0</Long>
     </pref>
     <prefGroup key="AAM-LR Phone level audio segmentation">
         <pref key="source_audio">
@@ -128,10 +128,10 @@
         <Float>1.0</Float>
     </pref>
     <pref key="TimeScaleBeginTime">
-        <Long>1086743</Long>
+        <Long>1102772</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>1098129</Long>
+        <Long>1115014</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="NIN">
@@ -143,11 +143,11 @@
         <pref key="Misc">
             <Object class="java.awt.Color">160,0,160</Object>
         </pref>
-        <pref key="SHA">
-            <Object class="java.awt.Color">0,90,0</Object>
-        </pref>
         <pref key="HIM">
             <Object class="java.awt.Color">160,160,0</Object>
+        </pref>
+        <pref key="SHA">
+            <Object class="java.awt.Color">0,90,0</Object>
         </pref>
         <pref key="PET">
             <Object class="java.awt.Color">160,0,90</Object>
