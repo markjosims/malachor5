@@ -332,9 +332,14 @@ def init_parser() -> ArgumentParser:
         action="store_true"
     )
     parser.add_argument(
-        "-d", "--drz_model",
+        "-z", "--drz_uri",
         help=f"DRZ model path. Default is {DIARIZE_URI}.",
         default=DIARIZE_URI,
+    )
+    parser.add_argument(
+        '-v', '--vad_uri',
+        help=f"VAD model path. Default is {VAD_URI}.",
+        default=VAD_URI,
     )
     parser.add_argument(
         "--lr_model",
