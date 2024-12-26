@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from glob import glob
 import os
 from longform import load_and_resample, SAMPLE_RATE
+SAMPLES_PER_MS = SAMPLE_RATE // 1000
 import torchaudio
 from tqdm import tqdm
 
@@ -30,10 +31,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         wav_basename = os.path.basename(wav_path)
         has_basename = df['wav_basename']==wav_basename
         # get the start and end sample indices from annotation timestamps
-        start_idcs = df.loc[has_basename, 'start'].apply(lambda x: int(x*SAMPLE_RATE))
-        end_idcs = df.loc[has_basename, 'end'].apply(lambda x: int(x*SAMPLE_RATE))
+        start_idcs = df.loc[has_basename, 'start'].apply(lambda x: int(x*SAMPLES_PER_MS))
+        end_idcs = df.loc[has_basename, 'end'].apply(lambda x: int(x*SAMPLES_PER_MS))
         for start, end in zip(start_idcs, end_idcs):
-            wav[start:end] = 0 # mask the samples
+            wav[:,start:end] = 0 # mask the samples
         # save the masked wav file
         torchaudio.save(os.path.join(args.output, wav_basename), wav, SAMPLE_RATE)
     return 0
