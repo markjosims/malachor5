@@ -404,7 +404,7 @@ def annotate(args) -> int:
     """
     wav_paths = glob(os.path.join(args.input, '*.wav'))
     vad_pipe = load_vad_pipeline(args.vad_uri, args.min_duration_on, args.min_duration_off)
-    _, args = load_lr(args)
+    _, args = load_lr(args=args)
     asr_pipelines = load_asr_pipelines_for_sli(args.sli_map)
     df = pd.DataFrame(columns=['wav_path', 'tier_name', 'start', 'end', 'transcription'])
     for wav_path in tqdm(wav_paths):
