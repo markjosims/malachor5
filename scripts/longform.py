@@ -47,7 +47,7 @@ def perform_asr(
         audio=deepcopy(audio)
         if type(audio) is not list:
             raise ValueError('Must pass list of audio chunks if passing `sli_map`')
-        pipelines = {}
+        pipelines = load_asr_pipelines_for_sli(sli_map)
         for language_obj in sli_map:
             sli_label=language_obj['label']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
