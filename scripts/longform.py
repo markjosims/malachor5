@@ -423,10 +423,14 @@ def annotate(args) -> int:
     asr_pipelines = load_asr_pipelines_for_sli(args.sli_map, args=args)
     df = pd.DataFrame(columns=['wav_path', 'tier_name', 'start', 'end', 'transcription'])
     for wav_path in tqdm(wav_paths, desc='Annotating wavs'):
+        tqdm.write(f"Processing {wav_path}")
         wav = load_and_resample(wav_path)
+        tqdm.write("Performing VAD")
         vad_out = perform_vad(wav, pipe=vad_pipe, return_wav_slices=True)
         vad_chunks = vad_out['vad_chunks']
+        tqdm.write("Performing SLI")
         sli_chunks, _ = perform_sli(vad_chunks, lr_model=args.lr_model)
+        tqdm.write("Performing ASR")
         asr_out = perform_asr(
             sli_chunks,
             pipe=asr_pipelines,
