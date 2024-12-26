@@ -340,12 +340,6 @@ def init_parser() -> ArgumentParser:
         help=f"ASR model path. Default is {ASR_URI}.",
         default=ASR_URI,
     )
-    parser.add_argument("--asr_model_lang1")
-    parser.add_argument(
-        "-l", "--language",
-        nargs="+",
-        help="Language(s) to transcribe.",
-    )
     parser.add_argument(
         "--checkpoint",
         help="Path to load model checkpoint from, if different from model path."
