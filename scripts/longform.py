@@ -95,15 +95,7 @@ def perform_vad(
 ):
 
     if not pipe:
-        #pipe = PyannotePipeline.from_pretrained(vad_uri)
-        pipe = VoiceActivityDetection(segmentation=vad_uri)
-        hyperparams = {
-            # remove speech regions shorter than that many seconds.
-            "min_duration_on": min_duration_on,
-            # fill non-speech regions shorter than that many seconds.
-            "min_duration_off": min_duration_off
-        }
-        pipe.instantiate(hyperparams)
+        pipe = load_vad_pipeline(vad_uri, min_duration_on, min_duration_off)
 
     with ProgressHook() as hook:
         result = pipe(
@@ -117,6 +109,17 @@ def perform_vad(
             chunk['wav']=wav_slice
     annotations['vad_chunks'] = vad_chunks
     return annotations
+
+def load_vad_pipeline(vad_uri, min_duration_on, min_duration_off):
+    pipe = VoiceActivityDetection(segmentation=vad_uri)
+    hyperparams = {
+            # remove speech regions shorter than that many seconds.
+            "min_duration_on": min_duration_on,
+            # fill non-speech regions shorter than that many seconds.
+            "min_duration_off": min_duration_off
+        }
+    pipe.instantiate(hyperparams)
+    return pipe
 
 def diarize(
         audio: torch.Tensor,
