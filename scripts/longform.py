@@ -51,9 +51,6 @@ def perform_asr(
         for language_obj in sli_map:
             sli_label=language_obj['label']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
-            model_for_language = language_obj['whisper_checkpoint']
-            if model_for_language not in pipelines:
-                pipelines[model_for_language]=pipeline("automatic-speech-recognition", model=model_for_language)
             language_code=language_obj['whisper_lang_code']
             generate_kwargs=generate_kwargs if generate_kwargs else {}
             generate_kwargs['forced_decoder_ids']=get_forced_decoder_ids(language=language_code, tokenizer=tokenizer)#['language']=language_code
@@ -83,6 +80,16 @@ def perform_asr(
         **kwargs,
     )
     return result
+
+def load_asr_pipelines_for_sli(sli_map: Dict[str, Any]) -> Dict[str, Pipeline]:
+    pipelines = {}
+    for language_obj in sli_map:
+        model_for_language = language_obj['whisper_checkpoint']
+        peft_type = language_obj.get('peft_type', None)
+        args = Namespace(model=model_for_language, peft_type=peft_type)
+        if model_for_language not in pipelines:
+            pipelines[model_for_language]=load_whisper_pipeline(args)
+    return pipelines
 
 def perform_vad(
         audio: torch.Tensor,
