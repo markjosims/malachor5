@@ -342,6 +342,12 @@ def init_parser() -> ArgumentParser:
         default=VAD_URI,
     )
     parser.add_argument(
+        '--min_duration_on', type=float, default=0.0,
+    )
+    parser.add_argument(
+        '--min_duration_off', type=float, default=0.0,
+    )
+    parser.add_argument(
         "--lr_model",
         "--lr",
     )
