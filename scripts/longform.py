@@ -40,6 +40,7 @@ def perform_asr(
         return_timestamps = True,
         generate_kwargs=None,
         sli_map=None,
+        args=None,
         **kwargs,
 ) -> str:
     if sli_map:
@@ -48,7 +49,7 @@ def perform_asr(
         if type(audio) is not list:
             raise ValueError('Must pass list of audio chunks if passing `sli_map`')
         if type(pipe) is not dict:
-            pipe = load_asr_pipelines_for_sli(sli_map)
+            pipe = load_asr_pipelines_for_sli(sli_map, args=args)
         for language_obj in sli_map:
             sli_label=language_obj['label']
             model_for_language=language_obj['whisper_checkpoint']
@@ -83,12 +84,22 @@ def perform_asr(
     )
     return result
 
-def load_asr_pipelines_for_sli(sli_map: Dict[str, Any]) -> Dict[str, Pipeline]:
+def load_asr_pipelines_for_sli(sli_map: Dict[str, Any], args: Optional[Namespace]=None) -> Dict[str, Pipeline]:
+    # avoid side effects
+    if args:
+        args = deepcopy(args)
+    else:
+        args = init_parser().parse_args([])
+    # add args common to all pipelines
+    args.batch_size=getattr(args, 'batch_size', 8)
+    args.device=getattr(args, 'device', DEVICE)
+    args.chunk_length_s=getattr(args, 'chunk_length_s', 30)
     pipelines = {}
     for language_obj in sli_map:
         model_for_language = language_obj['whisper_checkpoint']
         peft_type = language_obj.get('peft_type', None)
-        args = Namespace(model=model_for_language, peft_type=peft_type)
+        args.model=model_for_language
+        args.peft_type=peft_type
         if model_for_language not in pipelines:
             pipelines[model_for_language]=load_whisper_pipeline(args)
     return pipelines
@@ -409,7 +420,7 @@ def annotate(args) -> int:
     wav_paths = glob(os.path.join(args.input, '*.wav'))
     vad_pipe = load_vad_pipeline(args.vad_uri, args.min_duration_on, args.min_duration_off)
     _, args = load_lr(args=args)
-    asr_pipelines = load_asr_pipelines_for_sli(args.sli_map)
+    asr_pipelines = load_asr_pipelines_for_sli(args.sli_map, args=args)
     df = pd.DataFrame(columns=['wav_path', 'tier_name', 'start', 'end', 'transcription'])
     for wav_path in tqdm(wav_paths):
         wav = load_and_resample(wav_path)
