@@ -2,12 +2,13 @@ import torch
 
 from test_utils import assert_chunk_dict_shape
 from pympi import Elan
-import numpy as np
+import pandas as pd
 import sys
 sys.path.append('scripts')
-from longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf
+from longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf, annotate, init_parser
 from dataset_utils import build_sb_dataloader
 from model_utils import LOGREG_PATH
+import os
 SAMPLE_WAVPATH = 'test/data/sample_biling.wav'
 
 def test_load_and_resample():
@@ -188,3 +189,24 @@ def test_pipeout_to_eaf():
     asr_out = perform_asr(wav, model_path='openai/whisper-tiny')
     asr_eaf = pipeout_to_eaf(asr_out['chunks'])
     assert type(asr_eaf) is Elan.Eaf
+
+def test_annotate(tmpdir):
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    # save 3 copies of wav to tmpdir
+    for i in range(3):
+        torch.save(wav, str(tmpdir.join(f'sample{i}.wav')))
+    args = init_parser().parse_args([])
+    args.lr_model = LOGREG_PATH
+    args.input=tmpdir
+    args.output=tmpdir
+    annotate(args)
+
+    for i in range(3):
+        assert os.path.exists(tmpdir/f'sample{i}.eaf')
+        eaf = Elan.Eaf(tmpdir/f'sample{i}.eaf')
+        assert 'asr' in eaf.get_tier_names()
+    assert os.path.exists(tmpdir/'metadata.csv')
+    df = pd.read_csv(tmpdir/'metadata.csv')
+    assert df['wav_source'].nunique() == 3
+    assert df['eaf_path'].nunique() == 3
+    assert 'asr' in df['tier_name'].values()
