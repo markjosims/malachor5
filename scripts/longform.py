@@ -318,7 +318,7 @@ def pipeout_to_df(
             chunk_annotations['wav_source'] = wav_source
         annotations.append(chunk_annotations)
     out_df = pd.DataFrame(annotations)
-    if df:
+    if df is not None:
         return pd.concat([df, out_df])
     return out_df
 
