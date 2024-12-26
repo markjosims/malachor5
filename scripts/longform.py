@@ -390,6 +390,9 @@ def init_parser() -> ArgumentParser:
     parser.add_argument(
         '--file_extension', '-x', default='.mp3',
     )
+    parser.add_argument(
+        '--sb_savedir', default='models/speechbrain',
+    )
     return parser
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
