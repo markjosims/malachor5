@@ -54,6 +54,9 @@ def perform_asr(
             sli_label=language_obj['label']
             model_for_language=language_obj['whisper_checkpoint']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
+            if len(chunks_with_language)==0:
+                tqdm.write(f"No chunks detected for {sli_label}")
+                continue
             tqdm.write(f"{len(chunks_with_language)} chunks for {sli_label}")
             language_code=language_obj['whisper_lang_code']
             generate_kwargs=generate_kwargs if generate_kwargs else {}
