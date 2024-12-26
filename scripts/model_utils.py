@@ -196,7 +196,7 @@ def load_whisper_peft(args) -> WhisperForConditionalGeneration:
 
 
 def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
-    if args.peft_type or args.peft:
+    if getattr(args, 'peft_type', None) or getattr(args, 'peft', None):
         model = load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
@@ -206,8 +206,8 @@ def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
         model=model,
         tokenizer=tokenizer,
         feature_extractor=feature_extractor,
-        batch_size=args.batch_size,
-        device=args.device,
+        batch_size=getattr(args, 'batch_size', 8),
+        device=getattr(args, 'device', DEVICE),
         chunk_length_s=getattr(args, 'chunk_length_s', None),
     )
     return pipe
