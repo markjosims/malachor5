@@ -426,7 +426,7 @@ def annotate(args) -> int:
         wav = load_and_resample(wav_path)
         vad_out = perform_vad(wav, pipe=vad_pipe, return_wav_slices=True)
         vad_chunks = vad_out['vad_chunks']
-        sli_chunks, _ = perform_sli(vad_chunks, args=args)
+        sli_chunks, _ = perform_sli(vad_chunks, lr_model=args.lr_model)
         asr_out = perform_asr(
             sli_chunks,
             pipe=asr_pipelines,
