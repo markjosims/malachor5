@@ -210,4 +210,4 @@ def test_annotate(tmpdir):
     df = pd.read_csv(tmpdir/'metadata.csv')
     assert df['wav_source'].nunique() == 3
     assert df['eaf_path'].nunique() == 3
-    assert 'asr' in df['tier_name'].values()
+    assert 'asr' in df['tier_name'].values
