@@ -196,7 +196,7 @@ def load_whisper_peft(args) -> WhisperForConditionalGeneration:
 
 
 def load_whisper_pipeline(args) -> AutomaticSpeechRecognitionPipeline:
-    if args.peft:
+    if args.peft_type or args.peft:
         model = load_whisper_peft(args)
     else:
         model = WhisperForConditionalGeneration.from_pretrained(args.model)
