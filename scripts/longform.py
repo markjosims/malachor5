@@ -191,9 +191,12 @@ def get_ipa_labels(elan_fp: str) -> List[Dict[str, Union[str, float]]]:
     ipa_labels = [{'start': a[0], 'end': a[1], 'value': a[2]} for a in ipa_tuples]
     return ipa_labels
     
-def change_file_suffix(media_fp: str, ext: str) -> str:
+def change_file_suffix(media_fp: str, ext: str, tgt_dir: Optional[str]=None) -> str:
     media_suff = os.path.splitext(media_fp)[-1]
     wav_fp = media_fp.replace(media_suff, ext)
+    if tgt_dir:
+        basename = os.path.basename(wav_fp)
+        return os.path.join(tgt_dir, basename)
     return wav_fp
 
 # ---------------------- #
