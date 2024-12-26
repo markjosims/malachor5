@@ -51,6 +51,7 @@ def perform_asr(
             pipe = load_asr_pipelines_for_sli(sli_map)
         for language_obj in sli_map:
             sli_label=language_obj['label']
+            model_for_language=language_obj['whisper_checkpoint']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
             language_code=language_obj['whisper_lang_code']
             generate_kwargs=generate_kwargs if generate_kwargs else {}
