@@ -284,19 +284,23 @@ def pipeout_to_df(
         chunk_key: str = 'text',
         tier_name: str = 'asr',
         df: Optional[pd.DataFrame] = None,
-        label: Optional[str] = None,    
+        label: Optional[str] = None,
+        eaf_path: Optional[str] = None,
+        wav_source: Optional[str] = None,
 ):
     annotations = []
     for chunk in chunk_list:
-        start_ms = sec_to_ms(chunk['timestamp'][0])
-        end_ms = sec_to_ms(chunk['timestamp'][1])
-        val = label if label else chunk[chunk_key]
-        annotations.append({
+        chunk_annotations = {
+            'start': sec_to_ms(chunk['timestamp'][0]),
+            'end': sec_to_ms(chunk['timestamp'][1]),
             'tier_name': tier_name,
-            'start': start_ms,
-            'end': end_ms,
-            'transcription': val,
-        })
+            'transcription': label if label else chunk[chunk_key],
+        }
+        if eaf_path:
+            chunk_annotations['eaf_path'] = eaf_path
+        if wav_source:
+            chunk_annotations['wav_source'] = wav_source
+        annotations.append(chunk_annotations)
     out_df = pd.DataFrame(annotations)
     if df:
         return pd.concat([df, out_df])
