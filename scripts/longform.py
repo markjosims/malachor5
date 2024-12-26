@@ -279,6 +279,29 @@ def pipeout_to_eaf(
         eaf.add_annotation(tier_name, start_ms, end_ms, val)
     return eaf
 
+def pipeout_to_df(
+        chunk_list: List[Dict[str, Any]],
+        chunk_key: str = 'text',
+        tier_name: str = 'asr',
+        df: Optional[pd.DataFrame] = None,
+        label: Optional[str] = None,    
+):
+    annotations = []
+    for chunk in chunk_list:
+        start_ms = sec_to_ms(chunk['timestamp'][0])
+        end_ms = sec_to_ms(chunk['timestamp'][1])
+        val = label if label else chunk[chunk_key]
+        annotations.append({
+            'tier_name': tier_name,
+            'start': start_ms,
+            'end': end_ms,
+            'transcription': val,
+        })
+    out_df = pd.DataFrame(annotations)
+    if df:
+        return pd.concat([df, out_df])
+    return out_df
+
 # ---- #
 # main #
 # ---- #
