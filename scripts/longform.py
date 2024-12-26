@@ -318,31 +318,6 @@ def init_parser() -> ArgumentParser:
     parser.add_argument("-i", "--input", help=".wav file or directory of .wav files to annotate")
     parser.add_argument("-o", "--output", help="directory files to save output to")
     parser.add_argument(
-        "-s",
-        "--strategy",
-        choices=["asr-only", "drz-only", "asr-first", "drz-first", "multitier", "vad-sli-asr"],
-        default="asr-first",
-        help="Specify what pipeline to use for annotation. "\
-        +"`asr-first` (default) will run Whisper first then diarization with PyAnnote, "\
-        +"and the PyAnnote diarization will be used to decide the speaker identity"\
-        +"for each chunk output by Whisper. "\
-        +"`drz-only` will run diarization with PyAnnote but not transcribe any audio."\
-        +"`asr-only` will run Whisper without performing speaker diarization. "\
-        +"`drz-first` will run diarization with PyAnnote first and then send each "\
-        +"speaker turn to Whisper for transcription. This will likely result in poor "\
-        +"turn boundaries, so `asr-first` should generally be preferred. "\
-        +"`multitier` will output an .eaf file with Whisper annotations and PyAnnote "\
-        +"speaker turns on separate tiers, and is mostly useful for debugging and understanding "\
-        +"the decisions that ASR and diarization are making independently."
-    )
-    parser.add_argument(
-        "-n",
-        "--num_speakers",
-        help="Number of speakers in file. Default 2.",
-        type=int,
-        default=2,
-    )
-    parser.add_argument(
         "-m", "--model",
         help=f"ASR model path. Default is {ASR_URI}.",
         default=ASR_URI,
