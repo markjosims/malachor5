@@ -16,7 +16,7 @@ import os
 from tqdm import tqdm
 from model_utils import load_whisper_pipeline
 from tokenization_utils import get_forced_decoder_ids
-from sli import infer_lr
+from sli import infer_lr, load_lr
 from copy import deepcopy
 
 SAMPLE_RATE = 16000
@@ -35,7 +35,7 @@ Copied from `annotate.py` in https://github.com/markjosims/montague_archiving on
 
 def perform_asr(
         audio: Union[torch.Tensor, np.ndarray],
-        pipe: Optional[Pipeline] = None,
+        pipe: Union[Pipeline, Dict[str, Pipeline], None] = None,
         model_path: str = ASR_URI,
         return_timestamps = True,
         generate_kwargs=None,
@@ -47,7 +47,8 @@ def perform_asr(
         audio=deepcopy(audio)
         if type(audio) is not list:
             raise ValueError('Must pass list of audio chunks if passing `sli_map`')
-        pipelines = load_asr_pipelines_for_sli(sli_map)
+        if type(pipe) is not dict:
+            pipe = load_asr_pipelines_for_sli(sli_map)
         for language_obj in sli_map:
             sli_label=language_obj['label']
             chunks_with_language=[chunk for chunk in audio if chunk['sli_pred']==sli_label]
@@ -56,7 +57,7 @@ def perform_asr(
             generate_kwargs['forced_decoder_ids']=get_forced_decoder_ids(language=language_code, tokenizer=tokenizer)#['language']=language_code
             language_result = perform_asr(
                 audio=chunks_with_language,
-                pipe=pipelines[model_for_language],
+                pipe=pipe[model_for_language],
                 generate_kwargs=generate_kwargs,
                 return_timestamps=return_timestamps,
                 **kwargs
@@ -386,255 +387,32 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 def annotate(args) -> int:
-    print(f"Initializing ASR pipeline from URI {args.model}...")
-    if args.strategy != "drz-only":
-        asr_pipe = load_whisper_pipeline(args)
-        tokenizer = WhisperTokenizer.from_pretrained(args.model)
-        forced_decoder_ids=get_forced_decoder_ids(tokenizer, args.language)
-    else:
-        asr_pipe=None
-        tokenizer=None
-        forced_decoder_ids=None
-    if args.strategy != "asr-only":
-        print(f"Initializing diarization pipeline from URI {args.drz_model}...")
-        drz_pipe = PyannotePipeline.from_pretrained(args.drz_model)
-        drz_pipe.to(torch.device(args.device))
-    else:
-        drz_pipe=None
-
-    if os.path.isdir(args.input):
-        if args.recursive:
-            glob_str = os.path.join(args.input, "**", "*" + args.file_extension.lower())
-        else:
-            glob_str = os.path.join(args.input, "*" + args.file_extension.lower())
-        # search for both lower and upper cased extensions
-        glob_str_upper = glob_str.replace(args.file_extension, args.file_extension.upper())
-        audio_fps = glob(glob_str, recursive=args.recursive) + glob(glob_str_upper, recursive=args.recursive)
-        for audio_fp in audio_fps:
-            annotate_file(
-                args,
-                asr_pipe,
-                drz_pipe,
-                audio_fp,
-                generate_kwargs={'forced_decoder_ids': forced_decoder_ids}
-            )
-        return 0
-
-    annotate_file(
-        args,
-        asr_pipe,
-        drz_pipe,
-        args.input,
-        generate_kwargs={'forced_decoder_ids': forced_decoder_ids}
-    )
+    """
+    For now assuming a VAD>SLI>ASR pipeline
+    TODO: Implement other pipelines later
+    """
+    wav_paths = glob(os.path.join(args.input, '*.wav'))
+    vad_pipe = load_vad_pipeline(args.vad_uri, args.min_duration_on, args.min_duration_off)
+    _, args = load_lr(args)
+    asr_pipelines = load_asr_pipelines_for_sli(args.sli_map)
+    df = pd.DataFrame(columns=['wav_path', 'tier_name', 'start', 'end', 'transcription'])
+    for wav_path in tqdm(wav_paths):
+        wav = load_and_resample(wav_path)
+        vad_out = perform_vad(wav, pipe=vad_pipe, return_wav_slices=True)
+        vad_chunks = vad_out['vad_chunks']
+        sli_chunks, _ = perform_sli(vad_chunks, args=args)
+        asr_out = perform_asr(
+            sli_chunks,
+            pipe=asr_pipelines,
+            return_timestamps=args.return_word_timestamps,
+            sli_map=args.sli_map,
+        )
+        eaf=pipeout_to_eaf(asr_out, tier_name='asr')
+        eaf_path = change_file_suffix(wav_path, '.eaf', tgt_dir=args.output)
+        eaf.to_file(eaf_path)
+        df=pipeout_to_df(asr_out, tier_name='asr', df=df, wav_source=wav_path, eaf_path=eaf_path)
+    df.to_csv(os.path.join(args.output, 'metadata.csv'))
     return 0
-
-def annotate_file(args, asr_pipe, drz_pipe, audio_fp, generate_kwargs):
-    print("Annotating file", audio_fp)
-    eaf = Elan.Eaf()
-
-    # ELAN does not accept .mp3 media files
-    wav_fp = change_file_suffix(audio_fp, '.wav')
-    eaf.add_linked_file(wav_fp)
-    wav = load_and_resample(audio_fp)
-    if args.strategy=='drz-first':
-        eaf = drz_first(
-            wav=wav,
-            eaf=eaf,
-            num_speakers=args.num_speakers,
-            drz_pipe=drz_pipe,
-            asr_pipe=asr_pipe,
-            generate_kwargs=generate_kwargs,
-        )
-    elif args.strategy=='drz-only':
-        eaf = drz_only(
-            wav=wav,
-            eaf=eaf,
-            num_speakers=args.num_speakers,
-            drz_pipe=drz_pipe,
-        )
-    elif args.strategy=='asr-first':
-        eaf = asr_first(
-            wav=wav,
-            eaf=eaf,
-            num_speakers=args.num_speakers,
-            drz_pipe=drz_pipe,
-            asr_pipe=asr_pipe,
-            generate_kwargs=generate_kwargs,
-            return_timestamps='word' if args.return_word_timestamps else True,
-        )
-    elif args.strategy=='multitier':
-        eaf = multitier(
-            wav=wav,
-            eaf=eaf,
-            num_speakers=args.num_speakers,
-            drz_pipe=drz_pipe,
-            asr_pipe=asr_pipe,
-            generate_kwargs=generate_kwargs,
-            return_timestamps='word' if args.return_word_timestamps else True,
-        )
-    elif args.strategy=='vad-sli-asr':
-        eaf = vad_sli_asr(
-            wav=wav,
-            eaf=eaf,
-            vad_pipe=drz_pipe,
-            asr_pipe=asr_pipe,
-            args=args,
-            generate_kwargs=generate_kwargs,
-        )
-    else:
-        eaf = asr_only(
-            wav=wav,
-            eaf=eaf,
-            asr_pipe=asr_pipe,
-            generate_kwargs=generate_kwargs,
-        )
-
-    eaf_fp = change_file_suffix(audio_fp, '.eaf')
-    if args.output:
-        eaf_fp=os.path.join(
-            args.output, os.path.basename(eaf_fp)
-        )
-    eaf.to_file(eaf_fp)
-    txt_fp = change_file_suffix(eaf_fp, '.txt')
-    write_script(
-        eaf,
-        txt_fp,
-        merge_turns=args.strategy!='asr-only',
-        keep_line_breaks=args.return_word_timestamps,
-    )
-
-    print("Saved ELAN annotations to", eaf_fp)
-    print("Saved text annotations to", txt_fp)
-
-def asr_only(
-    wav: torch.Tensor,
-    eaf: Elan.Eaf,
-    asr_pipe: Pipeline,
-    **kwargs,
-):
-    chunks = perform_asr(wav, pipe=asr_pipe, return_timestamps=True, **kwargs)["chunks"]
-    for chunk in chunks:
-        start, end = chunk['timestamp']
-        start, end = fix_whisper_timestamps(start, end, wav)
-
-        text = chunk['text']
-        eaf.add_annotation("default", sec_to_ms(start), sec_to_ms(end), text)
-    return eaf
-
-def drz_only(
-    wav: torch.Tensor,
-    eaf: Elan.Eaf,
-    num_speakers: int,
-    drz_pipe: PyannotePipeline,
-):
-
-    diarization = diarize(wav, drz_pipe, num_speakers=num_speakers)
-    speakers = diarization.labels()
-    for speaker in speakers:
-        eaf.add_tier(speaker)
-        speaker_timeline = diarization.label_timeline(speaker)
-        for segment in speaker_timeline:
-            start_ms = sec_to_ms(segment.start)
-            end_ms = sec_to_ms(segment.end)
-            eaf.add_annotation(speaker, start_ms, end_ms)
-    return eaf        
-
-def asr_first(
-    wav: torch.Tensor,
-    eaf: Elan.Eaf,
-    num_speakers: int,
-    drz_pipe: PyannotePipeline,
-    asr_pipe: Pipeline,
-    **kwargs,
-):
-    chunks = perform_asr(wav, pipe=asr_pipe, **kwargs)["chunks"]
-    diarization = diarize(wav, drz_pipe, num_speakers=num_speakers)
-
-    speakers = diarization.labels()
-    for speaker in speakers:
-        eaf.add_tier(speaker)
-
-    for chunk in chunks:
-        start, end = chunk['timestamp']
-        start, end = fix_whisper_timestamps(start, end, wav)
-
-        text = chunk['text']
-        speaker = diarization.argmax(Segment(start, end))
-        if not speaker:
-            speaker='default'
-        eaf.add_annotation(speaker, sec_to_ms(start), sec_to_ms(end), text)
-    return eaf
-
-def multitier(
-    wav: torch.Tensor,
-    eaf: Elan.Eaf,
-    num_speakers: int,
-    drz_pipe: PyannotePipeline,
-    asr_pipe: Pipeline,
-    **kwargs,
-):
-    eaf = asr_only(wav, eaf, asr_pipe, **kwargs)
-    eaf.rename_tier('default', 'asr')
-    eaf = drz_only(wav, eaf, num_speakers, drz_pipe)
-    return eaf
-
-def drz_first(
-        wav: torch.Tensor,
-        eaf: Elan.Eaf,
-        num_speakers: int,
-        drz_pipe: PyannotePipeline,
-        asr_pipe: Pipeline,
-        **kwargs,
-):
-
-    diarization = diarize(wav, drz_pipe, num_speakers=num_speakers)
-
-    speakers = diarization.labels()
-    for speaker in speakers:
-        eaf.add_tier(speaker)
-        speaker_timeline = diarization.label_timeline(speaker)
-        for segment in tqdm(
-                speaker_timeline,
-                desc=f"Performing ASR for speaker {speaker}",
-                total=len(list(speaker_timeline
-            ))):
-            segment_wav = get_segment_slice(wav, segment)
-            segment_text = perform_asr(segment_wav, asr_pipe, **kwargs)['text']
-            start_ms = sec_to_ms(segment.start)
-            end_ms = sec_to_ms(segment.end)
-            eaf.add_annotation(speaker, start_ms, end_ms, segment_text)
-    
-    return eaf
-
-def vad_sli_asr(
-    wav: torch.Tensor,
-    eaf: Elan.Eaf,
-    vad_pipe: PyannotePipeline,
-    asr_pipe: Pipeline,
-    args,
-    **kwargs,
-):
-    vad_result=perform_vad(wav, vad_pipe)
-    vad_slices=[get_segment_slice(wav, segment).squeeze().numpy() for segment in vad_result.itersegments()]
-    start=[seg.start for seg in vad_result.itersegments()]
-    end=[seg.end for seg in vad_result.itersegments()]
-    df=pd.DataFrame({'start': start, 'end': end, 'audio':vad_slices})
-    # hack a janky Dataset from wav tensors
-    ds=[{'audio': {'array':slice}} for slice in vad_slices]
-    sli_output=infer_lr(args, ds)
-    df['sli_output']=sli_output
-    lang0_rows=df[df['sli_output']==0].index
-    lang1_rows=df[df['sli_output']==1].index
-    df.loc[lang0_rows, 'audio']=[
-        chunk["text"] for chunk in perform_asr(df.loc[lang0_rows, 'audio'].tolist(), asr_pipe)
-    ]
-    args.asr_model=args.asr_model_lang1
-    asr_pipe=load_whisper_pipeline(args)
-    df.loc[lang1_rows, 'audio']=[
-        chunk["text"] for chunk in perform_asr(df.loc[lang1_rows, 'audio'].tolist(), asr_pipe)
-    ]
-    df=df.drop('audio', axis=1)
 
 
 if __name__ == '__main__':
