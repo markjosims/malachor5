@@ -205,9 +205,12 @@ def test_annotate(tmpdir):
     for i in range(3):
         assert os.path.exists(tmpdir/f'sample{i}.eaf')
         eaf = Elan.Eaf(tmpdir/f'sample{i}.eaf')
-        assert 'asr' in eaf.get_tier_names()
+        tier_names = eaf.get_tier_names()
+        assert 'asr' in tier_names
+        assert 'sli_pred' in tier_names
     assert os.path.exists(tmpdir/'metadata.csv')
     df = pd.read_csv(tmpdir/'metadata.csv')
     assert df['wav_source'].nunique() == 3
     assert df['eaf_path'].nunique() == 3
+    assert df['sli_pred'].nunique() == 2
     assert 'asr' in df['tier_name'].values
