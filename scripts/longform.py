@@ -301,8 +301,9 @@ def pipeout_to_eaf(
 
 def pipeout_to_df(
         chunk_list: List[Dict[str, Any]],
-        chunk_key: str = 'text',
+        transcription_key: str = 'text',
         tier_name: str = 'asr',
+        misc_chunk_keys: Optional[List[str]] = None,
         df: Optional[pd.DataFrame] = None,
         label: Optional[str] = None,
         eaf_path: Optional[str] = None,
@@ -314,12 +315,15 @@ def pipeout_to_df(
             'start': sec_to_ms(chunk['timestamp'][0]),
             'end': sec_to_ms(chunk['timestamp'][1]),
             'tier_name': tier_name,
-            'transcription': label if label else chunk[chunk_key],
+            'transcription': label if label else chunk[transcription_key],
         }
         if eaf_path:
             chunk_annotations['eaf_path'] = eaf_path
         if wav_source:
             chunk_annotations['wav_source'] = wav_source
+        if misc_chunk_keys:
+            for key in misc_chunk_keys:
+                chunk_annotations[key] = chunk[key]
         annotations.append(chunk_annotations)
     out_df = pd.DataFrame(annotations)
     if df is not None:
