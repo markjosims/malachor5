@@ -446,9 +446,17 @@ def annotate(args) -> int:
             sli_map=args.sli_map,
         )
         eaf=pipeout_to_eaf(asr_out, tier_name='asr')
+        eaf=pipeout_to_eaf(asr_out, tier_name='sli_pred', chunk_key='sli_pred', eaf=eaf)
         eaf_path = change_file_suffix(wav_path, '.eaf', tgt_dir=args.output)
         eaf.to_file(eaf_path)
-        df=pipeout_to_df(asr_out, tier_name='asr', df=df, wav_source=wav_path, eaf_path=eaf_path)
+        df=pipeout_to_df(
+            asr_out,
+            tier_name='asr',
+            df=df,
+            wav_source=wav_path,
+            eaf_path=eaf_path,
+            misc_chunk_keys=['sli_pred'],
+        )
     df.to_csv(os.path.join(args.output, 'metadata.csv'))
     return 0
 
