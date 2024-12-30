@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-12-30T14:05:28-06:00"
+<ANNOTATION_DOCUMENT AUTHOR="" DATE="2024-12-30T15:09:57-06:00"
     FORMAT="3.0" VERSION="3.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
     <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
@@ -7,7 +7,7 @@
             MEDIA_URL="file:///Users/markjos/projects/malachor5/data/biling_eval/elan_outputs/HH20220327-2.wav"
             MIME_TYPE="audio/x-wav" RELATIVE_MEDIA_URL="../data/biling_eval/elan_outputs/HH20220327-2.wav"/>
         <PROPERTY NAME="URN">urn:nl-mpi-tools-elan-eaf:67b8f98d-a4e3-4c78-a3a7-ac0a803c755d</PROPERTY>
-        <PROPERTY NAME="lastUsedAnnotationId">909</PROPERTY>
+        <PROPERTY NAME="lastUsedAnnotationId">918</PROPERTY>
     </HEADER>
     <TIME_ORDER>
         <TIME_SLOT TIME_SLOT_ID="ts1" TIME_VALUE="5860"/>
@@ -1606,18 +1606,36 @@
         <TIME_SLOT TIME_SLOT_ID="ts1594" TIME_VALUE="2634639"/>
         <TIME_SLOT TIME_SLOT_ID="ts1595" TIME_VALUE="2635125"/>
         <TIME_SLOT TIME_SLOT_ID="ts1596" TIME_VALUE="2639722"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1597" TIME_VALUE="2719670"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1598" TIME_VALUE="2720330"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1599" TIME_VALUE="2740210"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1600" TIME_VALUE="2746430"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1601" TIME_VALUE="2852730"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1602" TIME_VALUE="2857140"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1603" TIME_VALUE="2860550"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1604" TIME_VALUE="2863820"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1605" TIME_VALUE="2883650"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1606" TIME_VALUE="2886340"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1607" TIME_VALUE="2910860"/>
-        <TIME_SLOT TIME_SLOT_ID="ts1608" TIME_VALUE="2913930"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1597" TIME_VALUE="2640597"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1598" TIME_VALUE="2642055"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1599" TIME_VALUE="2642472"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1600" TIME_VALUE="2643556"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1601" TIME_VALUE="2643792"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1602" TIME_VALUE="2646723"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1603" TIME_VALUE="2647166"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1604" TIME_VALUE="2647916"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1605" TIME_VALUE="2648916"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1606" TIME_VALUE="2652014"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1607" TIME_VALUE="2652346"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1608" TIME_VALUE="2655249"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1609" TIME_VALUE="2655708"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1610" TIME_VALUE="2657611"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1611" TIME_VALUE="2658972"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1612" TIME_VALUE="2662111"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1613" TIME_VALUE="2662215"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1614" TIME_VALUE="2666882"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1615" TIME_VALUE="2719670"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1616" TIME_VALUE="2720330"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1617" TIME_VALUE="2740210"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1618" TIME_VALUE="2746430"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1619" TIME_VALUE="2852730"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1620" TIME_VALUE="2857140"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1621" TIME_VALUE="2860550"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1622" TIME_VALUE="2863820"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1623" TIME_VALUE="2883650"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1624" TIME_VALUE="2886340"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1625" TIME_VALUE="2910860"/>
+        <TIME_SLOT TIME_SLOT_ID="ts1626" TIME_VALUE="2913930"/>
     </TIME_ORDER>
     <TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="Transcription" TIER_ID="IPA Transcription">
         <ANNOTATION>
@@ -2120,37 +2138,37 @@
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a172"
-                TIME_SLOT_REF1="ts1597" TIME_SLOT_REF2="ts1598">
+                TIME_SLOT_REF1="ts1615" TIME_SLOT_REF2="ts1616">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a173"
-                TIME_SLOT_REF1="ts1599" TIME_SLOT_REF2="ts1600">
+                TIME_SLOT_REF1="ts1617" TIME_SLOT_REF2="ts1618">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a179"
-                TIME_SLOT_REF1="ts1601" TIME_SLOT_REF2="ts1602">
+                TIME_SLOT_REF1="ts1619" TIME_SLOT_REF2="ts1620">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a180"
-                TIME_SLOT_REF1="ts1603" TIME_SLOT_REF2="ts1604">
+                TIME_SLOT_REF1="ts1621" TIME_SLOT_REF2="ts1622">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a181"
-                TIME_SLOT_REF1="ts1605" TIME_SLOT_REF2="ts1606">
+                TIME_SLOT_REF1="ts1623" TIME_SLOT_REF2="ts1624">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
         <ANNOTATION>
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a182"
-                TIME_SLOT_REF1="ts1607" TIME_SLOT_REF2="ts1608">
+                TIME_SLOT_REF1="ts1625" TIME_SLOT_REF2="ts1626">
                 <ANNOTATION_VALUE/>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
@@ -3197,6 +3215,12 @@
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a908"
                 TIME_SLOT_REF1="ts1593" TIME_SLOT_REF2="ts1595">
                 <ANNOTATION_VALUE>I'm not sure</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a913"
+                TIME_SLOT_REF1="ts1603" TIME_SLOT_REF2="ts1604">
+                <ANNOTATION_VALUE>Yeah</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
     </TIER>
@@ -4646,6 +4670,36 @@
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a902"
                 TIME_SLOT_REF1="ts1583" TIME_SLOT_REF2="ts1584">
                 <ANNOTATION_VALUE>Sorry, it just autocorrected again</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a910"
+                TIME_SLOT_REF1="ts1599" TIME_SLOT_REF2="ts1601">
+                <ANNOTATION_VALUE>Can't be past if it's</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a914"
+                TIME_SLOT_REF1="ts1607" TIME_SLOT_REF2="ts1608">
+                <ANNOTATION_VALUE>I think it has to with that, whatever that vowel is</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a916"
+                TIME_SLOT_REF1="ts1609" TIME_SLOT_REF2="ts1610">
+                <ANNOTATION_VALUE>Is related to the extraction</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a917"
+                TIME_SLOT_REF1="ts1611" TIME_SLOT_REF2="ts1612">
+                <ANNOTATION_VALUE>Cause the second one, ŋgìɲɔ́, ŋgìɲɔ́, Sharon?</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a918"
+                TIME_SLOT_REF1="ts1613" TIME_SLOT_REF2="ts1614">
+                <ANNOTATION_VALUE>Is is anaphoric "he." That's Kuku. There's nothing being extracted out of that clause.</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
     </TIER>
@@ -6942,6 +6996,24 @@
             <ALIGNABLE_ANNOTATION ANNOTATION_ID="a909"
                 TIME_SLOT_REF1="ts1594" TIME_SLOT_REF2="ts1596">
                 <ANNOTATION_VALUE>No, it's actually, "àn kɛ̀gìɲɔ́ lídɔ̀", it's not in the past. Actually both they are not in the past.</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a911"
+                TIME_SLOT_REF1="ts1597" TIME_SLOT_REF2="ts1598">
+                <ANNOTATION_VALUE>àn kɛ̀gìɲɔ́ lídɔ̀</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a912"
+                TIME_SLOT_REF1="ts1600" TIME_SLOT_REF2="ts1602">
+                <ANNOTATION_VALUE>And it's one word, though, "kɛ̀gìɲɔ́" could be one word</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a915"
+                TIME_SLOT_REF1="ts1605" TIME_SLOT_REF2="ts1606">
+                <ANNOTATION_VALUE>kɛ̀gìɲɔ́, àn kɛ̀gìɲɔ́ lídɔ̀</ANNOTATION_VALUE>
             </ALIGNABLE_ANNOTATION>
         </ANNOTATION>
     </TIER>
