@@ -25,10 +25,10 @@
         <Int>911</Int>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>1810900</Long>
+        <Long>2371590</Long>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
-        <Float>10.0</Float>
+        <Float>72.0</Float>
     </pref>
     <pref key="LayoutManager.CurrentMode">
         <Int>1</Int>
@@ -116,7 +116,7 @@
         <Object class="java.awt.Point">0,0</Object>
     </pref>
     <pref key="TimeLineViewer.ZoomLevel">
-        <Float>10.0</Float>
+        <Float>72.0</Float>
     </pref>
     <prefList key="TranscriptionTable.NonEditableTiers"/>
     <prefList key="TranscriptionTable.ColumnTypes">
@@ -126,7 +126,7 @@
         <Object class="java.awt.Rectangle">570,300,300,300</Object>
     </pref>
     <pref key="SelectionBeginTime">
-        <Long>1806500</Long>
+        <Long>2368080</Long>
     </pref>
     <pref key="TM.SignalViewer.ZoomLevel">
         <Float>5.0</Float>
@@ -192,10 +192,10 @@
         </prefList>
     </prefGroup>
     <pref key="TimeScaleBeginTime">
-        <Long>1743800</Long>
+        <Long>2360815</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>1808300</Long>
+        <Long>2368080</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="NIN">
