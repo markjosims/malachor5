@@ -19,6 +19,8 @@ import json
 from dataset_utils import load_dataset_safe
 from model_utils import load_whisper_pipeline, DEVICE, device_type
 from string_norm import get_epitran
+from longform import load_and_resample, SAMPLE_RATE
+import torchaudio
 
 # TODO: move heavy imports (torch, transformers, datasets) into methods
 
@@ -228,7 +230,7 @@ def clip_segment(
         wav_basename: str,
         target_dir: str,
         data_dir: Optional[str]=None,
-        wav: Optional[np.ndarray]=None,
+        wav: Optional[torch.Tensor]=None,
         sampling_rate: int=16_000,
     ) -> str:
     """
@@ -250,8 +252,9 @@ def clip_segment(
     if wav is not None:
         start_samples=ms_to_samples(start_ms, sampling_rate=sampling_rate)
         end_samples=ms_to_samples(end_ms, sampling_rate=sampling_rate)
-        wav_clip = wav[start_samples:end_samples]
-        soundfile.write(clip_fp, wav_clip, samplerate=sampling_rate)
+        wav_clip = wav[:, start_samples:end_samples]
+        # soundfile.write(clip_fp, wav_clip, samplerate=sampling_rate)
+        torchaudio.save(clip_fp, wav_clip, SAMPLE_RATE)
     if data_dir:
         clip_fp=os.path.relpath(clip_fp, data_dir)
 
@@ -513,10 +516,12 @@ def make_clips(args) -> int:
         is_wav_source=df['wav_source']==wav_source
         if args.check_clips_exist and check_clips_exist(is_wav_source, wav_source, clip_dir):
             # if clips already exist, skip loading in wav but still save clip filepaths
-            wav, sampling_rate = None, None
+            # wav, sampling_rate = None, None
+            wav = None
         else:
             try:
-                wav, sampling_rate=librosa.load(wav_source, sr=16_000, mono=True)
+                wav = load_and_resample(wav_source)
+                # wav, sampling_rate=librosa.load(wav_source, sr=16_000, mono=True)
             except:
                 with open(args.logfile, 'a') as f:
                     f.write("Could not open wav_source "+wav_source)
@@ -528,7 +533,7 @@ def make_clips(args) -> int:
                 end_ms=row['end'],
                 wav_basename=os.path.basename(wav_source),
                 target_dir=clip_dir,
-                sampling_rate=sampling_rate,
+                # sampling_rate=sampling_rate,
             ),
             axis=1
         )
