@@ -533,6 +533,7 @@ def make_clips(args) -> int:
                 end_ms=row['end'],
                 wav_basename=os.path.basename(wav_source),
                 target_dir=clip_dir,
+                data_dir=output_dir,
                 # sampling_rate=sampling_rate,
             ),
             axis=1
