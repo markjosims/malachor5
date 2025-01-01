@@ -522,9 +522,9 @@ def make_clips(args) -> int:
             try:
                 wav = load_and_resample(wav_source)
                 # wav, sampling_rate=librosa.load(wav_source, sr=16_000, mono=True)
-            except:
+            except Exception as e:
                 with open(args.logfile, 'a') as f:
-                    f.write("Could not open wav_source "+wav_source)
+                    f.write(f"Could not open wav_source {wav_source} due to exception {e}\n")
                 continue
         df.loc[is_wav_source, 'file_name']=df.loc[is_wav_source].progress_apply(
             lambda row: clip_segment(
