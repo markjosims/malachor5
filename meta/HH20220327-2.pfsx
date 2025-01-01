@@ -16,16 +16,16 @@
         <String>mpi.eudico.client.annotator.viewer.TimeLineViewer</String>
     </pref>
     <pref key="SegmentationViewer.ZoomLevel">
-        <Float>25.0</Float>
+        <Float>72.0</Float>
     </pref>
     <pref key="MultiTierViewer.ActiveTierName">
-        <String>PET</String>
+        <String>Misc</String>
     </pref>
     <pref key="TranscriptionTable.LastActiveRow">
-        <Int>911</Int>
+        <Int>1534</Int>
     </pref>
     <pref key="SelectionEndTime">
-        <Long>2371590</Long>
+        <Long>3125361</Long>
     </pref>
     <pref key="SignalViewer.ZoomLevel">
         <Float>72.0</Float>
@@ -92,7 +92,7 @@
         </pref>
     </prefGroup>
     <pref key="SegmentationViewer.ActiveTier">
-        <String>HIM</String>
+        <String>PET</String>
     </pref>
     <prefList key="CommentViewer.Columns.Order">
         <String>Start Time</String>
@@ -126,7 +126,7 @@
         <Object class="java.awt.Rectangle">570,300,300,300</Object>
     </pref>
     <pref key="SelectionBeginTime">
-        <Long>2368080</Long>
+        <Long>3123889</Long>
     </pref>
     <pref key="TM.SignalViewer.ZoomLevel">
         <Float>5.0</Float>
@@ -146,6 +146,7 @@
         <String>Gloss</String>
         <String>Tira orthography</String>
         <String>MAR</String>
+        <String>NIN</String>
     </prefList>
     <prefGroup key="BAS - WebMAUS Basic">
         <pref key="LANGUAGE">
@@ -192,10 +193,10 @@
         </prefList>
     </prefGroup>
     <pref key="TimeScaleBeginTime">
-        <Long>2360815</Long>
+        <Long>3115611</Long>
     </pref>
     <pref key="MediaTime">
-        <Long>2368080</Long>
+        <Long>3125213</Long>
     </pref>
     <prefGroup key="TierColors">
         <pref key="NIN">
