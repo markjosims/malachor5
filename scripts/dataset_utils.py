@@ -138,11 +138,11 @@ def load_dataset_safe(args) -> Union[Dataset, DatasetDict]:
     make_split=getattr(args, 'make_split', False)
     if os.path.exists(dataset_path):
         if os.path.exists(
-            os.path.join(dataset_path, 'metadata.csv')
+            os.path.join(dataset_path, 'dataset_dict.json')
         ):
-            dataset=load_dataset('audiofolder', data_dir=dataset_path)
-        else:
             dataset=load_from_disk(dataset_path)
+        else:
+            dataset=load_dataset('audiofolder', data_dir=dataset_path)
         if split and args.num_records:
             return dataset[split].select(range(args.num_records))
         if split:
