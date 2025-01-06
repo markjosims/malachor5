@@ -151,3 +151,19 @@ def test_label_prefix_added():
             token_names=['startoftranscript', 'sw', 'transcribe', 'notimestamps', 'eos'],
         )
     )
+
+def test_skip_recordings():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        model='openai/whisper-tiny',
+        action='train',
+        skip_recordings=['HH20210312'],
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    ds, _ = load_and_prepare_dataset(args)
+    # 16384 records in the base train dataset
+    # minus 230 records from recording HH20210312
+    assert len(ds['train'])==16154
