@@ -230,7 +230,7 @@ def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=Tr
             tqdm.write(f'Evaluating dataset {ds_name}...')
             ds_args = deepcopy(args)
             if args.eval_output:
-                ds_args.eval_output = args.eval_output + ds_name
+                ds_args.eval_output = args.eval_output + '-' + ds_name
             else:
                 ds_args.eval_output = os.path.join(
                     args.output, f'{ds_name}-{args.action}-predictions'
