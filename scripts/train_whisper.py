@@ -304,8 +304,14 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
                     preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
                 )
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
-        metrics.append(predictions.metrics)
-        metrics[-1]['checkpoint']=chkpnt
+        if type(predictions) is dict:
+            for ds_name, ds_preds in predictions.items():
+                metrics.append(ds_preds.metrics)
+                metrics[-1]['checkpoint']=chkpnt
+                metrics[-1]['dataset']=ds_name
+        else:
+            metrics.append(predictions.metrics)
+            metrics[-1]['checkpoint']=chkpnt
 
         del chkpnt_model
         del data_collator
