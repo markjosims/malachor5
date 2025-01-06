@@ -273,6 +273,8 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         dataset_args = copy(args)
         dataset_args.eval_datasets=None
         dataset_args.language=lang if lang!='None' else None
+        # assuming that skip_recordings is only used for main dataset
+        dataset_args.skip_recordings=None
         if 'fleurs' in dataset or 'commonvoice' in dataset:
             dataset_args.fleurs_lang = iso2_to_fleurs(lang[0])
         dataset_args.dataset=dataset
