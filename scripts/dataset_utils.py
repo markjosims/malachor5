@@ -213,7 +213,7 @@ def load_and_prepare_dataset(args):
             if i not in args.skip_idcs
         )
         ds['train']=ds['train'].select(skip_range)
-    if args.skip_recordings:
+    if args.skip_recordings and 'filestem' in ds['train'].column_names:
         ds = ds.filter((lambda x: x['filestem'] not in args.skip_recordings))
     epitran=get_epitran(
         args.fleurs_lang,
