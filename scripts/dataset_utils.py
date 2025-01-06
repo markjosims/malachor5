@@ -213,6 +213,8 @@ def load_and_prepare_dataset(args):
             if i not in args.skip_idcs
         )
         ds['train']=ds['train'].select(skip_range)
+    if args.skip_recordings:
+        ds = ds.filter((lambda x: x['filestem'] not in args.skip_recordings))
     epitran=get_epitran(
         args.fleurs_lang,
         lang_key='fleurs' if 'fleurs' in args.dataset
@@ -363,4 +365,5 @@ def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--make_split', action='store_true')
     parser.add_argument('--eval_datasets', nargs='+')
     parser.add_argument('--eval_dataset_languages', nargs='+')
+    parser.add_argument('--skip_recordings', nargs='+')
     return parser
