@@ -21,6 +21,7 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     Returns dictionary with language-specific edit metrics.
     Return keys are as follows:
     - 'num_tira': number of tira words in reference
+    - 'pct_tira': proportion of tira words in reference
     - 'tira_insertions': number of tira words inserted
     - 'tira_deletions': number of tira words deleted
     - 'tira2eng_substitutions': number of tira words substituted with English words
@@ -28,6 +29,7 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     - 'tira2tira_substitutions': number of tira words substituted with other tira words
     - 'tira_hits': number of tira words that are correct
     - 'num_eng': number of English words in reference
+    - 'pct_eng': proportion of English words in reference
     - 'eng_insertions': number of English words inserted
     - 'eng_deletions': number of English words deleted
     - 'eng2tira_substitutions': number of English words substituted with tira words
@@ -53,7 +55,20 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
             alignment_metrics = get_metrics_from_alignment(aligned_word, ref_words, hyp_words)
             for key, value in alignment_metrics.items():
                 metrics[key] += value
-
+            # calculate rates
+            for k, v in metrics.copy().items():
+                if k.startswith('num_'):
+                    lang = 'tira' if k.endswith('tira') else 'eng'
+                    total = len(ref)
+                    metrics[f'pct_{lang}'] = v / total
+                elif any(k.endswith(name) for name in ['substitutions', 'deletions', 'hits']):
+                    lang = 'tira' if k.startswith('tira') else 'eng'
+                    total = metrics[f'num_{lang}']
+                    metrics[f'{k}_rate'] = v / total
+                elif k.endswith('insertion'):
+                    lang = 'tira' if k.startswith('tira') else 'eng'
+                    total = len(hyp)
+                    metrics[f'{k}_rate'] = v / total
         metric_list.append(metrics)
     return metric_list
 
@@ -89,6 +104,7 @@ def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
             ref_lang = get_word_language(ref_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f'{ref_lang}_deletions'] += 1
+
     return alignment_metrics
 
 
