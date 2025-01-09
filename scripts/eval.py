@@ -21,6 +21,7 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     Returns dictionary with language-specific edit metrics.
     Return keys are as follows:
     - 'num_tira': number of tira words in reference
+    - 'num_tira_hyp': number of tira words in hypothesis
     - 'pct_tira': proportion of tira words in reference
     - 'tira_insertions': number of tira words inserted
     - 'tira_deletions': number of tira words deleted
@@ -29,6 +30,7 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     - 'tira2tira_substitutions': number of tira words substituted with other tira words
     - 'tira_hits': number of tira words that are correct
     - 'num_eng': number of English words in reference
+    - 'num_eng_hyp': number of English words in hypothesis
     - 'pct_eng': proportion of English words in reference
     - 'eng_insertions': number of English words inserted
     - 'eng_deletions': number of English words deleted
@@ -36,6 +38,7 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     - 'eng2misc_substitutions': number of English words substituted with non-English
     - 'eng2eng_substitutions': number of English words substituted with other English words
     - 'eng_hits': number of English words that are correct
+    - 'num_misc_hyp': number of non-English non-Tira words in hypothesis
     
     Plus, for each string edit key, there is an additional key with the same name but with '_rate' appended,
     giving the number of edits as a portion of the total number of words for that language in the reference.
@@ -85,18 +88,20 @@ def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
             ref_lang = get_word_language(ref_word)
             hyp_lang = get_word_language(hyp_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
+            alignment_metrics[f'num_{hyp_lang}_hyp'] += 1
             alignment_metrics[f'{ref_lang}2{hyp_lang}_substitutions'] += 1
     elif align_type == 'equal':
         for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
             ref_word = ref_words[ref_idx]
             ref_lang = get_word_language(ref_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
+            alignment_metrics[f'num_{ref_lang}_hyp'] += 1
             alignment_metrics[f'{ref_lang}_hits'] += 1
     elif align_type == 'insert':
         for hyp_idx in range(align.hyp_start_idx, align.hyp_end_idx):
             hyp_word = hyp_words[hyp_idx]
             hyp_lang = get_word_language(hyp_word)
-            alignment_metrics[f'num_{hyp_lang}'] += 1
+            alignment_metrics[f'num_{hyp_lang}_hyp'] += 1
             alignment_metrics[f'{hyp_lang}_insertions'] += 1
     else: # align_type == 'deletion'
         for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
@@ -111,6 +116,7 @@ def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
 def metric_factory(jiwer_output):
     metrics = {
             'num_tira':                   0,
+            'num_tira_hyp':               0,
             'tira_insertions':            0,
             'tira_deletions':             0,
             'tira2eng_substitutions':     0,
@@ -118,12 +124,14 @@ def metric_factory(jiwer_output):
             'tira2tira_substitutions':    0,
             'tira_hits':                  0,
             'num_eng':                    0,
+            'num_eng_hyp':                0,
             'eng_deletions':              0,
             'eng_insertions':             0,
             'eng2tira_substitutions':     0,
             'eng2misc_substitutions':     0,
             'eng2eng_substitutions':      0,
             'eng_hits':                   0,
+            'num_misc_hyp':               0,
             'wer':                        jiwer_output.wer,
             'mer':                        jiwer_output.mer,
             'wil':                        jiwer_output.wil,
