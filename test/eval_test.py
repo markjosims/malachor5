@@ -34,7 +34,7 @@ def test_get_wer_by_language_2():
     assert result['tira2eng_substitutions'] ==      0
     assert result['tira2misc_substitutions'] ==     0
     assert result['tira2tira_substitutions'] ==     1
-    assert result['tira_hits'] ==                   0
+    assert result['tira_hits'] ==                   1
     assert result['eng_insertions'] ==              0
     assert result['eng_deletions'] ==               1
     assert result['eng2tira_substitutions'] ==      0
