@@ -64,11 +64,11 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
                 elif any(k.endswith(name) for name in ['substitutions', 'deletions', 'hits']):
                     lang = 'tira' if k.startswith('tira') else 'eng'
                     total = metrics[f'num_{lang}']
-                    metrics[f'{k}_rate'] = v / total
+                    metrics[f'{k.removesuffix('s')}_rate'] = v / total
                 elif k.endswith('insertion'):
                     lang = 'tira' if k.startswith('tira') else 'eng'
                     total = len(hyp)
-                    metrics[f'{k}_rate'] = v / total
+                    metrics[f'{k.removesuffix('s')}_rate'] = v / total
         metric_list.append(metrics)
     return metric_list
 
