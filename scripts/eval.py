@@ -55,20 +55,20 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
             alignment_metrics = get_metrics_from_alignment(aligned_word, ref_words, hyp_words)
             for key, value in alignment_metrics.items():
                 metrics[key] += value
-            # calculate rates
-            for k, v in metrics.copy().items():
-                if k.startswith('num_'):
-                    lang = 'tira' if k.endswith('tira') else 'eng'
-                    total = len(ref)
-                    metrics[f'pct_{lang}'] = v / total
-                elif any(k.endswith(name) for name in ['substitutions', 'deletions', 'hits']):
-                    lang = 'tira' if k.startswith('tira') else 'eng'
-                    total = metrics[f'num_{lang}']
-                    metrics[f'{k.removesuffix('s')}_rate'] = v / total
-                elif k.endswith('insertion'):
-                    lang = 'tira' if k.startswith('tira') else 'eng'
-                    total = len(hyp)
-                    metrics[f'{k.removesuffix('s')}_rate'] = v / total
+        # calculate rates
+        for k, v in metrics.copy().items():
+            if k.startswith('num_'):
+                lang = 'tira' if k.endswith('tira') else 'eng'
+                total = len(ref)
+                metrics[f'pct_{lang}'] = v / total
+            elif any(k.endswith(name) for name in ['substitutions', 'deletions', 'hits']):
+                lang = 'tira' if k.startswith('tira') else 'eng'
+                total = metrics[f'num_{lang}']
+                metrics[f"{k.removesuffix('s')}_rate"] = v / total
+            elif k.endswith('insertion'):
+                lang = 'tira' if k.startswith('tira') else 'eng'
+                total = metrics[f'num_{lang}_hyp']
+                metrics[f"{k.removesuffix('s')}_rate"] = v / total
         metric_list.append(metrics)
     return metric_list
 
