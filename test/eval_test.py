@@ -50,20 +50,20 @@ def test_get_cer_by_language():
     ref = "boy àpɾí"
     hyp = "bo àpɾíí"
     result = get_metrics_by_language(ref, hyp, metric='cer')[0]
-    assert result['tira_insertions'] ==             2
-    assert result['tira_deletions'] ==              0
-    assert result['tira2eng_substitutions'] ==      0
-    assert result['tira2misc_substitutions'] ==     0
-    assert result['tira2tira_substitutions'] ==     0
-    assert result['tira_hits'] ==                   6
-    assert result['tira_cer'] ==                    1/3
-    assert result['eng_insertions'] ==              0
-    assert result['eng_deletions'] ==               1
-    assert result['eng2tira_substitutions'] ==      0
-    assert result['eng2misc_substitutions'] ==      0
-    assert result['eng2eng_substitutions'] ==       0
-    assert result['eng_hits'] ==                    2
-    assert result['eng_cer'] ==                     1/3
+    assert result['tira_char_insertions'] ==             2
+    assert result['tira_char_deletions'] ==              0
+    assert result['tira2eng_char_substitutions'] ==      0
+    assert result['tira2misc_char_substitutions'] ==     0
+    assert result['tira2tira_char_substitutions'] ==     0
+    assert result['tira_char_hits'] ==                   6
+    assert result['tira_cer'] ==                         1/3
+    assert result['eng_char_insertions'] ==              0
+    assert result['eng_char_deletions'] ==               1
+    assert result['eng2tira_char_substitutions'] ==      0
+    assert result['eng2misc_char_substitutions'] ==      0
+    assert result['eng2eng_char_substitutions'] ==       0
+    assert result['eng_char_hits'] ==                    2
+    assert result['eng_cer'] ==                          1/3
 
 def test_get_word_from_char_i():
     s = "hello world its me"
