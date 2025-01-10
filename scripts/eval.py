@@ -18,7 +18,7 @@ def get_word_language(word: str) -> str:
     else:
         return 'misc'
 
-def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str, List[str]]):
+def get_metrics_by_language(reference: Union[str, List[str]], hypothesis: Union[str, List[str]], metric: Literal['cer', 'wer']='wer') -> List[Dict[str, int]]:
     """
     Returns dictionary with language-specific edit metrics.
     Return keys are as follows:
@@ -49,13 +49,14 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
         reference = [reference,]
         hypothesis = [hypothesis,]
     metric_list = []
-    output = process_words(reference, hypothesis)
+    output = process_words(reference, hypothesis) if metric=='wer' else\
+        process_characters(reference, hypothesis)
     alignments = output.alignments
     for ref, hyp, align in zip(reference, hypothesis, alignments):
-        metrics = metric_factory(output)
+        metrics = metric_factory(output, metric=metric)
 
         for aligned_word in align:
-            alignment_metrics = get_metrics_from_alignment(aligned_word, ref, hyp)
+            alignment_metrics = get_metrics_from_alignment(aligned_word, ref, hyp, metric=metric)
             for key, value in alignment_metrics.items():
                 metrics[key] += value
         # calculate rates
@@ -76,18 +77,16 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
         for lang in ['tira', 'eng', 'misc']:
             num_lang = metrics[f'num_{lang}']
             if num_lang == 0:
-                metrics[f'{lang}_wer'] = 0
+                metrics[f'{lang}_{metric}'] = 0
             else:
                 num_insert = metrics[f'{lang}_insertions']
                 num_delete = metrics[f'{lang}_deletions']
                 num_sub = sum(metrics[f'{lang}2{lang2}_substitutions'] for lang2 in ['tira', 'eng', 'misc'])
-                metrics[f'{lang}_wer'] = (num_insert + num_delete + num_sub) / num_lang
+                metrics[f'{lang}_{metric}'] = (num_insert + num_delete + num_sub) / num_lang
         metric_list.append(metrics)
     return metric_list
 
 def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='wer') -> Dict[str, int]:
-    ref_words = ref.split()
-    hyp_words = hyp.split()
     alignment_metrics = defaultdict(lambda:0)
     align_type = align.type
     if align_type == 'substitute':
@@ -95,8 +94,8 @@ def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='w
             range(align.ref_start_idx, align.ref_end_idx),
             range(align.hyp_start_idx, align.hyp_end_idx),
         ):
-            ref_word = ref_words[ref_idx]
-            hyp_word = hyp_words[hyp_idx]
+            ref_word = get_word_for_alignment(ref, ref_idx, metric)
+            hyp_word = get_word_for_alignment(hyp, hyp_idx, metric)
             ref_lang = get_word_language(ref_word)
             hyp_lang = get_word_language(hyp_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
@@ -104,25 +103,30 @@ def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='w
             alignment_metrics[f'{ref_lang}2{hyp_lang}_substitutions'] += 1
     elif align_type == 'equal':
         for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
-            ref_word = ref_words[ref_idx]
+            ref_word = get_word_for_alignment(ref, ref_idx, metric)
             ref_lang = get_word_language(ref_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f'num_{ref_lang}_hyp'] += 1
             alignment_metrics[f'{ref_lang}_hits'] += 1
     elif align_type == 'insert':
         for hyp_idx in range(align.hyp_start_idx, align.hyp_end_idx):
-            hyp_word = hyp_words[hyp_idx]
+            hyp_word = get_word_for_alignment(hyp, hyp_idx, metric)
             hyp_lang = get_word_language(hyp_word)
             alignment_metrics[f'num_{hyp_lang}_hyp'] += 1
             alignment_metrics[f'{hyp_lang}_insertions'] += 1
     else: # align_type == 'deletion'
         for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
-            ref_word = ref_words[ref_idx]
+            ref_word = get_word_for_alignment(ref, ref_idx, metric)
             ref_lang = get_word_language(ref_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f'{ref_lang}_deletions'] += 1
 
     return alignment_metrics
+
+def get_word_for_alignment(s: str, i: int, metric: Literal['cer', 'wer']='wer') -> str:
+    if metric == 'cer':
+        return get_word_from_char_i(s, i)
+    return s.split()[i]
 
 def get_word_from_char_i(s: str, i: int) -> str:
     word = s[i]
@@ -138,15 +142,18 @@ def get_word_from_char_i(s: str, i: int) -> str:
         j += 1
     return word
 
-def metric_factory(jiwer_output):
+def metric_factory(jiwer_output, metric: Literal['cer', 'wer']='wer') -> Dict[str, int]:
     langs = ['tira', 'eng', 'misc']
     edits = ['insertions', 'deletions', 'hits']
-    metrics = {
-        'wer': jiwer_output.wer,
-        'mer': jiwer_output.mer,
-        'wil': jiwer_output.wil,
-        'wip': jiwer_output.wip,
-    }
+    if metric == 'cer':
+        metrics = {'cer': jiwer_output.cer}
+    else:
+        metrics = {
+            'wer': jiwer_output.wer,
+            'mer': jiwer_output.mer,
+            'wil': jiwer_output.wil,
+            'wip': jiwer_output.wip,
+        }
     for lang in langs:
         for edit in edits:
             metrics[f'{lang}_{edit}'] = 0
