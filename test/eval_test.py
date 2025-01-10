@@ -15,12 +15,14 @@ def test_get_wer_by_language_1():
     assert result['tira2misc_substitutions'] ==     1
     assert result['tira2tira_substitutions'] ==     0
     assert result['tira_hits'] ==                   1
+    assert result['tira_wer'] ==                    0.5
     assert result['eng_insertions'] ==              0
     assert result['eng_deletions'] ==               0
     assert result['eng2tira_substitutions'] ==      1
     assert result['eng2misc_substitutions'] ==      0
     assert result['eng2eng_substitutions'] ==       0
     assert result['eng_hits'] ==                    2
+    assert result['eng_wer'] ==                     1/3
 
 def test_get_wer_by_language_2():
     ref = "àpɾí             means boy   àpɾí"
@@ -35,9 +37,11 @@ def test_get_wer_by_language_2():
     assert result['tira2misc_substitutions'] ==     0
     assert result['tira2tira_substitutions'] ==     1
     assert result['tira_hits'] ==                   1
+    assert result['tira_wer'] ==                    1
     assert result['eng_insertions'] ==              0
     assert result['eng_deletions'] ==               1
     assert result['eng2tira_substitutions'] ==      0
     assert result['eng2misc_substitutions'] ==      0
     assert result['eng2eng_substitutions'] ==       0
     assert result['eng_hits'] ==                    1
+    assert result['eng_wer'] ==                     0.5

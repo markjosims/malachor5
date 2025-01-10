@@ -72,6 +72,16 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
                 lang = 'eng' if k.startswith('eng') else k[:4]
                 total = metrics[f'num_{lang}_hyp']
                 metrics[f"{k.removesuffix('s')}_rate"] = v / total if v!=0 else v
+        # Calculate lang-specific WER
+        for lang in ['tira', 'eng', 'misc']:
+            num_lang = metrics[f'num_{lang}']
+            if num_lang == 0:
+                metrics[f'{lang}_wer'] = 0
+            else:
+                num_insert = metrics[f'{lang}_insertions']
+                num_delete = metrics[f'{lang}_deletions']
+                num_sub = sum(metrics[f'{lang}2{lang2}_substitutions'] for lang2 in ['tira', 'eng', 'misc'])
+                metrics[f'{lang}_wer'] = (num_insert + num_delete + num_sub) / num_lang
         metric_list.append(metrics)
     return metric_list
 
