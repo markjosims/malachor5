@@ -1,6 +1,6 @@
 import sys
 sys.path.append('scripts')
-from eval import get_wer_by_language
+from eval import get_wer_by_language, get_word_from_char_i
 
 def test_get_wer_by_language_1():
     ref = "yeah     àpɾí    jícə̀lò      is      right"
@@ -45,3 +45,24 @@ def test_get_wer_by_language_2():
     assert result['eng2eng_substitutions'] ==       0
     assert result['eng_hits'] ==                    1
     assert result['eng_wer'] ==                     0.5
+
+def test_get_word_from_char_i():
+    s = "hello world its me"
+    #    012345678901234567
+    for i in range(11):
+        result = get_word_from_char_i(s, i)
+        if i < 5:
+            assert result == "hello"
+        elif i == 5:
+            assert result == " "
+        elif i < 11:
+            assert result == "world"
+        elif i == 11:
+            assert result == " "
+        elif i < 14:
+            assert result == "its"
+        elif i == 14:
+            assert result == " "
+        else:
+            assert result == "me"
+

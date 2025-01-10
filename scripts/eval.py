@@ -122,6 +122,19 @@ def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
 
     return alignment_metrics
 
+def get_word_from_char_i(s: str, i: int) -> str:
+    word = s[i]
+    if word.isspace():
+        return word
+    j=i-1
+    while j >= 0 and not s[j].isspace():
+        word = s[j] + word
+        j -= 1
+    j=i+1
+    while j < len(s) and not s[j].isspace():
+        word += s[j]
+        j += 1
+    return word
 
 def metric_factory(jiwer_output):
     langs = ['tira', 'eng', 'misc']
