@@ -3,9 +3,9 @@ sys.path.append('scripts')
 from eval import get_metrics_by_language, get_word_from_char_i
 
 def test_get_wer_by_language_1():
-    ref = "yeah     àpɾí    jícə̀lò      is      right"
+    ref = "yeah,    àpɾí    jícə̀lò      is      right"
     #     ENG>TIC   H TIC   TIC>MISC    H ENG   H ENG
-    hyp = "jâ       àpɾí    yichelow    is      right"
+    hyp = "jâ,      àpɾí    yichelow    is      right"
 
     result = get_metrics_by_language(ref, hyp)[0]
 
@@ -25,7 +25,7 @@ def test_get_wer_by_language_1():
     assert result['eng_wer'] ==                     1/3
 
 def test_get_wer_by_language_2():
-    ref = "àpɾí             means boy   àpɾí"
+    ref = "àpɾí             means boy,  àpɾí"
     #     TIC>TIC   I TIC   H ENG D ENG H TIC
     hyp = "àp       pɾí     means       àpɾí"
 

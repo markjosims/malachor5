@@ -1,4 +1,4 @@
-from string_norm import has_unicode, is_en_word, get_remove_oov_char_funct
+from string_norm import has_unicode, is_en_word, get_remove_oov_char_funct, remove_punct
 from jiwer.process import process_words, process_characters
 from typing import Union, List, Dict, Literal
 from collections import defaultdict
@@ -9,11 +9,12 @@ def has_tira_chars(s: str) -> bool:
     return s==remove_nontira_chars(s)
 
 def get_word_language(word: str) -> str:
-    if len(word)==1 and not word.isalpha():
+    word=remove_punct(word).strip()
+    if len(word)<=1 and not word.isalpha():
         return 'misc'
     elif has_unicode(word) and has_tira_chars(word):
         return 'tira'
-    elif is_en_word(word):
+    elif is_en_word((word)):
         return 'eng'
     else:
         return 'misc'
