@@ -9,7 +9,9 @@ def has_tira_chars(s: str) -> bool:
     return s==remove_nontira_chars(s)
 
 def get_word_language(word: str) -> str:
-    if has_unicode(word) and has_tira_chars(word):
+    if len(word)==1 and not word.isalpha():
+        return 'misc'
+    elif has_unicode(word) and has_tira_chars(word):
         return 'tira'
     elif is_en_word(word):
         return 'eng'
