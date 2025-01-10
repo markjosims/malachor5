@@ -1,6 +1,6 @@
 from string_norm import has_unicode, is_en_word, get_remove_oov_char_funct
-from jiwer.process import process_words
-from typing import Union, List, Dict
+from jiwer.process import process_words, process_characters
+from typing import Union, List, Dict, Literal
 from collections import defaultdict
 
 remove_nontira_chars = get_remove_oov_char_funct('meta/tira_asr_unique_chars.txt')
@@ -50,12 +50,10 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
     output = process_words(reference, hypothesis)
     alignments = output.alignments
     for ref, hyp, align in zip(reference, hypothesis, alignments):
-        ref_words = ref.split()
-        hyp_words = hyp.split()
         metrics = metric_factory(output)
 
         for aligned_word in align:
-            alignment_metrics = get_metrics_from_alignment(aligned_word, ref_words, hyp_words)
+            alignment_metrics = get_metrics_from_alignment(aligned_word, ref, hyp)
             for key, value in alignment_metrics.items():
                 metrics[key] += value
         # calculate rates
@@ -85,7 +83,9 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
         metric_list.append(metrics)
     return metric_list
 
-def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
+def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='wer') -> Dict[str, int]:
+    ref_words = ref.split()
+    hyp_words = hyp.split()
     alignment_metrics = defaultdict(lambda:0)
     align_type = align.type
     if align_type == 'substitute':
