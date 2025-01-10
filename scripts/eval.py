@@ -61,17 +61,17 @@ def get_wer_by_language(reference: Union[str, List[str]], hypothesis: Union[str,
         # calculate rates
         for k, v in metrics.copy().items():
             if k.startswith('num_'):
-                lang = 'tira' if k.endswith('tira') else 'eng'
+                lang = 'eng' if k.endswith('eng') else k[-4:]
                 total = len(ref)
-                metrics[f'pct_{lang}'] = v / total
+                metrics[f'pct_{lang}'] = v / total if v!=0 else v
             elif any(k.endswith(name) for name in ['substitutions', 'deletions', 'hits']):
-                lang = 'tira' if k.startswith('tira') else 'eng'
+                lang = 'eng' if k.startswith('eng') else k[:4]
                 total = metrics[f'num_{lang}']
-                metrics[f"{k.removesuffix('s')}_rate"] = v / total
-            elif k.endswith('insertion'):
-                lang = 'tira' if k.startswith('tira') else 'eng'
+                metrics[f"{k.removesuffix('s')}_rate"] = v / total if v!=0 else v
+            elif k.endswith('insertions'):
+                lang = 'eng' if k.startswith('eng') else k[:4]
                 total = metrics[f'num_{lang}_hyp']
-                metrics[f"{k.removesuffix('s')}_rate"] = v / total
+                metrics[f"{k.removesuffix('s')}_rate"] = v / total if v!=0 else v
         metric_list.append(metrics)
     return metric_list
 
