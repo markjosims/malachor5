@@ -114,28 +114,20 @@ def get_metrics_from_alignment(align, ref_words, hyp_words) -> Dict[str, int]:
 
 
 def metric_factory(jiwer_output):
+    langs = ['tira', 'eng', 'misc']
+    edits = ['insertions', 'deletions', 'hits']
     metrics = {
-            'num_tira':                   0,
-            'num_tira_hyp':               0,
-            'tira_insertions':            0,
-            'tira_deletions':             0,
-            'tira2eng_substitutions':     0,
-            'tira2misc_substitutions':    0,
-            'tira2tira_substitutions':    0,
-            'tira_hits':                  0,
-            'num_eng':                    0,
-            'num_eng_hyp':                0,
-            'eng_deletions':              0,
-            'eng_insertions':             0,
-            'eng2tira_substitutions':     0,
-            'eng2misc_substitutions':     0,
-            'eng2eng_substitutions':      0,
-            'eng_hits':                   0,
-            'num_misc_hyp':               0,
-            'wer':                        jiwer_output.wer,
-            'mer':                        jiwer_output.mer,
-            'wil':                        jiwer_output.wil,
-            'wip':                        jiwer_output.wip,
-        }
+        'wer': jiwer_output.wer,
+        'mer': jiwer_output.mer,
+        'wil': jiwer_output.wil,
+        'wip': jiwer_output.wip,
+    }
+    for lang in langs:
+        for edit in edits:
+            metrics[f'{lang}_{edit}'] = 0
+        for lang2 in langs:
+            metrics[f'{lang}2{lang2}_substitutions'] = 0
+        metrics[f'num_{lang}'] = 0
+        metrics[f'num_{lang}_hyp'] = 0
     
     return metrics
