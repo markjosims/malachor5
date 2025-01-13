@@ -19,7 +19,7 @@ def get_word_language(word: str) -> str:
     else:
         return 'misc'
 
-def get_metrics_by_language(reference: Union[str, List[str]], hypothesis: Union[str, List[str]], metric: Literal['cer', 'wer']='wer') -> List[Dict[str, int]]:
+def get_metrics_by_language(reference: Union[str, List[str]], hypothesis: Union[str, List[str]], metric: Literal['cer', 'wer']='wer', ignore_punct: bool = False) -> List[Dict[str, int]]:
     """
     Returns dictionary with language-specific edit metrics.
     Return keys are as follows:
@@ -49,6 +49,9 @@ def get_metrics_by_language(reference: Union[str, List[str]], hypothesis: Union[
     if type(reference) is str:
         reference = [reference,]
         hypothesis = [hypothesis,]
+    if ignore_punct:
+        reference = [remove_punct(ref) for ref in reference]
+        hypothesis = [remove_punct(hyp) for hyp in hypothesis]
     metric_list = []
     output = process_words(reference, hypothesis) if metric=='wer' else\
         process_characters(reference, hypothesis)
