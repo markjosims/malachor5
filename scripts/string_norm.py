@@ -4,7 +4,7 @@ import unicodedata
 import json
 import epitran
 import importlib.util
-if importlib.util.find_spec(enchant) is not None:
+if importlib.util.find_spec('enchant') is not None:
     import enchant
 from unidecode import unidecode
 
