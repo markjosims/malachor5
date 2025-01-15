@@ -3,7 +3,9 @@ from string import punctuation
 import unicodedata
 import json
 import epitran
-import enchant
+import importlib.util
+if importlib.util.find_spec(enchant) is not None:
+    import enchant
 from unidecode import unidecode
 
 """
