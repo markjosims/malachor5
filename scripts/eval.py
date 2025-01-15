@@ -1,4 +1,5 @@
-from string_norm import has_unicode, is_en_word, get_remove_oov_char_funct, remove_punct
+from string_norm import get_remove_oov_char_funct, remove_punct
+from lid_utils import has_unicode, is_en_word
 from jiwer.process import process_words, process_characters
 from typing import Union, List, Dict, Literal
 from collections import defaultdict

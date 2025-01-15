@@ -3,18 +3,12 @@ from string import punctuation
 import unicodedata
 import json
 import epitran
-import importlib.util
-if importlib.util.find_spec('enchant') is not None:
-    import enchant
-from unidecode import unidecode
 
 """
 Copied from zugubul
 """
 
 DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde',]
-
-en_dict = enchant.request_dict('en_US')
 
 COMBINING = {
     'grave': "\u0300",
@@ -102,16 +96,6 @@ def condense_tones(s: str) -> str:
             in_tone_seq=False
 
     return out
-
-# ---------------- #
-# Text LID methods #
-# ---------------- #
-
-def is_en_word(w: str) -> bool:
-    return en_dict.check(w)
-
-def has_unicode(s):
-    return unidecode(s) != s
 
 # ---------------------------- #
 # String normalization helpers #
