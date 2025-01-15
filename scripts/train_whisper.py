@@ -24,7 +24,7 @@ DEFAULT_HYPERPARAMS = {
     'gradient_accumulation_steps': 1,
     'eval_accumulation_steps': 16,
     'eval_strategy': "epoch",
-    'save_strategy': "best",
+    'save_strategy': "epoch",
     'num_train_epochs': 4,
     'gradient_checkpointing': False,
     'fp16': False,
