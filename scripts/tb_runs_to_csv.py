@@ -36,7 +36,7 @@ def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
         run_name = os.path.basename(run_dir)
         reader = SummaryReader(run_path)
         run_df = reader.scalars
-        run_df['experiment_name'] = run_name
+        run_df['experiment_name'] = run_name.removesuffix('/')
         df_list.append(run_df)
     return pd.concat(df_list)
 
