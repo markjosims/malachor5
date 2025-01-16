@@ -33,10 +33,10 @@ def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
     df_list = []
     for run_dir in tqdm(run_dirs):
         run_path = get_latest_run(run_dir)
-        run_name = os.path.basename(run_dir)
+        run_name = os.path.basename(run_dir.removesuffix('/'))
         reader = SummaryReader(run_path)
         run_df = reader.scalars
-        run_df['experiment_name'] = run_name.removesuffix('/')
+        run_df['experiment_name'] = run_name
         df_list.append(run_df)
     return pd.concat(df_list)
 
