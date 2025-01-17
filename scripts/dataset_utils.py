@@ -272,7 +272,7 @@ def load_eval_datasets(args) -> Dict[str, Dataset]:
         tqdm.write(f'Preparing {dataset}...')
         dataset_args = copy(args)
         dataset_args.eval_datasets=None
-        dataset_args.language=lang if lang!='None' else None
+        dataset_args.language=lang if lang!=['None'] else None
         # assuming that skip_recordings is only used for main dataset
         dataset_args.skip_recordings=None
         if 'fleurs' in dataset or 'commonvoice' in dataset:
