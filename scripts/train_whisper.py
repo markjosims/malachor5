@@ -377,7 +377,6 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             embed_dist_type=args.embed_dist_type,
             lid_loss_alpha=args.lid_loss_alpha,
             fisher_matrix_path=args.fisher_matrix_path,
-            device=args.device,
         )
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)
