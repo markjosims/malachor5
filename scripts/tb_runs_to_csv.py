@@ -70,6 +70,8 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     ] = 'cosine'
     get_regdist_lmd = lambda s: float(re.search(r'regdist-lmd-([\d.]+)', s).groups()[0]) if 'regdist-lmd-' in s else None
     df['distance_regularization_lambda'] = df['experiment_name'].apply(get_regdist_lmd)
+    get_ewc_lmd = lambda s: float(re.search(r'ewc-lmd-([\d.]+)', s).groups()[0]) if 'ewc-lmd-' in s else None
+    df['ewc_lambda'] = df['experiment_name'].apply(get_ewc_lmd)
     return df
 
 # ---- #
