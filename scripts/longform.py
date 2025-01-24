@@ -235,7 +235,6 @@ def load_and_resample(
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
     if to_mono and len(wav.shape)==2:
-        tqdm.write("Converting stereo wav to mono")
         wav=wav[:1,:]
         if flatten:
             wav=wav.squeeze()
