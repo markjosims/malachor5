@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ANNOTATION_DOCUMENT AUTHOR="pympi" DATE="2024-12-09T16:31:35-08:00"
+<ANNOTATION_DOCUMENT AUTHOR="pympi" DATE="2025-01-23T16:07:39-08:00"
     FORMAT="3.0" VERSION="3.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
     <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
         <MEDIA_DESCRIPTOR
-            MEDIA_URL="file:///Users/markjos/projects/malachor5/data/elan_outputs/HH20240424.wav"
-            MIME_TYPE="audio/x-wav" RELATIVE_MEDIA_URL="../data/elan_outputs/HH20240424.wav"/>
+            MEDIA_URL="file:///C:/projects/malachor5/data/HH20240424.wav"
+            MIME_TYPE="audio/x-wav" RELATIVE_MEDIA_URL="../data/HH20240424.wav"/>
         <PROPERTY NAME="URN">urn:nl-mpi-tools-elan-eaf:ae9a29fd-b0cb-4eb9-b0f9-a3d74b175b52</PROPERTY>
         <PROPERTY NAME="lastUsedAnnotationId">69</PROPERTY>
     </HEADER>
