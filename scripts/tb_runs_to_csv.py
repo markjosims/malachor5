@@ -19,6 +19,9 @@ def get_latest_run(run_dir: str) -> str:
     run_file_tuples = list(
         zip(run_files, run_file_dates)
     )
+    if not run_file_tuples:
+        print(f"No runs found in {run_dir}.")
+        return
     run_file_tuples.sort(
         key=lambda t:t[1],
         reverse=True
@@ -33,6 +36,8 @@ def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
     df_list = []
     for run_dir in tqdm(run_dirs):
         run_path = get_latest_run(run_dir)
+        if not run_path:
+            continue
         run_name = os.path.basename(run_dir.removesuffix('/'))
         reader = SummaryReader(run_path)
         run_df = reader.scalars
