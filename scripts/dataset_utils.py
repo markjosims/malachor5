@@ -14,23 +14,27 @@ import numpy as np
 from copy import copy
 from tqdm import tqdm
 
-DATASET_ARGS = [
-    'dataset',
-    'num_records',
-    'stream',
-    'fleurs_lang',
-    'skip_idcs',
-    'make_split',
-    'processor',
-    'model',
-    'action',
-    'g2p',
-    'load_ds_cache',
-    'transcription_ids',
-    'label_key',
-    'eval_datasets',
-    'eval_dataset_languages',
-]
+# TODO: clean up args across scripts
+DATASET_ARG_MAP = {
+    'dataset': str,
+    'num_records': int,
+    'stream': bool,
+    'fleurs_lang': str,
+    'skip_idcs': lambda x: [int(i) for i in x],
+    'make_split': bool,
+    'processor': str,
+    'model': str,
+    'action': str,
+    'g2p': str,
+    'load_ds_cache': bool,
+    'transcription_ids': str,
+    'label_key': str,
+    'eval_datasets': list,
+    'eval_dataset_languages': list,
+    'train_datasets': list,
+    'train_dataset_languages': list,
+}
+DATASET_ARGS = list(DATASET_ARG_MAP.keys())
 
 # ------------- #
 # data collator #
