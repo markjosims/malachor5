@@ -165,6 +165,7 @@ cython_debug/
 # Data
 data/
 *.wav
+*.csv
 
 # VS Code
 settings.json
