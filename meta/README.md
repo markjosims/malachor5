@@ -1,2 +1,5 @@
 - `language_codes.json`: Dictionary mapping Whisper language names to FLEURS language codes. Only contains data for languages that overlap between Whisper and FLEURS.
 - `tira_asr_unique_chars.txt`: str containing every unique char in the Tira ASR dataset. Used in post-processing to constrain Whisper output to only contain Tira characters.
+- `HH20210312.eaf` - test
+- `HH20220327-2.eaf` - test
+- `HH20210913.eaf` - validation
