@@ -23,6 +23,12 @@ def assert_tokens_in_row(row, token_names, col='labels'):
     for tok_id in tok_ids:
         assert tok_id in labels
 
+def assert_tokens_not_in_row(row, token_names, col='labels'):
+    tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
+    labels = row[col]
+    for tok_id in tok_ids:
+        assert tok_id not in labels
+
 def assert_labels_begin_with(row, token_names, col='labels'):
     tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
     labels = row[col]

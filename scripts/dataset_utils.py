@@ -1,5 +1,6 @@
 from math import ceil
 from datasets import Audio, Dataset, DatasetDict, load_dataset, load_from_disk
+import datasets
 from speechbrain.dataio.batch import PaddedBatch
 import torch
 from dataclasses import dataclass
@@ -21,6 +22,7 @@ DATASET_ARG_MAP = {
     'stream': bool,
     'fleurs_lang': str,
     'skip_idcs': lambda x: [int(i) for i in x],
+    'skip_recordings': list,
     'make_split': bool,
     'processor': str,
     'model': str,
@@ -242,13 +244,25 @@ def load_and_prepare_dataset(args):
 
     if args.eval_datasets:
         print("Loading additional eval datasets...")
-        eval_dataset_dict = load_eval_datasets(args)
+        eval_dataset_dict = load_extra_datasets(args, 'eval')
         if 'validation' in ds:
             dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
             if args.eval_dataset_languages:
                 dataset_stem+='-'+'+'.join(args.language or ['LID'])
             eval_dataset_dict[dataset_stem]=ds['validation']
         ds['validation']=eval_dataset_dict
+    if args.train_datasets:
+        print("Loading additional train datasets...")
+        train_dataset_dict = load_extra_datasets(args, 'train')
+        if 'train' in ds:
+            dataset_stem = args.dataset.removesuffix('/').split('/')[-1]
+            if args.train_dataset_languages:
+                dataset_stem+='-'+'+'.join(args.language or ['LID'])
+            ds['train']=ds['train'].add_column('dataset', [dataset_stem]*len(ds['train']))
+            train_dataset_dict[dataset_stem]=ds['train']
+        ds_concat = datasets.concatenate_datasets(list(train_dataset_dict.values()))
+        ds_concat = ds_concat.shuffle(seed=42)
+        ds['train']=ds_concat
 
     # if 'validation' in ds:
     #     ds['validation'] = ds['validation'].map(
@@ -264,35 +278,42 @@ def load_and_prepare_dataset(args):
     #     )
     return ds, processor
 
-def load_eval_datasets(args) -> Dict[str, Dataset]:
-    if args.eval_dataset_languages:
-        eval_dataset_languages = [lang.split('+') for lang in args.eval_dataset_languages]
+def load_extra_datasets(args, split: Literal['train', 'eval', 'test']) -> Dict[str, Dataset]:
+    # if args.eval_dataset_languages:
+    dataset_languages = getattr(args, f'{split}_dataset_languages', None)
+    datasets = getattr(args, f'{split}_datasets', None)
+    if dataset_languages:
+        dataset_languages = [lang.split('+') for lang in dataset_languages]
     else:
-        eval_dataset_languages = [
-            args.language for _ in range(len(args.eval_datasets))
+        dataset_languages = [
+            args.language for _ in datasets
         ]
-    eval_dataset_dict = {}
+    dataset_dict = {}
 
-    for dataset, lang in tqdm(list(zip(args.eval_datasets, eval_dataset_languages)), desc='Extra validation datasets'):
+    for dataset, lang in tqdm(list(zip(datasets, dataset_languages)), desc='Extra validation datasets'):
         tqdm.write(f'Preparing {dataset}...')
         dataset_args = copy(args)
-        dataset_args.eval_datasets=None
+        # avoid infinite recursion
+        setattr(dataset_args, split+'_datasets', None)
         dataset_args.language=lang if lang!=['None'] else None
         # assuming that skip_recordings is only used for main dataset
         dataset_args.skip_recordings=None
         if 'fleurs' in dataset or 'commonvoice' in dataset:
             dataset_args.fleurs_lang = iso2_to_fleurs(lang[0])
         dataset_args.dataset=dataset
-        dataset_args.action='evaluate'
+        dataset_args.action='evaluate' if split=='eval' else split
         dataset_obj, _ = load_and_prepare_dataset(dataset_args)
         
-        eval_dataset_name=dataset.removesuffix('/').split('/')[-1]
-        if args.eval_dataset_languages:
+        dataset_name=dataset.removesuffix('/').split('/')[-1]
+        if getattr(args, f'{split}_dataset_languages', None):
             # when specifying language for each dataset, include language in dataset name
-            eval_dataset_name+='-'+'+'.join(lang)
-            eval_dataset_name=eval_dataset_name.replace('None', 'LID')
-        eval_dataset_dict[eval_dataset_name]=dataset_obj['validation']
-    return eval_dataset_dict
+            dataset_name+='-'+'+'.join(lang)
+            dataset_name=dataset_name.replace('None', 'LID')
+        split_key = 'validation' if split=='eval' else split
+        dataset_obj[split_key]=dataset_obj[split_key].add_column('dataset', [dataset_name]*len(dataset_obj[split_key]))
+
+        dataset_dict[dataset_name]=dataset_obj[split_key]
+    return dataset_dict
 
 def make_ds_split(dataset: DatasetDict, percent_val: float=0.2) -> DatasetDict:
     """

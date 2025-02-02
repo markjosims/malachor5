@@ -1,7 +1,6 @@
 from argparse import Namespace
-from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with, assert_tokens_appear_once
+from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with, assert_tokens_appear_once, assert_tokens_not_in_row
 from datasets import Dataset
-import math
 
 import sys
 sys.path.append('scripts')
@@ -167,3 +166,26 @@ def test_skip_recordings():
     # 16384 records in the base train dataset
     # minus 230 records from recording HH20210312
     assert len(ds['train'])==16154
+
+def test_train_datasets():
+    args = Namespace(
+        dataset=TIRA_ASR_DS,
+        language=['sw'],
+        train_datasets=[FLEURS, FLEURS],
+        train_dataset_languages=['en', 'en+sw'],
+        model='openai/whisper-tiny',
+        action='train',
+        num_records=10,
+    )
+    for arg in DATASET_ARGS:
+        if not hasattr(args, arg):
+            setattr(args, arg, None)
+    ds, _ = load_and_prepare_dataset(args)
+    fleurs = ds['train'].filter(lambda row: row['dataset']=='fl_en-en')
+    fleurs.map(assert_tokens_in_row, fn_kwargs={'token_names':['en', 'transcribe', 'startoftranscript', 'eos', 'notimestamps']})
+    fleurs.map(assert_tokens_not_in_row, fn_kwargs={'token_names':['sw']})
+    tira_biling = ds['train'].filter(lambda row: row['dataset']=='fl_en-en+sw')
+    tira_biling.map(assert_tokens_in_row, fn_kwargs={'token_names':['en', 'sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps']})
+    tira_mono = ds['train'].filter(lambda row: row['dataset']=='tira-clean-split-sw')
+    tira_mono.map(assert_tokens_in_row, fn_kwargs={'token_names':['sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps']})
+    tira_mono.map(assert_tokens_not_in_row, fn_kwargs={'token_names':['en']})
