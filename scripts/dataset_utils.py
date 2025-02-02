@@ -393,5 +393,7 @@ def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--make_split', action='store_true')
     parser.add_argument('--eval_datasets', nargs='+')
     parser.add_argument('--eval_dataset_languages', nargs='+')
+    parser.add_argument('--train_datasets', nargs='+')
+    parser.add_argument('--train_dataset_languages', nargs='+')
     parser.add_argument('--skip_recordings', nargs='+')
     return parser
