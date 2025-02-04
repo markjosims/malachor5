@@ -128,6 +128,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     new_cols = [col for col in df.columns if col not in cols_orig]
     print(f"\tAdded columns: {new_cols}")
 
+    print(f"Dataframe has {len(df)} rows from {len(df['experiment_name'].unique())} experiments")
+
     print(f"Saving to {args.output}...")
     df.to_csv(args.output, index=False)
     print("\tDone!")
