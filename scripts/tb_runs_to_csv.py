@@ -44,10 +44,10 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
             run_df = reader.scalars
             run_df['experiment_name'] = run_name
             run_df['date']=run_date
+            if not all_run_dates:
+                run_df = latest_run_per_event(run_df)
             df_list.append(run_df)
     df = pd.concat(df_list)
-    if not all_run_dates:
-        df = latest_run_per_event(df)
     return df
 
 def latest_run_per_event(df: pd.DataFrame):
