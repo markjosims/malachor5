@@ -12,7 +12,7 @@ import re
 # filepath helpers #
 # ---------------- #
 
-def get_latest_run(run_dir: str) -> str:
+def get_runs_with_date(run_dir: str) -> str:
     run_files = glob(os.path.join(run_dir, 'runs', '*'))
     run_date_strs = [os.path.basename(run_file)[:14] for run_file in run_files]
     run_file_dates = [datetime.strptime(run_date, '%b%d_%H-%M-%S') for run_date in run_date_strs]
@@ -26,25 +26,43 @@ def get_latest_run(run_dir: str) -> str:
         key=lambda t:t[1],
         reverse=True
     )
-    return run_file_tuples[0][0]
+    return run_file_tuples
 
 # ----------------- #
 # dataframe helpers #
 # ----------------- #
 
-def get_runs_df(run_dirs: Sequence[str]) -> pd.DataFrame:
+def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
     df_list = []
     for run_dir in tqdm(run_dirs):
-        run_path = get_latest_run(run_dir)
-        if not run_path:
+        run_tuples = get_runs_with_date(run_dir)
+        if not run_tuples:
             continue
         run_name = os.path.basename(run_dir.removesuffix('/'))
-        reader = SummaryReader(run_path)
-        run_df = reader.scalars
-        run_df['experiment_name'] = run_name
-        df_list.append(run_df)
-    return pd.concat(df_list)
+        for run_path, run_date in run_tuples:
+            reader = SummaryReader(run_path)
+            run_df = reader.scalars
+            run_df['experiment_name'] = run_name
+            run_df['date']=run_date
+            df_list.append(run_df)
+    df = pd.concat(df_list)
+    if not all_run_dates:
+        df = latest_run_per_event(df)
+    return df
 
+def latest_run_per_event(df: pd.DataFrame):
+    drop_idcs = []
+    for tag in df['tag'].unique():
+        tag_mask = df['tag']==tag
+        for step in df['step'].unique():
+            step_mask = df['step']==step
+            step_tag_df = df[step_mask&tag_mask]
+            if len(step_tag_df)==1:
+                continue
+            step_tag_df = step_tag_df.sort_values('date', ascending=False)
+            not_latest_date = step_tag_df.iloc[1:].index
+            drop_idcs.extend(not_latest_date)
+    return df.drop(drop_idcs)
 
 def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     # lid loss alpha col
@@ -87,6 +105,7 @@ def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('--globstr', '-g', nargs='+')
     parser.add_argument('--output', '-o')
+    parser.add_argument('--all_run_dates', action='store_true')
 
     return parser
 
