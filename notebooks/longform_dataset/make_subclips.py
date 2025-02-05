@@ -42,5 +42,4 @@ if __name__ == '__main__':
             continue
         wav = load_and_resample(wavpath_local)
         df.loc[wav_mask, 'clip_name']=df.loc[wav_mask].progress_apply(clip_record, wav=wav, axis=1)
-    breakpoint()
     df.to_csv(balance_df_path)
