@@ -13,3 +13,4 @@ speechbrain
 epitran
 peft
 jiwer
+git+https://github.com/kpu/kenlm/archive/master.zip
