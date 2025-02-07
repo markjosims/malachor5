@@ -298,22 +298,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         chkpnt_model = load_whisper_model_for_training_or_eval(args)
         chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
         data_collator=load_data_collator(chkpnt_model, processor)
-        trainer = WhisperTrainer(
-            args=training_args,
-            model=chkpnt_model,
-            data_collator=data_collator,
-            compute_metrics=compute_metrics,
-            tokenizer=processor.feature_extractor,
-            preprocess_logits_for_metrics=argmax_logits if not args.predict_with_generate else None,
-            mean_embed_path=args.mean_embed_path,
-            embed_dist_lambda=args.embed_dist_lambda,
-            embed_dist_type=args.embed_dist_type,
-            lid_loss_alpha=args.lid_loss_alpha,
-            fisher_matrix_path=args.fisher_matrix_path if args.action=='train' else None,
-            lm_path=args.lm,
-            lm_alpha=args.lm_alpha,
-            string_tokenizer=processor.tokenizer,
-        )
+        trainer = init_trainer(args, processor, training_args, compute_metrics, chkpnt_model, data_collator)
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
         if type(predictions) is dict:
             for ds_name, ds_preds in predictions.items():
@@ -331,6 +316,26 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df=pd.DataFrame(data=metrics)
     df.to_csv(csv_path, index=False)
+
+def init_trainer(args, processor, training_args, compute_metrics, model, data_collator):
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            processing_class=processor.feature_extractor,
+            preprocess_logits_for_metrics=argmax_logits if not args.predict_with_generate else None,
+            mean_embed_path=args.mean_embed_path,
+            embed_dist_lambda=args.embed_dist_lambda,
+            embed_dist_type=args.embed_dist_type,
+            lid_loss_alpha=args.lid_loss_alpha,
+            fisher_matrix_path=args.fisher_matrix_path if args.action=='train' else None,
+            lm_path=args.lm,
+            lm_alpha=args.lm_alpha,
+            tokenizer=processor.tokenizer,
+        )
+    
+    return trainer
 
 # ------------- #
 # training args #
@@ -377,24 +382,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         print("Building dataloader...")
         data_collator = load_data_collator(model, processor)
         print("Initializing trainer...")
-        trainer = WhisperTrainer(
-            args=training_args,
-            model=model,
-            data_collator=data_collator,
-            compute_metrics=compute_metrics,
-            tokenizer=processor.feature_extractor,
-            preprocess_logits_for_metrics=argmax_logits if not args.predict_with_generate else None,
-            mean_embed_path=args.mean_embed_path,
-            embed_dist_lambda=args.embed_dist_lambda,
-            embed_dist_type=args.embed_dist_type,
-            lid_loss_alpha=args.lid_loss_alpha,
-            fisher_matrix_path=args.fisher_matrix_path if args.action=='train' else None,
-            lm_path=args.lm,
-            lm_alpha=args.lm_alpha,
-            string_tokenizer=processor.tokenizer,
-            train_dataset=ds.get('train', None),
-            eval_dataset=ds.get('validation', None),
-        )
+        trainer = init_trainer(args, processor, training_args, compute_metrics, model, data_collator)
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)
     if args.action=='train':
