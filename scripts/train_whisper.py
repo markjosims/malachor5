@@ -345,6 +345,8 @@ def get_training_args(args):
     if args.peft_type=='LoRA':
         arg_dict['remove_unused_columns']=False
         arg_dict['label_names']=["labels"]
+    if args.action!='train':
+        arg_dict['evaluation_strategy']='no'
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=args.output,
