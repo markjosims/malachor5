@@ -95,6 +95,13 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     df['distance_regularization_lambda'] = df['experiment_name'].apply(get_regdist_lmd)
     get_ewc_lmd = lambda s: float(re.search(r'ewc-lambda-([\d.]+)', s).groups()[0]) if 'ewc-lambda-' in s else None
     df['ewc_lambda'] = df['experiment_name'].apply(get_ewc_lmd)
+
+    df['epoch']=0
+    epoch_mask = df['tag'].str.contains('epoch')
+    for i, row in df[epoch_mask].iterrows():
+        step_mask = df['step']==row['step']
+        exp_mask = df['experiment_name']==row['experiment_name']
+        df.loc[step_mask & exp_mask, 'epoch'] = int(row['value'])
     return df
 
 # ---- #
