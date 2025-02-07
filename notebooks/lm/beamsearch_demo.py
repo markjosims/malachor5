@@ -13,21 +13,12 @@ class LanguageModelRescorer(LogitsProcessor):
         self.lm = kenlm.LanguageModel(lm_path)
 
     def __call__(self, input_ids, scores):
-        # breakpoint()
         """Modify logits using LM-based rescoring."""
-        # Decode the current sequence
         hypotheses = self.tokenizer.batch_decode(input_ids)
 
-        # Get LM score
         lm_scores = [self.lm.score(hyp) for hyp in hypotheses]
-        # print(scores.shape)
-        # print(lm_score)
-
-        # Convert LM score into a logit adjustment
         lm_adjustment = torch.tensor(lm_scores, device=scores.device).unsqueeze(1) * self.alpha
-        
-        # Apply the LM bias (shallow fusion)
-        scores = scores *(1-self.alpha) + lm_adjustment
+        scores = scores + lm_adjustment
 
         return scores
 

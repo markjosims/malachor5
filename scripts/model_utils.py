@@ -12,13 +12,15 @@ from transformers import (
     WhisperTokenizer,
     WhisperProcessor,
     GenerationConfig,
-    LogitsProcessor
+    LogitsProcessor,
+    LogitsProcessorList,
 )
 from transformers.modeling_outputs import BaseModelOutput
 import pickle
 from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
 import numpy as np
 import kenlm
+from datasets import Dataset
 
 
 DEVICE = 0 if torch.cuda.is_available() else -1
@@ -62,6 +64,9 @@ class WhisperTrainer(Seq2SeqTrainer):
             embed_dist_lambda=1,
             embed_dist_type: Literal['euclidean', 'cosine']='euclidean',
             lid_loss_alpha=None,
+            lm_path=None,
+            lm_alpha=0.5,
+            string_tokenizer=None, # since `tokenizer` is reserved for feature extractor
             **kwargs,
         ):
         super().__init__(*args, **kwargs)
@@ -71,6 +76,8 @@ class WhisperTrainer(Seq2SeqTrainer):
         self.embed_dist_lambda = embed_dist_lambda
         self.embed_dist_type = embed_dist_type
         self.lid_loss_alpha = lid_loss_alpha
+        self.lm_path = lm_path
+        self.lm_alpha = lm_alpha
         
         if fisher_matrix_path is not None:
             self.fisher_matrix = torch.load(fisher_matrix_path, map_location=kwargs['args'].device)
@@ -84,6 +91,10 @@ class WhisperTrainer(Seq2SeqTrainer):
             self.mean_embed = torch.load(mean_embed_path, map_location=kwargs['args'].device)
         else:
             self.mean_embed = None
+        if lm_path is not None:
+            self.lm_rescorer = LanguageModelRescorer(string_tokenizer, lm_path, alpha=lm_alpha)
+        else:
+            self.lm_rescorer = None
         
 
     def prediction_step(
@@ -104,6 +115,23 @@ class WhisperTrainer(Seq2SeqTrainer):
             inputs,
             prediction_loss_only=prediction_loss_only,
             ignore_keys=ignore_keys,
+            **gen_kwargs,
+        )
+    
+    def evaluate(
+        self,
+        eval_dataset: Optional[Dataset] = None,
+        ignore_keys: Optional[List[str]] = None,
+        metric_key_prefix: str = "eval",
+        **gen_kwargs,
+    ) -> Dict[str, float]:
+        if self.lm_rescorer is not None:
+            logits_processor = LogitsProcessorList([self.lm_rescorer])
+            gen_kwargs['logits_processor'] = logits_processor
+        return super().evaluate(
+            eval_dataset=eval_dataset,
+            ignore_keys=ignore_keys,
+            metric_key_prefix=metric_key_prefix,
             **gen_kwargs,
         )
 

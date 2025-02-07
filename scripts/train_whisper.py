@@ -65,6 +65,8 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--fisher_matrix_path')
     parser.add_argument('--lid_logits_path')
     parser.add_argument('--lid_loss_alpha', type=float)
+    parser.add_argument('--lm')
+    parser.add_argument('--lm_alpha', type=float, default=0.5)
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -371,12 +373,15 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             data_collator=data_collator,
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+            preprocess_logits_for_metrics=argmax_logits if not args.predict_with_generate else None,
             mean_embed_path=args.mean_embed_path,
             embed_dist_lambda=args.embed_dist_lambda,
             embed_dist_type=args.embed_dist_type,
             lid_loss_alpha=args.lid_loss_alpha,
             fisher_matrix_path=args.fisher_matrix_path if args.action=='train' else None,
+            lm_path=args.lm,
+            lm_alpha=args.lm_alpha,
+            string_tokenizer=processor.tokenizer,
         )
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)
