@@ -155,11 +155,12 @@ class WhisperTrainer(Seq2SeqTrainer):
     def training_step(
             self,
             model: torch.nn.Module,
-            inputs: Dict[str, Union[torch.Tensor, Any]]
+            inputs: Dict[str, Union[torch.Tensor, Any]],
+            num_items_in_batch=None,
         ) -> torch.Tensor:
         # don't pass forced_decoder_ids during training
         inputs.pop('forced_decoder_ids', None)
-        loss = super().training_step(model, inputs)
+        loss = super().training_step(model, inputs, num_items_in_batch)
         # Apply gradient masking for the decoder embeddings
         if self.token_id_to_train is not None:
             decoder_input_embeddings = model.model.decoder.embed_tokens.weight
