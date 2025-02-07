@@ -66,7 +66,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             lid_loss_alpha=None,
             lm_path=None,
             lm_alpha=0.5,
-            string_tokenizer=None, # since `tokenizer` is reserved for feature extractor
+            tokenizer=None,
             **kwargs,
         ):
         super().__init__(*args, **kwargs)
@@ -92,7 +92,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.mean_embed = None
         if lm_path is not None:
-            self.lm_rescorer = LanguageModelRescorer(string_tokenizer, lm_path, alpha=lm_alpha)
+            self.lm_rescorer = LanguageModelRescorer(tokenizer, lm_path, alpha=lm_alpha)
         else:
             self.lm_rescorer = None
         
