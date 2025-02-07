@@ -180,7 +180,7 @@ def get_metrics(args, processor, return_decoded=False):
     )
     return compute_metrics
 
-def preprocess_logits_for_metrics(logits, labels):
+def argmax_logits(logits, labels):
     """
     Original Trainer may have a memory leak. 
     This is a workaround to avoid storing too many tensors that are not needed.
@@ -302,7 +302,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
                     data_collator=data_collator,
                     compute_metrics=compute_metrics,
                     tokenizer=processor.feature_extractor,
-                    preprocess_logits_for_metrics=preprocess_logits_for_metrics if not args.predict_with_generate else None,
+                    preprocess_logits_for_metrics=argmax_logits if not args.predict_with_generate else None,
                 )
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
         if type(predictions) is dict:

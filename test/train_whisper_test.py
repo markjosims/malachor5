@@ -2,7 +2,7 @@ import torch
 import sys
 import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, preprocess_logits_for_metrics, calculate_fisher_matrix, get_lid_probs
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -80,7 +80,7 @@ def test_lang_token_peft(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
         )
     trainer = prepare_trainer_for_peft(args, trainer, processor)
     trainer.train()
@@ -128,7 +128,7 @@ def test_lang_token_regularization(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
     )
     trainer = prepare_trainer_for_peft(args, trainer, processor)
     dataloader = trainer.get_train_dataloader()
@@ -146,7 +146,7 @@ def test_lang_token_regularization(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
             mean_embed_path=toy_embed_path,
             embed_dist_lambda=1,
     )
@@ -200,7 +200,7 @@ def test_save_fisher_matrix(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
         )
 
     calculate_fisher_matrix(args, trainer, model)
@@ -242,7 +242,7 @@ def test_train_w_ewc(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
     )
     fisher_matrix_path = calculate_fisher_matrix(args, trainer, model)
 
@@ -254,7 +254,7 @@ def test_train_w_ewc(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
             fisher_matrix_path=fisher_matrix_path,
             ewc_lambda=0.1
     )
@@ -266,7 +266,7 @@ def test_train_w_ewc(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
             fisher_matrix_path=fisher_matrix_path,
             ewc_lambda=1_000
     )
@@ -320,7 +320,7 @@ def test_get_lid_probs(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
     )
 
     get_lid_probs(args, trainer, model)
@@ -362,7 +362,7 @@ def test_lid_loss(tmpdir):
             tokenizer=processor.feature_extractor,
             train_dataset=ds['train'],
             eval_dataset=ds['validation'],
-            preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            preprocess_logits_for_metrics=argmax_logits,
             lid_loss_alpha=0.2,
     )
     dataloader = trainer.get_train_dataloader()
