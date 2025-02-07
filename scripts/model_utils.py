@@ -4,11 +4,21 @@ import torch
 from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.linear_model import LogisticRegression
 from speechbrain.inference.classifiers import EncoderClassifier
-from transformers import AutomaticSpeechRecognitionPipeline, Seq2SeqTrainer, WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizer, WhisperProcessor, GenerationConfig
+from transformers import (
+    AutomaticSpeechRecognitionPipeline,
+    Seq2SeqTrainer,
+    WhisperFeatureExtractor,
+    WhisperForConditionalGeneration,
+    WhisperTokenizer,
+    WhisperProcessor,
+    GenerationConfig,
+    LogitsProcessor
+)
 from transformers.modeling_outputs import BaseModelOutput
 import pickle
 from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
 import numpy as np
+import kenlm
 
 
 DEVICE = 0 if torch.cuda.is_available() else -1
@@ -23,6 +33,23 @@ device_type = lambda s: int(s) if s!='cpu' else s
 # ---------------------- #
 # custom trainer objects #
 # ---------------------- #
+
+class LanguageModelRescorer(LogitsProcessor):
+    def __init__(self, tokenizer, lm_path, alpha=0.5):
+        super().__init__()
+        self.alpha = alpha  # Weight for LM fusion
+        self.tokenizer = tokenizer
+        self.lm = kenlm.LanguageModel(lm_path)
+
+    def __call__(self, input_ids, scores):
+        """Modify logits using LM-based rescoring."""
+        hypotheses = self.tokenizer.batch_decode(input_ids)
+
+        lm_scores = [self.lm.score(hyp) for hyp in hypotheses]
+        lm_adjustment = torch.tensor(lm_scores, device=scores.device).unsqueeze(1) * self.alpha
+        scores = scores + lm_adjustment
+
+        return scores
 
 class WhisperTrainer(Seq2SeqTrainer):
     def __init__(
