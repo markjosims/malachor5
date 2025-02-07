@@ -14,7 +14,6 @@ from transformers import (
     GenerationConfig,
     LogitsProcessor,
     LogitsProcessorList,
-    PredictionOutput,
 )
 from transformers.modeling_outputs import BaseModelOutput
 import pickle
@@ -142,7 +141,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         ignore_keys: Optional[List[str]] = None,
         metric_key_prefix: str = "test",
         **gen_kwargs,
-    ) -> PredictionOutput:
+    ):
         if self.lm_rescorer is not None:
             logits_processor = LogitsProcessorList([self.lm_rescorer])
             gen_kwargs['logits_processor'] = logits_processor
