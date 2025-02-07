@@ -172,11 +172,11 @@ class WhisperTrainer(Seq2SeqTrainer):
                 decoder_input_embeddings.grad *= mask  # Mask gradients
         return loss
     
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         if return_outputs or (self.lid_loss_alpha is not None):
-            loss, outputs = super().compute_loss(model, inputs, return_outputs=True)
+            loss, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
         else:
-            loss = super().compute_loss(model, inputs, return_outputs)
+            loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
         if self.fisher_matrix is not None and self.previous_params is not None:
             # EWC Regularization Term
             ewc_loss = 0.0
