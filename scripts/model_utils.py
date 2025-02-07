@@ -105,6 +105,8 @@ class WhisperTrainer(Seq2SeqTrainer):
         ignore_keys: Optional[List[str]] = None,
         **gen_kwargs,
     ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        if len(gen_kwargs) == 0 and hasattr(self, "_gen_kwargs"):
+            gen_kwargs = self._gen_kwargs.copy()
         if 'forced_decoder_ids' in inputs:
             # need to set one array of ids as the decoder prompt for whole batch
             # expected shape is [(1, ID), (2, ID), ...]
