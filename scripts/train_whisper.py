@@ -392,12 +392,12 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
             lm_path=args.lm,
             lm_alpha=args.lm_alpha,
             string_tokenizer=processor.tokenizer,
+            train_dataset=ds.get('train', None),
+            eval_dataset=ds.get('validation', None),
         )
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)
     if args.action=='train':
-        trainer.train_dataset=ds['train']
-        trainer.eval_dataset=ds['validation']
         print("Training!")
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
         save_dir=os.path.join(args.output, 'pretrained')
