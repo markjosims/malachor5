@@ -37,17 +37,27 @@ device_type = lambda s: int(s) if s!='cpu' else s
 # ---------------------- #
 
 class LanguageModelRescorer(LogitsProcessor):
-    def __init__(self, tokenizer, lm_path, alpha=0.5):
+    def __init__(self, tokenizer, lm_path, alpha=0.5, lm_input: Literal['text', 'tokens']='text'):
         super().__init__()
         self.alpha = alpha  # Weight for LM fusion
         self.tokenizer = tokenizer
         self.lm = kenlm.LanguageModel(lm_path)
+        self.lm_input = lm_input
 
     def __call__(self, input_ids, scores):
         """Modify logits using LM-based rescoring."""
-        hypotheses = self.tokenizer.batch_decode(input_ids)
-
-        lm_scores = [self.lm.score(hyp) for hyp in hypotheses]
+        eos_list = [self.tokenizer.eos_token_id in hyp for hyp in input_ids]
+        if self.lm_input == 'text':
+            text_hypotheses = self.tokenizer.batch_decode(input_ids)
+            lm_scores = [self.lm.score(hyp, eos=eos) for hyp, eos in zip(text_hypotheses, eos_list)]
+        else:
+            print("scoring ids")
+            token_hypotheses = [
+                ' '.join([str(id) for id in hyp if id not in self.tokenizer.all_special_ids])
+                for hyp in input_ids.tolist()
+            ]
+            lm_scores = [self.lm.score(hyp, eos=eos) for hyp, eos in zip(token_hypotheses, eos_list)]
+            
         lm_adjustment = torch.tensor(lm_scores, device=scores.device).unsqueeze(1) * self.alpha
         scores = scores + lm_adjustment
 
@@ -66,6 +76,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             lid_loss_alpha=None,
             lm_path=None,
             lm_alpha=0.5,
+            lm_input: Literal['text', 'tokens']='text',
             tokenizer=None,
             **kwargs,
         ):
@@ -92,7 +103,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.mean_embed = None
         if lm_path is not None:
-            self.lm_rescorer = LanguageModelRescorer(tokenizer, lm_path, alpha=lm_alpha)
+            self.lm_rescorer = LanguageModelRescorer(tokenizer, lm_path, alpha=lm_alpha, lm_input=lm_input)
         else:
             self.lm_rescorer = None
         

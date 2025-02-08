@@ -67,6 +67,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--lid_loss_alpha', type=float)
     parser.add_argument('--lm')
     parser.add_argument('--lm_alpha', type=float, default=0.5)
+    parser.add_argument('--lm_input', choices=['text', 'tokens'], default='text')
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -332,6 +333,7 @@ def init_trainer(args, processor, training_args, compute_metrics, model, data_co
             fisher_matrix_path=args.fisher_matrix_path if args.action=='train' else None,
             lm_path=args.lm,
             lm_alpha=args.lm_alpha,
+            lm_input=args.lm_input,
             tokenizer=processor.tokenizer,
         )
     
