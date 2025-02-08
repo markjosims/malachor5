@@ -51,7 +51,6 @@ class LanguageModelRescorer(LogitsProcessor):
             text_hypotheses = self.tokenizer.batch_decode(input_ids)
             lm_scores = [self.lm.score(hyp, eos=eos) for hyp, eos in zip(text_hypotheses, eos_list)]
         else:
-            print("scoring ids")
             token_hypotheses = [
                 ' '.join([str(id) for id in hyp if id not in self.tokenizer.all_special_ids])
                 for hyp in input_ids.tolist()
