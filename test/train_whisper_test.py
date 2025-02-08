@@ -371,3 +371,21 @@ def test_lid_loss(tmpdir):
     trainer.lid_loss_alpha = None
     loss_base = trainer.training_step(model, batch)
     assert not torch.equal(loss_w_lid, loss_base)
+
+def test_get_lid_labels():
+    labels = torch.tensor([
+        [5001, 5002,  121,   90,   76  ],
+        [5010, 5009,  298,   12,   432 ],
+        [5002, 2981,  87,    974,  87  ],
+        [5002, 5021,  294,   596,  31  ],
+    ], dtype=torch.int)
+    lang_ids = [5000+i for i in range(11)]
+    lid_logits = torch.randn(labels.shape[0], labels.max().item()+1)
+    lid_labels = WhisperTrainer.get_lid_labels(lid_logits, labels, lang_ids)
+    expected_labels = torch.zeros_like(lid_logits).float()
+    for i, row in enumerate(labels):
+        for val in row:
+            if val in lang_ids:
+                expected_labels[i,val]=1
+        expected_labels[i]/=expected_labels[i].sum()
+    assert torch.equal(lid_labels, expected_labels)

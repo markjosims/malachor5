@@ -214,15 +214,35 @@ class WhisperTrainer(Seq2SeqTrainer):
             lid_logits = self.get_lid_logits(encoder_outputs=outputs.encoder_last_hidden_state)
             lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
 
-            ground_truth_lid_labels = inputs['labels'][:,0]
-            ground_truth_lid_labels = ground_truth_lid_labels
-            ground_truth_lid_mat = torch.nn.functional.one_hot(ground_truth_lid_labels, num_classes=lid_logits.shape[1]).float()
-
+            # ground_truth_lid_labels = inputs['labels'][:,0]
+            # ground_truth_lid_labels = ground_truth_lid_labels
+            labels: torch.Tensor = inputs['labels']
+            lang_ids = self.generation_config.lang_to_id.values()
+            ground_truth_lid_mat = self.get_lid_labels(lid_logits, labels, lang_ids)
             lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
         if return_outputs:
             return loss, outputs
         return loss
+
+    @staticmethod
+    def get_lid_labels(lid_logits, labels, lang_ids):
+        lid_label_mask = torch.stack(
+            [labels==lang_id for lang_id in lang_ids]
+        ).sum(dim=0).bool()
+        ground_truth_lid_mat = torch.stack([
+            torch.sum(
+                torch.nn.functional.one_hot(
+                    label[lid_label_mask[i]].long(),
+                    num_classes=lid_logits.shape[1]
+                ).float(),
+                dim=0,
+            ) for i, label in enumerate(labels)
+        ])
+        langs_per_row = ground_truth_lid_mat.sum(dim=1).unsqueeze(dim=1)
+        ground_truth_lid_mat/=langs_per_row
+        
+        return ground_truth_lid_mat
     
     def get_lid_logits(
             self,
