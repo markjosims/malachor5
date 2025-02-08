@@ -299,7 +299,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         chkpnt_model = load_whisper_model_for_training_or_eval(args)
         chkpnt_model = set_generation_config(args, chkpnt_model, processor.tokenizer)
         data_collator=load_data_collator(chkpnt_model, processor)
-        trainer = init_trainer(args, processor, training_args, compute_metrics, chkpnt_model, data_collator)
+        trainer = init_trainer(args, processor, training_args, compute_metrics, chkpnt_model, ds, data_collator)
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
         if type(predictions) is dict:
             for ds_name, ds_preds in predictions.items():
@@ -318,7 +318,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     df=pd.DataFrame(data=metrics)
     df.to_csv(csv_path, index=False)
 
-def init_trainer(args, processor, training_args, compute_metrics, model, data_collator):
+def init_trainer(args, processor, training_args, compute_metrics, model, ds, data_collator):
     trainer = WhisperTrainer(
             args=training_args,
             model=model,
@@ -335,6 +335,8 @@ def init_trainer(args, processor, training_args, compute_metrics, model, data_co
             lm_alpha=args.lm_alpha,
             lm_input=args.lm_input,
             tokenizer=processor.tokenizer,
+            train_dataset=ds.get('train', None),
+            eval_dataset=ds.get('validation', None),
         )
     
     return trainer
@@ -384,7 +386,7 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         print("Building dataloader...")
         data_collator = load_data_collator(model, processor)
         print("Initializing trainer...")
-        trainer = init_trainer(args, processor, training_args, compute_metrics, model, data_collator)
+        trainer = init_trainer(args, processor, training_args, compute_metrics, model, ds, data_collator)
         if args.peft_type:
             trainer = prepare_trainer_for_peft(args, trainer, processor)
     if args.action=='train':
@@ -402,12 +404,8 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='calculate_fisher':
-        trainer.train_dataset=ds['train']
-        trainer.eval_dataset=ds['validation']
         calculate_fisher_matrix(args, trainer, model)
     elif args.action=='get_lid_probs':
-        trainer.train_dataset=ds['train']
-        trainer.eval_dataset=ds['validation']
         get_lid_probs(args, trainer, model)
     else:
         # args.action == 'test'
