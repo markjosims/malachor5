@@ -5,89 +5,89 @@ from tqdm import tqdm
 import numpy as np
 import torchaudio
 import torch
-import argparse
+from glob import glob
 sys.path.append('scripts')
 from longform import load_and_resample
 import shutil
+from datasets import load_dataset
+import json
 
 tqdm.pandas()
 balance_df_path = 'notebooks/longform_dataset/balance_df.csv'
-elicitation_wav_dir = 'data/elicitation-wavs/wav'
-tira_cs_dir = 'data/hf-datasets/tira_cs_balanced'
-tira_eng_dir = 'data/hf-datasets/tira_eng_balanced'
-tira_tira_dir = 'data/hf-datasets/tira_tira_balanced'
-os.makedirs(os.path.join(tira_cs_dir, 'train'), exist_ok=True)
+balance_data_dir = 'notebooks/longform_dataset/data'
+clip_dir = 'data/elicitation-wavs/wav/clips'
+hf_ds_dir = 'data/hf-datasets'
+pyarrow_ds_dir = 'data/pyarrow-datasets'
 
-def load_clip(clipname):
-    clippath = os.path.join(elicitation_wav_dir, clipname)
+def load_clip(i):
+    clippath = os.path.join(clip_dir, str(i)+'.wav')
     return load_and_resample(clippath)
 
-def concat_recordings_and_save(rows, i):
-    clip_basename = str(i)+'.wav'
-    clip_relpath = os.path.join('train', clip_basename)
-    clip_path = os.path.join(tira_cs_dir, clip_relpath)
-    clips = rows['clip_name'].apply(load_clip).tolist()
-    clips = torch.concatenate(clips, dim=1)
-    # clips = [snip_record(row) for _, row in rows.iterrows()]
-    torchaudio.save(clip_path, clips, 16_000)
-    return clip_relpath
+def concat_recordings(idcs):
+    clips = [load_clip(i) for i in idcs]
+    half_second_silence = torch.zeros(1,8_000)
+    padded_clips = []
+    for clip in clips:
+        padded_clips.append(clip)
+        padded_clips.append(half_second_silence)
+    clips = torch.concatenate(padded_clips, dim=1)
+    return clips
 
-def make_cs_labels(df):
-    cs_df = df[df['lang_balanced_dataset']=='cs']
-    cs_labels = []
-    for i in tqdm(cs_df['asr_index'].unique().tolist()):
-        if np.isnan(i):
-            continue
-        i=int(i)
-        has_index = cs_df['asr_index']==i
-        min_start = cs_df[has_index]['start'].min()
-        max_end = cs_df[has_index]['end'].max()
-        transcription = ' '.join([
-            s.strip() for s in cs_df[has_index].sort_values('start')['transcription']
-        ]).strip()
-        filestem = cs_df[has_index]['filestem'].unique()
-        clip_relpath = concat_recordings_and_save(cs_df[has_index], i)
-        cs_labels.append({
-            'asr_index': i,
-            'start': min_start,
-            'end': max_end,
-            'transcription': transcription,
-            'indices': cs_df[has_index].sort_values('start').index.tolist(),
-            'duration': max_end-min_start,
-            'split': 'train',
-            'filestem': filestem,
-            'file_name': clip_relpath,
-        })
-    return pd.DataFrame(cs_labels)
-
-def make_monoling_ds(df, lang):
-    labels = []
-    if lang == 'tira':
-        tgt_dir = tira_tira_dir
-    else:
-        tgt_dir = tira_eng_dir
-    os.makedirs(os.path.join(tgt_dir, 'train'), exist_ok=True)
-    lang_df = df[df['lang_balanced_dataset']==lang]
-    lang_df['clip_name'].progress_apply(
-        lambda clipname: shutil.move(
-            os.path.join(elicitation_wav_dir, clipname),
-            os.path.join(tgt_dir, 'train', os.path.basename(clipname))
-        )
-    )
-    lang_df['file_name'] = 'train/'+lang_df['clip_name']
-    return lang_df
+def sort_indices(indices, df):
+    return sorted(indices, key=lambda i: df.loc[i, 'wav_source']+str(df.loc[i, 'start']))
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--language', '-l', choices=['tira', 'eng', 'cs'], required=True)
-    args = parser.parse_args()
-    df=pd.read_csv(balance_df_path)
-    if args.language=='cs':
-        cs_labels = make_cs_labels(df)
-        cs_labels.to_csv(os.path.join(tira_cs_dir, 'metadata.csv'), index=False)
-    elif args.language=='eng':
-        eng_labels = make_monoling_ds(df, lang='eng')
-        eng_labels.to_csv(os.path.join(tira_eng_dir, 'metadata.csv'), index=False)
-    elif args.language=='tira':
-        tira_labels = make_monoling_ds(df, lang='tira')
-        tira_labels.to_csv(os.path.join(tira_tira_dir, 'metadata.csv'), index=False)
+    df = pd.read_csv(balance_df_path, index_col='index')
+    # mono_lists = glob(os.path.join(balance_data_dir, '*mono*.txt'))
+    # for list_file in mono_lists:
+    #     with open(list_file) as f:
+    #         train_list = f.read().splitlines()
+    #     train_list = [int(i) for i in train_list]
+    #     train_df = pd.DataFrame({
+    #         'transcription': df.loc[train_list, 'transcription'],
+    #     })
+    #     ds_dirname = os.path.basename(list_file).replace('_indices.txt', '')
+    #     ds_dirpath = os.path.join(hf_ds_dir, ds_dirname)
+    #     os.makedirs(os.path.join(ds_dirpath, 'train'), exist_ok=True)
+    #     def move_to_train_dir(i):
+    #         clip_source = os.path.join(clip_dir, str(i)+'.wav')
+    #         clip_relpath = os.path.join('train', str(i)+'.wav')
+    #         clip_target = os.path.join(ds_dirpath, clip_relpath)
+    #         shutil.move(clip_source, clip_target)
+    #         return clip_relpath
+    #     train_df['file_name']=[move_to_train_dir(i) for i in tqdm(train_list)]
+
+    #     train_df.to_csv(os.path.join(ds_dirpath, 'metadata.csv'))
+    #     ds = load_dataset('audiofolder', data_dir=ds_dirpath)
+    #     pyarrow_path = os.path.join(pyarrow_ds_dir, ds_dirname)
+    #     ds.save_to_disk(pyarrow_path)
+
+    cs_lists = glob(os.path.join(balance_data_dir, 'asr_idx2cs*.json'))
+    for list_file in cs_lists:
+        with open(list_file) as f:
+            idx_map = json.load(f)
+        idx_map = {k:sort_indices(v, df) for k,v in idx_map.items()}
+        list_file_basename = os.path.basename(list_file)
+        ds_dirname = 'tira_' + list_file_basename.removeprefix('asr_idx2').removesuffix('_idcs.json')
+        ds_dirpath = os.path.join(hf_ds_dir, ds_dirname)
+        os.makedirs(os.path.join(ds_dirpath, 'train'), exist_ok=True)
+        file_names = []
+        transcriptions = []
+        for asr_index, i_list in tqdm(idx_map.items()):
+            clip = concat_recordings(i_list)
+            clip_relpath = os.path.join('train', str(asr_index)+'.wav')
+            clip_path = os.path.join(ds_dirpath, clip_relpath)
+            torchaudio.save(clip_path, clip, 16_000)
+            del clip
+            transcription = ' '.join(df.loc[i_list, 'transcription'].str.strip().tolist())
+            transcriptions.append(transcription)
+            file_names.append(clip_relpath)
+        train_df = pd.DataFrame({
+            'file_name': file_names,
+            'transcription': transcriptions,
+        })
+        train_df.to_csv(os.path.join(ds_dirpath, 'metadata.csv'))
+        ds = load_dataset('audiofolder', data_dir=ds_dirpath)
+        pyarrow_path = os.path.join(pyarrow_ds_dir, ds_dirname)
+        ds.save_to_disk(pyarrow_path)
+
