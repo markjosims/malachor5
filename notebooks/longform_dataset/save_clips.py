@@ -38,29 +38,29 @@ def sort_indices(indices, df):
 
 if __name__ == '__main__':
     df = pd.read_csv(balance_df_path, index_col='index')
-    # mono_lists = glob(os.path.join(balance_data_dir, '*mono*.txt'))
-    # for list_file in mono_lists:
-    #     with open(list_file) as f:
-    #         train_list = f.read().splitlines()
-    #     train_list = [int(i) for i in train_list]
-    #     train_df = pd.DataFrame({
-    #         'transcription': df.loc[train_list, 'transcription'],
-    #     })
-    #     ds_dirname = os.path.basename(list_file).replace('_indices.txt', '')
-    #     ds_dirpath = os.path.join(hf_ds_dir, ds_dirname)
-    #     os.makedirs(os.path.join(ds_dirpath, 'train'), exist_ok=True)
-    #     def move_to_train_dir(i):
-    #         clip_source = os.path.join(clip_dir, str(i)+'.wav')
-    #         clip_relpath = os.path.join('train', str(i)+'.wav')
-    #         clip_target = os.path.join(ds_dirpath, clip_relpath)
-    #         shutil.move(clip_source, clip_target)
-    #         return clip_relpath
-    #     train_df['file_name']=[move_to_train_dir(i) for i in tqdm(train_list)]
+    mono_lists = glob(os.path.join(balance_data_dir, '*mono*.txt'))
+    for list_file in mono_lists:
+        with open(list_file) as f:
+            train_list = f.read().splitlines()
+        train_list = [int(i) for i in train_list]
+        train_df = pd.DataFrame({
+            'transcription': df.loc[train_list, 'transcription'],
+        })
+        ds_dirname = os.path.basename(list_file).replace('_indices.txt', '')
+        ds_dirpath = os.path.join(hf_ds_dir, ds_dirname)
+        os.makedirs(os.path.join(ds_dirpath, 'train'), exist_ok=True)
+        def move_to_train_dir(i):
+            clip_source = os.path.join(clip_dir, str(i)+'.wav')
+            clip_relpath = os.path.join('train', str(i)+'.wav')
+            clip_target = os.path.join(ds_dirpath, clip_relpath)
+            shutil.move(clip_source, clip_target)
+            return clip_relpath
+        train_df['file_name']=[move_to_train_dir(i) for i in tqdm(train_list)]
 
-    #     train_df.to_csv(os.path.join(ds_dirpath, 'metadata.csv'))
-    #     ds = load_dataset('audiofolder', data_dir=ds_dirpath)
-    #     pyarrow_path = os.path.join(pyarrow_ds_dir, ds_dirname)
-    #     ds.save_to_disk(pyarrow_path)
+        train_df.to_csv(os.path.join(ds_dirpath, 'metadata.csv'))
+        ds = load_dataset('audiofolder', data_dir=ds_dirpath)
+        pyarrow_path = os.path.join(pyarrow_ds_dir, ds_dirname)
+        ds.save_to_disk(pyarrow_path)
 
     cs_lists = glob(os.path.join(balance_data_dir, 'asr_idx2cs*.json'))
     for list_file in cs_lists:
