@@ -217,7 +217,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             # ground_truth_lid_labels = inputs['labels'][:,0]
             # ground_truth_lid_labels = ground_truth_lid_labels
             labels: torch.Tensor = inputs['labels']
-            lang_ids = self.generation_config.lang_to_id.values()
+            lang_ids = self.model.generation_config.lang_to_id.values()
             ground_truth_lid_mat = self.get_lid_labels(lid_logits, labels, lang_ids)
             lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
