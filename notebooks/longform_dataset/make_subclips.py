@@ -25,7 +25,7 @@ def clip_record(row, wav):
     return clip_path
 
 if __name__ == '__main__':
-    df = pd.read_csv(balance_df_path)
+    df = pd.read_csv(balance_df_path, index_col='index')
     df['clip_name']=''
     for wavpath in tqdm(df['wav_source'].unique().tolist()):
         wavpath_local = os.path.join(
