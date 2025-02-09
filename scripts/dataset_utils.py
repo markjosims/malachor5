@@ -221,6 +221,9 @@ def load_and_prepare_dataset(args):
         ds['train']=ds['train'].select(skip_range)
     if args.skip_recordings:
         ds['train'] = ds['train'].filter((lambda x: x['filestem'] not in args.skip_recordings))
+    if args.train_data_pct:
+        num_train = int(len(ds['train'])*args.train_data_pct)
+        ds['train'] = ds['train'].shuffle(seed=42).select(range(num_train))
     epitran=get_epitran(
         args.fleurs_lang,
         lang_key='fleurs' if 'fleurs' in args.dataset
@@ -396,4 +399,5 @@ def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--train_datasets', nargs='+')
     parser.add_argument('--train_dataset_languages', nargs='+')
     parser.add_argument('--skip_recordings', nargs='+')
+    parser.add_argument('--train_data_pct')
     return parser
