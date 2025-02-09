@@ -211,11 +211,9 @@ class WhisperTrainer(Seq2SeqTrainer):
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if self.lid_loss_alpha is not None:
-            lid_logits = self.get_lid_logits(encoder_outputs=outputs.encoder_last_hidden_state)
+            lid_logits = self.get_lid_logits(logits=outputs.logits[:,0])
             lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
 
-            # ground_truth_lid_labels = inputs['labels'][:,0]
-            # ground_truth_lid_labels = ground_truth_lid_labels
             labels: torch.Tensor = inputs['labels']
             lang_ids = self.model.generation_config.lang_to_id.values()
             ground_truth_lid_mat = self.get_lid_labels(lid_logits, labels, lang_ids)
@@ -246,38 +244,14 @@ class WhisperTrainer(Seq2SeqTrainer):
     
     def get_lid_logits(
             self,
-            input_features: Optional[torch.FloatTensor] = None,
-            encoder_outputs: Optional[Union[torch.FloatTensor, BaseModelOutput]] = None,
+            logits: torch.FloatTensor,
             generation_config: Optional[GenerationConfig] = None,
-            num_segment_frames: int = 3000,
         ) -> torch.Tensor:
         """
         Same as `WhisperGenerationMixin.detect_language` from `generation_whisper.py`
         except returns a tensor of LID logits for the input batch rather than the argmax.
         """
-        if input_features is None and encoder_outputs is None:
-            raise ValueError("You have to specify either `input_features` or `encoder_outputs`")
-        elif input_features is not None and encoder_outputs is not None:
-            raise ValueError("Make sure to specificy only one of `input_features` or `encoder_outputs` - not both!")
-        elif input_features is not None:
-            inputs = {"input_features": input_features[:, :, :num_segment_frames]}
-            batch_size = input_features.shape[0]
-        elif (encoder_outputs is not None) and (
-            isinstance(encoder_outputs, BaseModelOutput) or
-            type(encoder_outputs) is tuple
-        ):
-                inputs = {"encoder_outputs": encoder_outputs}
-                batch_size = encoder_outputs[0].shape[0]
-        elif (encoder_outputs is not None):
-                inputs = {"encoder_outputs": (encoder_outputs,)}
-                batch_size = encoder_outputs.shape[0]
         generation_config = generation_config or self.model.generation_config
-        decoder_input_ids = (
-            torch.ones((batch_size, 1), device=self.model.device, dtype=torch.long)
-            * generation_config.decoder_start_token_id
-        )
-        with torch.no_grad():
-            logits = self.model(**inputs, decoder_input_ids=decoder_input_ids).logits[:, -1]
         non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool)
         non_lang_mask[list(generation_config.lang_to_id.values())] = False
 
