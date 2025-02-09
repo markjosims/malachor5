@@ -244,6 +244,9 @@ def load_and_prepare_dataset(args):
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
     )
+    # forced decoder ids not passed during training
+    if 'train' in ds:
+        ds['train']=ds['train'].remove_columns('forced_decoder_ids')
 
     if args.eval_datasets:
         print("Loading additional eval datasets...")
@@ -293,7 +296,7 @@ def load_extra_datasets(args, split: Literal['train', 'eval', 'test']) -> Dict[s
         ]
     dataset_dict = {}
 
-    for dataset, lang in tqdm(list(zip(datasets, dataset_languages)), desc='Extra validation datasets'):
+    for dataset, lang in tqdm(list(zip(datasets, dataset_languages)), desc=f'Extra {split} datasets'):
         tqdm.write(f'Preparing {dataset}...')
         dataset_args = copy(args)
         # avoid infinite recursion
