@@ -1,4 +1,8 @@
 import json
+from transformers import WhisperTokenizer
+import sys
+sys.path.append('scripts')
+from eval import get_word_language
 
 TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
@@ -38,3 +42,19 @@ def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
     if ids_only:
         forced_decoder_ids=[t[1] for t in forced_decoder_ids]
     return forced_decoder_ids
+
+def normalize_tira_eng_str(s: str, tokenizer: WhisperTokenizer=None) -> str:
+    """
+    Normalize all non-Tira words in string, leaving Tira unchanged
+    """
+    if tokenizer is None:
+        tokenizer = WhisperTokenizer.from_pretrained('openai/whisper-medium')
+    norm_words = []
+    for word in s.split():
+        if get_word_language(word)=='tira':
+            norm_words.append(word)
+        else:
+            norm_words.append(tokenizer.normalize(word))
+    return ' '.join(norm_words)
+
+    
