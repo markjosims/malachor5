@@ -3,6 +3,7 @@ from transformers import WhisperTokenizer
 import sys
 sys.path.append('scripts')
 from eval import get_word_language
+from string_norm import remove_punct, unicode_normalize
 
 TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
@@ -52,7 +53,9 @@ def normalize_tira_eng_str(s: str, tokenizer: WhisperTokenizer=None) -> str:
     norm_words = []
     for word in s.split():
         if get_word_language(word)=='tira':
-            norm_words.append(word)
+            norm_word = unicode_normalize(word)
+            norm_word = remove_punct(word)
+            norm_words.append(norm_word)
         else:
             norm_words.append(tokenizer.normalize(word))
     return ' '.join(norm_words)
