@@ -115,7 +115,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         else:
             self.mean_embed = None
         if lm_path is not None:
-            self.lm_rescorer = LanguageModelRescorer(tokenizer, lm_path_list=lm_path, alpha=lm_alpha, betas=lm_betas, lm_input=lm_input)
+            self.lm_rescorer = LanguageModelRescorer(tokenizer, lm_path_list=lm_path, alpha=lm_alpha, lm_betas=lm_betas, lm_input=lm_input)
         else:
             self.lm_rescorer = None
         

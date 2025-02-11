@@ -338,6 +338,7 @@ def init_trainer(args, processor, training_args, compute_metrics, model, ds, dat
             lm_path=args.lm,
             lm_alpha=args.lm_alpha,
             lm_input=args.lm_input,
+            lm_betas=args.lm_betas,
             tokenizer=processor.tokenizer,
             train_dataset=ds.get('train', None),
             eval_dataset=ds.get('validation', None),
