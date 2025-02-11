@@ -16,6 +16,7 @@ from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
 from copy import deepcopy
+import re
 
 DEFAULT_HYPERPARAMS = {
     'group_by_length': True,
@@ -315,8 +316,10 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         del data_collator
         del trainer
         del predictions
-    csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df=pd.DataFrame(data=metrics)
+    df=df.melt(id_vars='checkpoint', var_name='tag')
+    df['step']=df['checkpoint'].apply(re.match(r'*.checkpoint-([0-9])/?').groups()[0]).astype(int)
+    csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df.to_csv(csv_path, index=False)
 
 def init_trainer(args, processor, training_args, compute_metrics, model, ds, data_collator):
