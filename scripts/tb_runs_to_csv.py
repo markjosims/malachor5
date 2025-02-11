@@ -105,6 +105,12 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     get_ewc_lmd = lambda s: float(re.search(r'ewc-lambda-([\d.]+)', s).groups()[0]) if 'ewc-lambda-' in s else None
     df['ewc_lambda'] = df['experiment_name'].apply(get_ewc_lmd)
 
+    get_lm_beta = lambda s: float(re.search(r'beta-([\d.]+)', s).groups()[0]) if 'beta-' in s else None
+    get_lm_alpha = lambda s: float(re.search(r'lm-alpha-([\d.]+)', s).groups()[0]) if 'lm-alpha-' in s else None
+    df['lm_beta']=df['experiment_name'].apply(get_lm_beta)
+    df['lm_alpha']=df['experiment_name'].apply(get_lm_alpha)
+    df['beam']=df['experiment_name'].str.contains('beam')
+
     df['epoch']=0
     epoch_mask = df['tag'].str.contains('epoch')
     for i, row in df[epoch_mask].iterrows():
