@@ -380,9 +380,9 @@ def test_get_lid_labels():
         [5002, 5021,  294,   596,  31  ],
     ], dtype=torch.int)
     lang_ids = [5000+i for i in range(11)]
-    lid_logits = torch.randn(labels.shape[0], labels.max().item()+1)
-    lid_labels = WhisperTrainer.get_lid_labels(lid_logits, labels, lang_ids)
-    expected_labels = torch.zeros_like(lid_logits).float()
+    lid_logits = torch.randn(labels.shape[0], labels.shape[1], labels.max().item()+1)
+    lid_labels = WhisperTrainer.get_lid_labels(labels, lang_ids, num_classes=lid_logits.shape[-1])
+    expected_labels = torch.zeros_like(lid_logits[:,0,:]).float()
     for i, row in enumerate(labels):
         for val in row:
             if val in lang_ids:

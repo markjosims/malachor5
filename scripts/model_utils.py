@@ -225,10 +225,10 @@ class WhisperTrainer(Seq2SeqTrainer):
 
         if self.lid_loss_alpha is not None:
             lid_logits = self.get_lid_logits(logits=outputs.logits[:,0])
-            lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
-
             labels: torch.Tensor = inputs['labels']
             lang_ids = self.model.generation_config.lang_to_id.values()
+
+            lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
             ground_truth_lid_mat = self.get_lid_labels(lid_logits, labels, lang_ids)
             lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
@@ -237,7 +237,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         return loss
 
     @staticmethod
-    def get_lid_labels(lid_logits, labels, lang_ids):
+    def get_lid_labels(labels, lang_ids, num_classes):
         lid_label_mask = torch.stack(
             [labels==lang_id for lang_id in lang_ids]
         ).sum(dim=0).bool()
@@ -245,7 +245,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             torch.sum(
                 torch.nn.functional.one_hot(
                     label[lid_label_mask[i]].long(),
-                    num_classes=lid_logits.shape[1]
+                    num_classes=num_classes,
                 ).float(),
                 dim=0,
             ) for i, label in enumerate(labels)
