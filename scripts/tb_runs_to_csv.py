@@ -5,14 +5,14 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 from argparse import ArgumentParser
-from typing import Sequence, Optional
+from typing import Sequence, Optional, List, Tuple
 import re
 
 # ---------------- #
 # filepath helpers #
 # ---------------- #
 
-def get_runs_with_date(run_dir: str) -> str:
+def get_runs_with_date(run_dir: str) -> List[Tuple[str,str]]:
     run_files = glob(os.path.join(run_dir, 'runs', '*'))
     run_date_strs = [os.path.basename(run_file)[:14] for run_file in run_files]
     run_file_dates = [datetime.strptime(run_date, '%b%d_%H-%M-%S') for run_date in run_date_strs]
@@ -27,6 +27,15 @@ def get_runs_with_date(run_dir: str) -> str:
         reverse=True
     )
     return run_file_tuples
+
+def get_checkpoint_evals(run_dirs: Sequence[str]) -> List[str]:
+    return sum(
+        [
+            glob(os.path.join(run_dir, '*', 'checkpoints-eval.csv'))
+            for run_dir in run_dirs
+        ],
+        start=[]
+    )
 
 # ----------------- #
 # dataframe helpers #
@@ -128,7 +137,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     run_dirs = [run_dir for run_dir in run_dirs if os.path.isdir(run_dir)]
     print(f"\tFound {len(run_dirs)} runs.")
 
-    df = get_runs_df(run_dirs)
+    runs_df = get_runs_df(run_dirs)
+    csv_list = get_checkpoint_evals(run_dirs)
+    print(f"Found {len(csv_list)} evaluation datafiles.")
+    csv_df = get_csv_df(csv_list)
+    df=pd.concat([runs_df,csv_df])
+
     print("Adding metadata from experiment names...")
     cols_orig = df.columns
     df = add_df_columns(df)
