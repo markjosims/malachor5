@@ -51,6 +51,8 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
         for run_path, run_date in run_tuples:
             reader = SummaryReader(run_path)
             run_df = reader.scalars
+            if len(run_df)==0:
+                continue
             run_df['experiment_name'] = run_name
             run_df['date']=run_date
             if not all_run_dates:
