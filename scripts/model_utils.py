@@ -51,7 +51,7 @@ class LanguageModelRescorer(LogitsProcessor):
 
     def score_str(self, hyp_str, eos):
         if len(self.lm_list) == 1:
-            return self.lm_list[0]
+            return self.lm_list[0].score(hyp_str)
         unweighted_scores = [lm.score(hyp_str, eos=eos) for lm in self.lm_list]
         weighted_scores = [score*beta for score,beta in zip(unweighted_scores, self.lm_betas)]
         return sum(weighted_scores)
