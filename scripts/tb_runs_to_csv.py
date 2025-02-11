@@ -59,6 +59,15 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
     df = pd.concat(df_list)
     return df
 
+def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
+    df_list = []
+    for csv in csv_list:
+        csv_df = pd.read_csv(csv)
+        csv_df['experiment_name']=csv
+        df_list.append(csv_df)
+    df = pd.concat(df_list)
+    return df
+
 def latest_run_per_event(df: pd.DataFrame):
     drop_idcs = []
     for tag in df['tag'].unique():
