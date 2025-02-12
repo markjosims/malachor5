@@ -65,13 +65,11 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
     df_list = []
     for csv in csv_list:
         csv_df = pd.read_csv(csv)
-        csv_dir = os.path.basename(os.path.dirname(csv))
-        csv_relpath = os.path.join(
-            csv_dir,
-            os.path.basename(csv)
-        )
+        model = os.path.split(csv)[-3]
+        csv_name = os.path.split(csv)[-2]
+        csv_relpath = os.path.join(model, csv_name)
         csv_df['csv_name']=csv_relpath
-        csv_df['experiment_name']=csv_dir.removesuffix('/')
+        csv_df['experiment_name']=model.removesuffix('/')
         df_list.append(csv_df)
     df = pd.concat(df_list)
     return df
