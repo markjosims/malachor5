@@ -232,7 +232,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         return loss
 
     @staticmethod
-    def compute_lid_loss(logits, labels, lang_ids, colwise=False):
+    def compute_lid_loss(logits, labels, lang_ids, colwise=True):
         lid_label_mask, lang_prefix_mask, max_lang_token_ct = WhisperTrainer.get_logit_masks_for_lid(labels, lang_ids)
         ground_truth_lid_mat = WhisperTrainer.get_lid_labels(
             labels=labels,
