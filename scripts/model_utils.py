@@ -224,36 +224,91 @@ class WhisperTrainer(Seq2SeqTrainer):
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if self.lid_loss_alpha is not None:
-            lid_logits = self.get_lid_logits(logits=outputs.logits[:,0])
-            labels: torch.Tensor = inputs['labels']
             lang_ids = self.model.generation_config.lang_to_id.values()
-
-            lid_probs = torch.nn.functional.softmax(lid_logits, dim=1)
-            ground_truth_lid_mat = self.get_lid_labels(lid_logits, labels, lang_ids)
-            lid_loss = torch.nn.functional.binary_cross_entropy(lid_probs, ground_truth_lid_mat)
+            lid_loss = self.compute_lid_loss(outputs.logits, inputs.labels, lang_ids)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
         if return_outputs:
             return loss, outputs
         return loss
 
     @staticmethod
-    def get_lid_labels(labels, lang_ids, num_classes):
+    def compute_lid_loss(logits, labels, lang_ids, colwise=False):
+        lid_label_mask, lang_prefix_mask, max_lang_token_ct = WhisperTrainer.get_logit_masks_for_lid(labels, lang_ids)
+        ground_truth_lid_mat = WhisperTrainer.get_lid_labels(
+            labels=labels,
+            lang_ids=lang_ids,
+            lid_label_mask=lid_label_mask,
+            lang_prefix_mask=lang_prefix_mask,
+            num_classes=logits.shape[-1],
+            colwise=colwise,
+        )
+        if colwise:
+            lid_probs = torch.nn.functional.softmax(
+                logits[lang_prefix_mask].view(
+                    lang_prefix_mask.shape[0], 
+                    max_lang_token_ct,
+                    logits.shape[-1],
+                )[lid_label_mask][:,lang_ids],
+                dim=1
+            )
+        else:
+            lid_probs = torch.nn.functional.softmax(
+                logits[:,0,lang_ids],
+                dim=1,
+            )
+        # breakpoint()
+        lid_loss = torch.nn.functional.cross_entropy(
+            lid_probs,
+            ground_truth_lid_mat
+        )
+        return lid_loss
+    
+    @staticmethod
+    def get_lid_labels(
+        labels: torch.Tensor,
+        num_classes: int,
+        lang_ids,
+        lang_prefix_mask=None,
+        lid_label_mask=None,
+        colwise=False
+    ):
+        if (lid_label_mask is None) or (lang_prefix_mask is None):
+            lid_label_mask, lang_prefix_mask, _ = WhisperTrainer.get_logit_masks_for_lid(labels, lang_ids)
+        one_hot_tensors = [
+            torch.nn.functional.one_hot(
+                label[lang_prefix_mask[i]].long(),
+                num_classes=num_classes,
+            ).float()
+            for i, label in enumerate(labels)
+        ]
+        ground_truth_lid_mat = torch.stack(one_hot_tensors)
+        # zero out positions in possible lang token prefix search space
+        # tha't dont have a language token
+        ground_truth_lid_mat[~lid_label_mask]=0
+        if colwise:
+            return ground_truth_lid_mat[lid_label_mask][:,lang_ids]
+        ground_truth_lid_mat=ground_truth_lid_mat.sum(dim=1)
+        langs_per_row = ground_truth_lid_mat.sum(dim=1).unsqueeze(dim=1)
+        ground_truth_lid_mat/=langs_per_row
+    
+        return ground_truth_lid_mat[:,lang_ids]
+
+    @staticmethod
+    def get_logit_masks_for_lid(labels, lang_ids):
         lid_label_mask = torch.stack(
             [labels==lang_id for lang_id in lang_ids]
         ).sum(dim=0).bool()
-        ground_truth_lid_mat = torch.stack([
-            torch.sum(
-                torch.nn.functional.one_hot(
-                    label[lid_label_mask[i]].long(),
-                    num_classes=num_classes,
-                ).float(),
-                dim=0,
-            ) for i, label in enumerate(labels)
-        ])
-        langs_per_row = ground_truth_lid_mat.sum(dim=1).unsqueeze(dim=1)
-        ground_truth_lid_mat/=langs_per_row
-        
-        return ground_truth_lid_mat
+        # there may be some rows with multiple lang tokens
+        # and some rows with one
+        # to make sure tensors are right shape, make new mask over the first N
+        # tokens of each row for N=max_[batch](num lang tokens)
+        max_lang_token_ct = lid_label_mask.sum(dim=1).max().item()
+        lang_prefix_mask = torch.zeros_like(lid_label_mask)
+        lang_prefix_mask[:,:max_lang_token_ct]=1
+        lang_prefix_mask=lang_prefix_mask.bool()
+        # now trim lid_label_mask to size of search space for language tokens
+        lid_label_mask = lid_label_mask[:,:max_lang_token_ct]
+        return lid_label_mask, lang_prefix_mask, max_lang_token_ct
     
     def get_lid_logits(
             self,

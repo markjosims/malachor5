@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import sys
 import os
 sys.path.append('scripts')
@@ -389,3 +390,115 @@ def test_get_lid_labels():
                 expected_labels[i,val]=1
         expected_labels[i]/=expected_labels[i].sum()
     assert torch.equal(lid_labels, expected_labels)
+
+def test_get_lid_labels_colwise():
+    labels = torch.tensor([
+        [5001, 5002,  121,   90,   76  ],
+        [5010, 5009,  298,   12,   432 ],
+        [5002, 2981,  87,    974,  87  ],
+        [5002, 5021,  294,   596,  31  ],
+    ], dtype=torch.int)
+    lang_ids = [5000+i for i in range(11)]
+    lid_logits = torch.randn(labels.shape[0], labels.shape[1], labels.max().item()+1)
+    lid_labels = WhisperTrainer.get_lid_labels(
+        labels,
+        lang_ids,
+        num_classes=lid_logits.shape[-1],
+        colwise=True,
+    )
+    expected_labels = torch.zeros_like(lid_logits[:,:2,:])
+    for i, row in enumerate(labels):
+        for j, val in enumerate(row):
+            if val in lang_ids:
+                expected_labels[i,j,val]=1 
+    assert torch.equal(lid_labels, expected_labels)
+
+def test_compute_lid_loss():
+    labels = torch.tensor([
+        [4, 2, 2],
+        [4, 4, 2]
+    ], dtype=torch.long)
+    perfect_logits = torch.nn.functional.one_hot(labels).float()
+    perfect_logits[perfect_logits==0]=-np.inf
+    perfect_logits.requires_grad=True
+    lang_ids = [3,4]
+    perfect_loss = WhisperTrainer.compute_lid_loss(perfect_logits, labels, lang_ids)
+    assert perfect_loss == 0
+
+    perfect_loss_colwise = WhisperTrainer.compute_lid_loss(perfect_logits, labels, lang_ids, colwise=True)
+    assert perfect_loss_colwise == 0
+
+    # change only non-lang token element to be an incorrect prediction
+    # (predicts vocab element 0 instead of 2)
+    perfect_lang_token_logits = perfect_logits.clone().detach()
+    perfect_lang_token_logits[0,1,:]=-np.inf
+    perfect_lang_token_logits[0,1,0]=1
+
+    perfect_lang_token_loss = WhisperTrainer.compute_lid_loss(perfect_lang_token_logits, labels, lang_ids)
+    assert perfect_lang_token_loss == 0
+
+    perfect_lang_token_loss_colwise = WhisperTrainer.compute_lid_loss(perfect_lang_token_logits, labels, lang_ids, colwise=True)
+    assert perfect_lang_token_loss_colwise == 0
+
+    # change lang token in row 1 col 1
+    wrong_lang_token_col1_row1 = perfect_logits.clone().detach()
+    wrong_lang_token_col1_row1[0,0,:]=-np.inf
+    wrong_lang_token_col1_row1[0,0,3]=1
+    wrong_lang_token_col1_row1_loss = WhisperTrainer.compute_lid_loss(wrong_lang_token_col1_row1, labels, lang_ids)
+    assert wrong_lang_token_col1_row1_loss > 0
+
+    # change lang token in row 2 col 2
+    wrong_lang_token_col2_row2 = perfect_logits.clone().detach()
+    wrong_lang_token_col2_row2[1,1,:]=-np.inf
+    wrong_lang_token_col2_row2[1,1,3]=1
+    wrong_lang_token_col2_row2_loss = WhisperTrainer.compute_lid_loss(wrong_lang_token_col2_row2, labels, lang_ids)
+    # should return zero loss as only first col is checked
+    assert wrong_lang_token_col2_row2_loss == 0
+    # same logits should return error if we compute lid loss colwise
+    wrong_lang_token_col2_loss_colwise = WhisperTrainer.compute_lid_loss(wrong_lang_token_col2_row2, labels, lang_ids, colwise=True)
+    assert wrong_lang_token_col2_loss_colwise > 0
+    
+    # changing all three lang tokens should give greater loss than just one
+    wrong_lang_token_col1 = perfect_logits.clone().detach()
+    wrong_lang_token_col1[:,0,:]=-np.inf
+    wrong_lang_token_col1[:,0,3]=1
+    wrong_lang_token_col1_loss = WhisperTrainer.compute_lid_loss(wrong_lang_token_col1, labels, lang_ids)
+    assert wrong_lang_token_col1_loss > 0
+    assert wrong_lang_token_col1_loss > wrong_lang_token_col1_row1_loss
+    # colwise loss should also be less than first col only
+    wrong_lang_token_loss_col1_colwise = WhisperTrainer.compute_lid_loss(wrong_lang_token_col1, labels, lang_ids, colwise=True)
+    assert wrong_lang_token_loss_col1_colwise < wrong_lang_token_col1_loss
+
+    # # second row contains codeswitching
+    labels = torch.tensor([
+        [4, 2, 2],
+        [4, 3, 2]
+    ], dtype=torch.long)
+    perfect_logits = torch.nn.functional.one_hot(labels).float()
+    perfect_logits[perfect_logits==0]=-np.inf
+    perfect_logits.requires_grad=True
+    lang_ids = [3,4]
+    
+    # should give zero loss for colwise case only
+    perfect_loss = WhisperTrainer.compute_lid_loss(perfect_logits, labels, lang_ids)
+    assert perfect_loss > 0 
+
+    perfect_loss_colwise = WhisperTrainer.compute_lid_loss(perfect_logits, labels, lang_ids, colwise=True)
+    assert perfect_loss_colwise == 0
+
+    # if we set equal likelihood to both lang tokens in col1
+    # colwise will return non-zero loss, first col will not
+    equal_prob_cs = perfect_logits.clone().detach()
+    equal_prob_cs[1,0,:]=-np.inf
+    equal_prob_cs[1,0,3]=1
+    equal_prob_cs[1,0,4]=1
+    equal_prob_cs_loss = WhisperTrainer.compute_lid_loss(equal_prob_cs, labels, lang_ids)
+    # assert equal_prob_cs_loss == 0
+    equal_prob_cs_loss_colwise = WhisperTrainer.compute_lid_loss(equal_prob_cs, labels, lang_ids, colwise=True)
+    assert equal_prob_cs_loss_colwise > equal_prob_cs_loss
+    # nvm I don't understand cross entropy
+
+
+
+
+    
