@@ -88,7 +88,7 @@ def latest_run_per_event(df: pd.DataFrame):
             if len(step_tag_df)==0:
                 continue
             step_tag_df = step_tag_df.sort_values('date', ascending=False)
-            latest_date = step_tag_df.iloc[0].index
+            latest_date = step_tag_df.iloc[0].name
             latest_idcs.append(latest_date)
     return df.loc[latest_idcs]
 
