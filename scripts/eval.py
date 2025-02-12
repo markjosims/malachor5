@@ -26,6 +26,7 @@ def get_metrics_by_language(
         metric: Literal['cer', 'wer']='wer',
         ignore_punct: bool = False,
         langs: List[str] = ['tira', 'eng', 'misc'],
+        average: bool = False,
     ) -> List[Dict[str, int]]:
     """
     Returns dictionary with language-specific edit metrics.
@@ -95,6 +96,17 @@ def get_metrics_by_language(
                 num_sub = sum(metrics[f"{lang}2{lang2}{'_char' if metric=='cer' else ''}_substitutions"] for lang2 in ['tira', 'eng', 'misc'])
                 metrics[f'{lang}_{metric}'] = (num_insert + num_delete + num_sub) / num_lang
         metric_list.append(metrics)
+    if average:
+        if len(metric_list)==1:
+            return metric_list[0]
+        avg_metrics = metric_list[0]
+        for metric_obj in metric_list[1:]:
+            for k, v in metric_obj.items():
+                avg_metrics[k]+=v
+        for k, v in avg_metrics:
+            avg_metrics[k]=v/len(metric_list)
+        return avg_metrics
+        
     return metric_list
 
 def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='wer') -> Dict[str, int]:
@@ -131,7 +143,6 @@ def get_metrics_from_alignment(align, ref, hyp, metric: Literal['cer', 'wer']='w
             ref_lang = get_word_language(ref_word)
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f"{ref_lang}{'_char' if metric=='cer' else ''}_deletions"] += 1
-
     return alignment_metrics
 
 def get_word_for_alignment(s: str, i: int, metric: Literal['cer', 'wer']='wer') -> str:
