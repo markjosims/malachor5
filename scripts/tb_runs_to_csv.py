@@ -65,8 +65,9 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
     df_list = []
     for csv in csv_list:
         csv_df = pd.read_csv(csv)
-        model = os.path.split(csv)[-3]
-        csv_name = os.path.split(csv)[-2]
+        dirlist = os.path.normpath(csv).split(os.sep)
+        model = dirlist[-3]
+        csv_name = dirlist[-2]
         csv_relpath = os.path.join(model, csv_name)
         csv_df['csv_name']=csv_relpath
         csv_df['experiment_name']=model.removesuffix('/')
