@@ -54,7 +54,7 @@ def normalize_eng_words_only(s: str, tokenizer: WhisperTokenizer=None) -> str:
         tokenizer = TOKENIZER
     norm_words = []
     for word in s.split():
-        if get_word_language(word)=='tira':
+        if get_word_language(word)!='eng':
             norm_word = unicode_normalize(word)
             norm_word = remove_punct(word)
             norm_words.append(norm_word)
