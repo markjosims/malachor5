@@ -64,7 +64,7 @@ def get_metrics_by_language(
         process_characters(reference, hypothesis)
     alignments = output.alignments
     for ref, hyp, align in zip(reference, hypothesis, alignments):
-        metrics = metric_factory(output, metric=metric)
+        metrics = metric_factory(output, metric=metric, langs=langs)
 
         for aligned_word in align:
             alignment_metrics = get_metrics_from_alignment(aligned_word, ref, hyp, metric=metric)
