@@ -157,8 +157,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     runs_df = get_runs_df(run_dirs)
     csv_list = get_checkpoint_evals(run_dirs)
     print(f"Found {len(csv_list)} evaluation datafiles.")
-    csv_df = get_csv_df(csv_list)
-    df=pd.concat([runs_df,csv_df])
+    if csv_list:
+        csv_df = get_csv_df(csv_list)
+        df=pd.concat([runs_df,csv_df])
 
     print("Adding metadata from experiment names...")
     cols_orig = df.columns
