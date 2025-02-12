@@ -184,7 +184,7 @@ def get_metrics(args, processor, return_decoded=False):
     str_process_pipe=get_str_process_pipe(args)
     compute_metrics = lambda pred: compute_wer_cer(
         pred, processor.tokenizer,
-        output_process_f=str_process_pipe,
+        str_process_f=str_process_pipe,
         return_decoded=return_decoded,
         langs=args.langs_for_metrics,
     )
@@ -203,7 +203,7 @@ def argmax_logits(logits, labels):
 def compute_wer_cer(
         pred,
         tokenizer,
-        output_process_f=None,
+        str_process_f=None,
         return_decoded=False,
         langs=None,
     ):
@@ -235,10 +235,11 @@ def compute_wer_cer(
         batch_metrics["labels"]=label_str
         batch_metrics["preds"]=pred_str
 
-    if output_process_f:
-        pred_str_processed=output_process_f(pred_str)
-        batch_metrics['cer_processed']=cer(label_str, pred_str_processed)
-        batch_metrics['wer_processed']=wer(label_str, pred_str_processed)
+    if str_process_f:
+        pred_str_processed=str_process_f(pred_str)
+        label_str_processed=str_process_f(label_str)
+        batch_metrics['cer_processed']=cer(label_str_processed, pred_str_processed)
+        batch_metrics['wer_processed']=wer(label_str_processed, pred_str_processed)
         if return_decoded:
             batch_metrics['preds_processed']=pred_str_processed
 
