@@ -79,6 +79,7 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
     return df
 
 def latest_run_per_event(df: pd.DataFrame):
+    df=df.reset_index()
     latest_idcs = []
     for tag in df['tag'].unique():
         tag_mask = df['tag']==tag
