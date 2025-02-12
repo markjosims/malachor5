@@ -69,7 +69,8 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
             os.path.basename(csv),
             os.path.dirname(csv)
         )
-        csv_df['experiment_name']=csv_relpath
+        csv_df['csv_name']=csv_relpath
+        csv_df['experiment_name']=os.path.dirname(csv).removesuffix('/')
         df_list.append(csv_df)
     df = pd.concat(df_list)
     return df
@@ -123,9 +124,10 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     get_lm_beta = lambda s: float(re.search(r'beta-([\d.]+)', s).groups()[0]) if 'beta-' in s else None
     get_lm_alpha = lambda s: float(re.search(r'lm-alpha-([\d.]+)', s).groups()[0]) if 'lm-alpha-' in s else None
     get_beams = lambda s: float(re.search(r'beam-([\d.]+)', s).groups()[0]) if 'beam-' in s else None
-    df['lm_beta']=df['experiment_name'].apply(get_lm_beta)
-    df['lm_alpha']=df['experiment_name'].apply(get_lm_alpha)
-    df['beam']=df['experiment_name'].apply(get_beams)
+    df['lm_beta']=df['csv_name'].apply(get_lm_beta)
+    df['lm_alpha']=df['csv_name'].apply(get_lm_alpha)
+    df['beam']=df['csv_name'].apply(get_beams)
+
 
     df['epoch']=0
     epoch_mask = df['tag'].str.contains('epoch')
