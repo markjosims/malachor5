@@ -37,16 +37,26 @@ device_type = lambda s: int(s) if s!='cpu' else s
 # ---------------------- #
 
 class LanguageModelRescorer(LogitsProcessor):
-    def __init__(self, tokenizer, lm_path_list, lm_betas=None, alpha=0.5, lm_input: Literal['text', 'tokens']='text'):
+    def __init__(
+            self,
+            tokenizer,
+            lm_path_list,
+            lm_betas=None,
+            alpha=0.5,
+            lm_input: Literal['text', 'tokens']='text',
+        ):
         super().__init__()
         self.alpha = alpha  # Weight for LM fusion
         self.tokenizer = tokenizer
         self.lm_list = [kenlm.LanguageModel(lm_path) for lm_path in lm_path_list]
         if len(self.lm_list)>1:
-            if len(lm_betas)!=len(self.lm_list)-1:
+            if not lm_betas:
+                self.lm_betas = [1/len(lm_path_list) for _ in lm_path_list]
+            elif len(lm_betas)!=len(self.lm_list)-1:
                 raise ValueError("Must return one beta value less than number of lms")
-            lm_betas.append(1-sum(lm_betas))
-            self.lm_betas = lm_betas
+            else:
+                lm_betas.append(1-sum(lm_betas))
+                self.lm_betas = lm_betas
         self.lm_input = lm_input
 
     def score_str(self, hyp_str, eos):
