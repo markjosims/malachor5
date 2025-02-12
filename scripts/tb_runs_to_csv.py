@@ -124,6 +124,7 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     get_lm_beta = lambda s: float(re.search(r'beta-([\d.]+)', s).groups()[0]) if 'beta-' in s else None
     get_lm_alpha = lambda s: float(re.search(r'lm-alpha-([\d.]+)', s).groups()[0]) if 'lm-alpha-' in s else None
     get_beams = lambda s: float(re.search(r'beam-([\d.]+)', s).groups()[0]) if 'beam-' in s else None
+    df['csv_name']=df['csv_name'].fillna('')
     df['lm_beta']=df['csv_name'].apply(get_lm_beta)
     df['lm_alpha']=df['csv_name'].apply(get_lm_alpha)
     df['beam']=df['csv_name'].apply(get_beams)
