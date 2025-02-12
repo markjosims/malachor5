@@ -1,26 +1,8 @@
-from string_norm import get_remove_oov_char_funct, remove_punct
-from lid_utils import has_unicode, is_en_word
+from string_norm import remove_punct
 from jiwer.process import process_words, process_characters
 from typing import Union, List, Dict, Literal
 from collections import defaultdict
-
-remove_nontira_chars = get_remove_oov_char_funct('meta/tira_asr_unique_chars.txt')
-
-def has_tira_chars(s: str) -> bool:
-    return s==remove_nontira_chars(s)
-
-def get_word_language(word: str, langs=None) -> str:
-    word=remove_punct(word).strip()
-    lang='misc'
-    if len(word)<=1 and not word.isalpha():
-        pass
-    elif has_unicode(word) and has_tira_chars(word):
-        lang='tira'
-    elif is_en_word((word)):
-        lang='eng'
-    if lang not in langs:
-        return 'misc'
-    return lang
+from lid_utils import get_word_language
 
 def get_metrics_by_language(
         reference: Union[str, List[str]],

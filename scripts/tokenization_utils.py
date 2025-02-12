@@ -2,7 +2,7 @@ import json
 from transformers import WhisperTokenizer
 import sys
 sys.path.append('scripts')
-from eval import get_word_language
+from lid_utils import get_word_language
 from string_norm import remove_punct, unicode_normalize
 
 TRANSCRIBE_TOKEN_ID=50359
@@ -22,6 +22,7 @@ LANG_TOKEN_IDS = [lang_obj['id'] for lang_obj in LANG_TOKENS.values()]
 FUNCTIONAL_TOKENS = SPECIAL_TOKENS['functional']
 SPECIAL_TOKENS_FLAT = dict(**LANG_TOKENS, **FUNCTIONAL_TOKENS)
 SB_VOXLINGUA = 'speechbrain/lang-id-voxlingua107-ecapa'
+TOKENIZER = WhisperTokenizer.from_pretrained('openai/whisper-medium')
 
 with open('meta/language_codes.json') as f:
     LANGUAGE_CODES = json.load(f)
@@ -44,12 +45,13 @@ def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
         forced_decoder_ids=[t[1] for t in forced_decoder_ids]
     return forced_decoder_ids
 
-def normalize_tira_eng_str(s: str, tokenizer: WhisperTokenizer=None) -> str:
+
+def normalize_eng_words_only(s: str, tokenizer: WhisperTokenizer=None) -> str:
     """
     Normalize all non-Tira words in string, leaving Tira unchanged
     """
     if tokenizer is None:
-        tokenizer = WhisperTokenizer.from_pretrained('openai/whisper-medium')
+        tokenizer = TOKENIZER
     norm_words = []
     for word in s.split():
         if get_word_language(word)=='tira':
@@ -57,7 +59,7 @@ def normalize_tira_eng_str(s: str, tokenizer: WhisperTokenizer=None) -> str:
             norm_word = remove_punct(word)
             norm_words.append(norm_word)
         else:
-            norm_words.append(tokenizer.normalize(word))
+            norm_words.append(word, tokenizer.normalize(word))
     return ' '.join(norm_words)
 
     
