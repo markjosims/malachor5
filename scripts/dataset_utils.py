@@ -221,7 +221,7 @@ def load_and_prepare_dataset(args):
         ds['train']=ds['train'].select(skip_range)
     if args.skip_recordings:
         ds['train'] = ds['train'].filter((lambda x: x['filestem'] not in args.skip_recordings))
-    if args.train_data_pct:
+    if args.train_data_pct and 'train' in ds:
         num_train = int(len(ds['train'])*(args.train_data_pct))
         ds['train'] = ds['train'].shuffle(seed=42).select(range(num_train))
     epitran=get_epitran(
