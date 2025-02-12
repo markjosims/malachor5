@@ -59,7 +59,7 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
             exp_df_list.append(run_df)
         exp_df = pd.concat(exp_df_list)
         if not all_run_dates:
-            run_df = latest_run_per_event(exp_df)
+            exp_df = latest_run_per_event(exp_df)
         df_list.append(exp_df)
     df = pd.concat(df_list)
     return df
