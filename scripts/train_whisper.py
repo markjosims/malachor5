@@ -318,7 +318,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         del predictions
     df=pd.DataFrame(data=metrics)
     df=df.melt(id_vars='checkpoint', var_name='tag')
-    df['step']=df['checkpoint'].apply(lambda s: re.match(r'.*checkpoint-([0-9])/?', s).groups()[0]).astype(int)
+    df['step']=df['checkpoint'].apply(lambda s: re.match(r'.*checkpoint-([0-9]+)/?', s).groups()[0]).astype(int)
     csv_path=os.path.join(eval_output_stem, 'checkpoints-eval.csv')
     df.to_csv(csv_path, index=False)
 
