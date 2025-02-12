@@ -224,7 +224,7 @@ class WhisperTrainer(Seq2SeqTrainer):
             loss = loss + (self.embed_dist_lambda * embed_dist_loss.pow(2))
 
         if self.lid_loss_alpha is not None:
-            lang_ids = self.model.generation_config.lang_to_id.values()
+            lang_ids = list(self.model.generation_config.lang_to_id.values())
             lid_loss = self.compute_lid_loss(outputs.logits, inputs.labels, lang_ids)
             loss = (1-self.lid_loss_alpha)*loss + self.lid_loss_alpha*lid_loss
         if return_outputs:
