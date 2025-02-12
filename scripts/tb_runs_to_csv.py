@@ -118,9 +118,10 @@ def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     get_lm_beta = lambda s: float(re.search(r'beta-([\d.]+)', s).groups()[0]) if 'beta-' in s else None
     get_lm_alpha = lambda s: float(re.search(r'lm-alpha-([\d.]+)', s).groups()[0]) if 'lm-alpha-' in s else None
+    get_beams = lambda s: float(re.search(r'beam-([\d.]+)', s).groups()[0]) if 'beam-' in s else None
     df['lm_beta']=df['experiment_name'].apply(get_lm_beta)
     df['lm_alpha']=df['experiment_name'].apply(get_lm_alpha)
-    df['beam']=df['experiment_name'].str.contains('beam')
+    df['beam']=df['experiment_name'].apply(get_beams)
 
     df['epoch']=0
     epoch_mask = df['tag'].str.contains('epoch')
