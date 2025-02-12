@@ -471,6 +471,7 @@ def add_processor_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument('--load_ds_cache', '-c', action='store_true')
     parser.add_argument('--char_vocab')
     parser.add_argument('--condense_tones', action='store_true')
+    parser.add_argument('--whisper_normalize', action='store_true')
     return parser
 
 def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
