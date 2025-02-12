@@ -48,6 +48,7 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
         if not run_tuples:
             continue
         run_name = os.path.basename(run_dir.removesuffix('/'))
+        exp_df_list = []
         for run_path, run_date in run_tuples:
             reader = SummaryReader(run_path)
             run_df = reader.scalars
@@ -55,9 +56,11 @@ def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
                 continue
             run_df['experiment_name'] = run_name
             run_df['date']=run_date
-            if not all_run_dates:
-                run_df = latest_run_per_event(run_df)
-            df_list.append(run_df)
+            exp_df_list.append(run_df)
+        exp_df = pd.concat(exp_df_list)
+        if not all_run_dates:
+            run_df = latest_run_per_event(exp_df)
+        df_list.append(exp_df)
     df = pd.concat(df_list)
     return df
 
