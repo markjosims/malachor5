@@ -15,6 +15,7 @@ from dataset_utils import load_and_prepare_dataset, load_data_collator, add_data
 from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
 from string_norm import get_remove_oov_char_funct, condense_tones
+from eval import get_metrics_by_language
 from copy import deepcopy
 import re
 
@@ -70,6 +71,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--lm_betas', nargs='+', type=float)
     parser.add_argument('--lm_alpha', type=float, default=0.5)
     parser.add_argument('--lm_input', choices=['text', 'tokens'], default='text')
+    parser.add_argument('--langs_for_metrics', nargs='+')
     parser = add_processor_args(parser)
     parser = add_whisper_model_args(parser)
     parser = add_dataset_args(parser)
@@ -182,6 +184,7 @@ def get_metrics(args, processor, return_decoded=False):
         pred, processor.tokenizer,
         output_process_f=str_process_pipe,
         return_decoded=return_decoded,
+        langs=args.langs_for_metrics,
     )
     return compute_metrics
 
@@ -195,7 +198,13 @@ def argmax_logits(logits, labels):
     pred_ids = torch.argmax(logits[0], dim=-1)
     return pred_ids, labels
 
-def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False):
+def compute_wer_cer(
+        pred,
+        tokenizer,
+        output_process_f=None,
+        return_decoded=False,
+        langs=None,
+    ):
     pred_ids = pred.predictions
     if type(pred_ids) is tuple:
         pred_ids = pred_ids[0]
@@ -208,13 +217,18 @@ def compute_wer_cer(pred, tokenizer, output_process_f=None, return_decoded=False
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    batch_wer = wer(label_str, pred_str)
-    batch_cer = cer(label_str, pred_str)
-    batch_metrics={
-        "wer": batch_wer, 
-        "cer": batch_cer,
+    if langs:
+        batch_wer = get_metrics_by_language(label_str, pred_str, 'wer', langs=langs, average=True)
+        batch_cer = get_metrics_by_language(label_str, pred_str, 'cer', langs=langs, average=True)
+        batch_metrics = {**batch_wer, **batch_cer}
+    else:
+        batch_wer = wer(label_str, pred_str)
+        batch_cer = cer(label_str, pred_str)
+        batch_metrics={
+            "wer": batch_wer, 
+            "cer": batch_cer,
 
-    }
+        }
     if return_decoded:
         batch_metrics["labels"]=label_str
         batch_metrics["preds"]=pred_str

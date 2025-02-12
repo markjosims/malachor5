@@ -20,7 +20,13 @@ def get_word_language(word: str) -> str:
     else:
         return 'misc'
 
-def get_metrics_by_language(reference: Union[str, List[str]], hypothesis: Union[str, List[str]], metric: Literal['cer', 'wer']='wer', ignore_punct: bool = False) -> List[Dict[str, int]]:
+def get_metrics_by_language(
+        reference: Union[str, List[str]],
+        hypothesis: Union[str, List[str]],
+        metric: Literal['cer', 'wer']='wer',
+        ignore_punct: bool = False,
+        langs: List[str] = ['tira', 'eng', 'misc'],
+    ) -> List[Dict[str, int]]:
     """
     Returns dictionary with language-specific edit metrics.
     Return keys are as follows:
@@ -147,8 +153,11 @@ def get_word_from_char_i(s: str, i: int) -> str:
         j += 1
     return word
 
-def metric_factory(jiwer_output, metric: Literal['cer', 'wer']='wer') -> Dict[str, int]:
-    langs = ['tira', 'eng', 'misc']
+def metric_factory(
+        jiwer_output,
+        metric: Literal['cer', 'wer']='wer',
+        langs: List[str]=['tira', 'eng', 'misc']
+    ) -> Dict[str, int]:
     edits = ['insertions', 'deletions', 'hits']
     if metric == 'cer':
         edits = ['char_' + edit for edit in edits]
