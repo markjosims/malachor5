@@ -59,7 +59,7 @@ def normalize_eng_words_only(s: str, tokenizer: WhisperTokenizer=None) -> str:
             norm_word = remove_punct(word)
             norm_words.append(norm_word)
         else:
-            norm_words.append(word, tokenizer.normalize(word))
+            norm_words.append(tokenizer.normalize(word))
     return ' '.join(norm_words)
 
     
