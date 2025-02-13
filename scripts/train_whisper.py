@@ -344,7 +344,7 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     df=pd.DataFrame(data=metrics)
     df=df.melt(id_vars='checkpoint', var_name='tag')
     df['step']=df['checkpoint'].apply(lambda s: re.match(r'.*checkpoint-([0-9]+)/?', s).groups()[0]).astype(int)
-    csv_path=os.path.join(eval_output_stem, f"checkpoints-{'test' if args.action=='evaluate' else 'test'}.csv")
+    csv_path=os.path.join(eval_output_stem, f"checkpoints-{'eval' if args.action=='evaluate' else 'test'}.csv")
     df.to_csv(csv_path, index=False)
 
 def init_trainer(args, processor, training_args, compute_metrics, model, ds, data_collator):
