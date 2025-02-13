@@ -43,17 +43,17 @@ def is_zulu_word(w: str) -> bool:
     return w in ZULU_WORDS
 
 def get_word_language(word: str, langs=None) -> str:
+    if langs is None:
+        langs = ['misc', 'tira', 'eng', 'zulu']
     word=remove_punct(word).strip()
     lang='misc'
     if len(word)<=1 and not word.isalpha():
         pass
-    elif is_tira_word(word):
+    elif ('tira' in langs) and is_tira_word(word):
         lang='tira'
-    elif is_zulu_word(word):
+    elif ('zulu' in langs) and is_zulu_word(word):
         lang='zulu'
-    elif is_en_word(word):
+    elif ('eng') in langs and is_en_word(word):
         lang='eng'
-    if langs and (lang not in langs):
-        return 'misc'
     return lang
 
