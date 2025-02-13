@@ -238,8 +238,8 @@ def compute_wer_cer(
         pred_str_processed=str_process_f(pred_str)
         label_str_processed=str_process_f(label_str)
         if langs:
-            batch_wer_processed = wer(label_str_processed, pred_str_processed)
-            batch_cer_processed = cer(label_str_processed, pred_str_processed)
+            batch_wer_processed = get_metrics_by_language(label_str_processed, pred_str_processed, 'wer', langs=langs, average=True)
+            batch_cer_processed = get_metrics_by_language(label_str_processed, pred_str_processed, 'cer', langs=langs, average=True)
             batch_metrics.update(**batch_wer_processed)
             batch_metrics.update(**batch_cer_processed)
         else:
