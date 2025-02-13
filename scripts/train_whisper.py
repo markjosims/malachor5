@@ -240,6 +240,9 @@ def compute_wer_cer(
         if langs:
             batch_wer_processed = get_metrics_by_language(label_str_processed, pred_str_processed, 'wer', langs=langs, average=True)
             batch_cer_processed = get_metrics_by_language(label_str_processed, pred_str_processed, 'cer', langs=langs, average=True)
+            add_processed_suffix = lambda d:{k+'_processed':v for k,v in d.items()}
+            batch_wer_processed = add_processed_suffix(batch_wer_processed)
+            batch_cer_processed = add_processed_suffix(batch_cer_processed)
             batch_metrics.update(**batch_wer_processed)
             batch_metrics.update(**batch_cer_processed)
         else:
