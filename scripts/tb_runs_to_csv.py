@@ -7,6 +7,7 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 from typing import Sequence, Optional, List, Tuple
 import re
+import torch
 
 # ---------------- #
 # filepath helpers #
@@ -37,7 +38,14 @@ def get_checkpoint_evals(run_dirs: Sequence[str]) -> List[str]:
         start=[]
     )
 
-def get_
+def get_test_predictions(run_dirs: Sequence[str]) -> List[str]:
+    return sum(
+        [
+            glob(os.path.join(run_dir, '*', 'test-predictions.pt'))
+            for run_dir in run_dirs
+        ],
+        start=[]
+    )
 
 # ----------------- #
 # dataframe helpers #
@@ -79,6 +87,22 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
         df_list.append(csv_df)
     df = pd.concat(df_list)
     return df
+
+def get_pt_df(pt_list: Sequence[str]) -> pd.DataFrame:
+    df_list = []
+    for pt_file in pt_list:
+        predictions = torch.load(pt_file)
+        dirlist = os.path.normpath(pt_file).split(os.sep)
+        model = dirlist[-3]
+        checkpoint = dirlist[-2]
+        pt_relpath = os.path.join(model,checkpoint)
+        rows = [{'tag':k, 'value':v} for k,v in predictions.metrics.items()]
+        pt_df = pd.DataFrame(rows)
+        pt_df['experiment_name']=model
+        pt_df['step']=int(re.match(r'checkpoint-(\d+)').groups()[0])
+        pt_df['preds_name']=pt_relpath
+        df_list.append(pt_df)
+    return pd.concat(df_list)
 
 def latest_run_per_event(df: pd.DataFrame):
     df=df.reset_index()
@@ -170,10 +194,16 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     runs_df = get_runs_df(run_dirs)
     csv_list = get_checkpoint_evals(run_dirs)
-    print(f"Found {len(csv_list)} evaluation datafiles.")
+    print(f"\tFound {len(csv_list)} evaluation datafiles.")
     if csv_list:
         csv_df = get_csv_df(csv_list)
         df=pd.concat([runs_df,csv_df])
+    pt_list = get_test_predictions(run_dirs)
+    print(f"\tFound {len(pt_list)} evaluation datafiles...")
+    if pt_list:
+        pt_df = get_pt_df(pt_list)
+        df = pd.concat([runs_df,pt_df])
+
 
     print("Adding metadata from experiment names...")
     cols_orig = df.columns
