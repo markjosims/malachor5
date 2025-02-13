@@ -91,7 +91,7 @@ def get_csv_df(csv_list: Sequence[str]) -> pd.DataFrame:
 def get_pt_df(pt_list: Sequence[str]) -> pd.DataFrame:
     df_list = []
     for pt_file in pt_list:
-        predictions = torch.load(pt_file)
+        predictions = torch.load(pt_file, weights_only=False)
         dirlist = os.path.normpath(pt_file).split(os.sep)
         model = dirlist[-3]
         checkpoint = dirlist[-2]
