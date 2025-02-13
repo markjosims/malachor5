@@ -199,7 +199,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         csv_df = get_csv_df(csv_list)
         df=pd.concat([runs_df,csv_df])
     pt_list = get_test_predictions(run_dirs)
-    print(f"\tFound {len(pt_list)} evaluation datafiles...")
+    print(f"\tFound {len(pt_list)} test prediction files...")
     if pt_list:
         pt_df = get_pt_df(pt_list)
         df = pd.concat([runs_df,pt_df])
