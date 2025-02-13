@@ -193,17 +193,17 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     run_dirs = [run_dir for run_dir in run_dirs if os.path.isdir(run_dir)]
     print(f"\tFound {len(run_dirs)} runs.")
 
-    runs_df = get_runs_df(run_dirs)
+    df = get_runs_df(run_dirs)
     csv_list = get_checkpoint_evals(run_dirs)
     print(f"\tFound {len(csv_list)} evaluation datafiles.")
     if csv_list:
         csv_df = get_csv_df(csv_list)
-        df=pd.concat([runs_df,csv_df])
+        df=pd.concat([df,csv_df])
     pt_list = get_test_predictions(run_dirs)
     print(f"\tFound {len(pt_list)} test prediction files...")
     if pt_list:
         pt_df = get_pt_df(pt_list)
-        df = pd.concat([runs_df,pt_df])
+        df = pd.concat([df,pt_df])
 
 
     print("Adding metadata from experiment names...")
