@@ -229,7 +229,6 @@ def compute_wer_cer(
         batch_metrics={
             "wer": batch_wer, 
             "cer": batch_cer,
-
         }
     if return_decoded:
         batch_metrics["labels"]=label_str
@@ -238,8 +237,14 @@ def compute_wer_cer(
     if str_process_f:
         pred_str_processed=str_process_f(pred_str)
         label_str_processed=str_process_f(label_str)
-        batch_metrics['cer_processed']=cer(label_str_processed, pred_str_processed)
-        batch_metrics['wer_processed']=wer(label_str_processed, pred_str_processed)
+        if langs:
+            batch_wer_processed = wer(label_str_processed, pred_str_processed)
+            batch_cer_processed = cer(label_str_processed, pred_str_processed)
+            batch_metrics.update(**batch_wer_processed)
+            batch_metrics.update(**batch_cer_processed)
+        else:
+            batch_metrics['cer_processed']=cer(label_str_processed, pred_str_processed)
+            batch_metrics['wer_processed']=wer(label_str_processed, pred_str_processed)
         if return_decoded:
             batch_metrics['preds_processed']=pred_str_processed
 
