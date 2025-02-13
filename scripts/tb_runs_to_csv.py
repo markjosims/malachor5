@@ -99,7 +99,7 @@ def get_pt_df(pt_list: Sequence[str]) -> pd.DataFrame:
         rows = [{'tag':k, 'value':v} for k,v in predictions.metrics.items()]
         pt_df = pd.DataFrame(rows)
         pt_df['experiment_name']=model
-        pt_df['step']=int(re.match(r'checkpoint-(\d+)').groups()[0])
+        pt_df['step']=int(lambda s: re.match(r'checkpoint-(\d+)', s).groups()[0])
         pt_df['preds_name']=pt_relpath
         df_list.append(pt_df)
     return pd.concat(df_list)
