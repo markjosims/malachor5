@@ -92,7 +92,7 @@ def get_metrics_by_language(
         for metric_obj in metric_list[1:]:
             for k, v in metric_obj.items():
                 avg_metrics[k]+=v
-        for k, v in avg_metrics:
+        for k, v in avg_metrics.items():
             avg_metrics[k]=v/len(metric_list)
         return avg_metrics
         
