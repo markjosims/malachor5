@@ -288,7 +288,7 @@ def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=Tr
         df['preds_processed']=preds_processed
     df.to_csv(
         args.eval_output+'.csv' if args.eval_output
-        else os.path.join(args.output, f'{args.action}-predictions.csv')
+        else os.path.join(args.checkpoint or args.output, f'{args.action}-predictions.csv')
     )
     predictions.metrics.pop(f'{metric_key_prefix}_labels')
     predictions.metrics.pop(f'{metric_key_prefix}_preds')
