@@ -232,7 +232,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     if args.baseline:
         print("Adding baseline metrics...")
         baseline_df = add_baseline(args.baseline)
-        df = pd.concat(baseline_df, df)
+        df = pd.concat([baseline_df, df])
 
     print(f"Dataframe has {len(df)} rows from {len(df['experiment_name'].unique())} experiments")
 
