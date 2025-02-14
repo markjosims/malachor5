@@ -297,7 +297,7 @@ def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=Tr
     torch.save(
         predictions,
         args.eval_output+'.pt' if args.eval_output
-        else os.path.join(args.output, f'{args.action}-predictions.pt')
+        else os.path.join(args.checkpoint or args.output, f'{args.action}-predictions.pt')
     )
     print(predictions.metrics)
     return predictions
