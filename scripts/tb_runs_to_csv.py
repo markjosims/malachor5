@@ -119,6 +119,22 @@ def latest_run_per_event(df: pd.DataFrame):
             latest_idcs.append(latest_date)
     return df.loc[latest_idcs]
 
+def add_baseline(baseline: str) -> pd.DataFrame:
+    df_list = []
+    for pt_file in glob(os.path.join(baseline, '*.pt')):
+        predictions = torch.load(pt_file, weights_only=False)
+        dirlist = os.path.normpath(pt_file).split(os.sep)
+        model = dirlist[-2]
+        preds_stem = os.path.splitext(dirlist[-1])[0]
+        pt_relpath = os.path.join(model,preds_stem)
+        rows = [{'tag':k, 'value':v} for k,v in predictions.metrics.items()]
+        pt_df = pd.DataFrame(rows)
+        pt_df['experiment_name']=model
+        pt_df['step']=0
+        pt_df['preds_name']=pt_relpath
+        df_list.append(pt_df)
+    return pd.concat(df_list) 
+
 def add_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     # lid loss alpha col
     get_lid_loss_alpha = lambda s: float(re.search(r'lid-alpha-([\d.]+)', s).groups()[0]) if 'lid-alpha-' in s else None
@@ -178,6 +194,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--globstr', '-g', nargs='+')
     parser.add_argument('--output', '-o')
     parser.add_argument('--all_run_dates', action='store_true')
+    parser.add_argument('--baseline')
 
     return parser
 
@@ -211,6 +228,11 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     df = add_df_columns(df)
     new_cols = [col for col in df.columns if col not in cols_orig]
     print(f"\tAdded columns: {new_cols}")
+
+    if args.baseline:
+        print("Adding baseline metrics...")
+        baseline_df = add_baseline(args.baseline)
+        df = pd.concat(baseline_df, df)
 
     print(f"Dataframe has {len(df)} rows from {len(df['experiment_name'].unique())} experiments")
 
