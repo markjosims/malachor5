@@ -47,6 +47,15 @@ def get_test_predictions(run_dirs: Sequence[str]) -> List[str]:
         start=[]
     )
 
+def get_tira_mono_test_files(run_dirs: Sequence[str]) -> List[str]:
+    return sum(
+        [
+            glob(os.path.join(run_dir, '*', 'tira-mono-test.pt'))
+            for run_dir in run_dirs
+        ],
+        start=[]
+    )
+
 # ----------------- #
 # dataframe helpers #
 # ----------------- #
@@ -221,7 +230,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     if pt_list:
         pt_df = get_pt_df(pt_list)
         df = pd.concat([df,pt_df])
-
+    tira_mono_list = get_tira_mono_test_files(run_dirs)
+    print(f"\tFound {len(tira_mono_list)} test files for `tira-clean-split`")
+    if tira_mono_list:
+        tira_df = get_pt_df(tira_mono_list)
+        tira_df['dataset'] = 'tira-clean-split'
+        df = pd.concat([df, tira_df])
 
     print("Adding metadata from experiment names...")
     cols_orig = df.columns
