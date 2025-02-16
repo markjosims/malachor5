@@ -1,0 +1,21 @@
+\begin{tabular}{llllllllll}
+\toprule
+ &  & \multicolumn{2}{l}{Plain finetune} & \multicolumn{2}{l}{EWC} & \multicolumn{2}{l}{LID loss} & \multicolumn{2}{l}{EWC+LID loss} \\
+ &  & wer & cer & wer & cer & wer & cer & wer & cer \\
+ & Train dataset &  &  &  &  &  &  &  &  \\
+\midrule
+Tira & Baseline & 0.50 & 0.42 & nan & nan & nan & nan & nan & nan \\
+ & Mono & 0.74 & 0.67 & \textit{0.67} & \textit{0.58} & 0.76 & 0.64 & 0.72 & 0.65 \\
+ & Biling & 0.53 & 0.47 & \textit{0.51} & \textit{0.45} & 0.53 & \textit{0.45} & 0.53 & 0.46 \\
+ & Biling (50\%) & 0.50 & 0.44 & \textit{0.49} & \textit{0.42} & \textit{0.49} & \textit{0.42} & \textit{0.49} & 0.43 \\
+ & CS (short) & \textit{0.46} & \textit{0.35} & 0.47 & \textit{0.35} & 0.47 & \textit{0.35} & 0.47 & \textit{0.35} \\
+ & CS (long) & \textbf{0.43} & \textbf{0.34} & \textit{\textbf{0.42}} & \textit{0.33} & \textbf{0.43} & \textbf{0.33} & \textit{\textbf{0.42}} & \textbf{0.33} \\
+ & All (short) & 0.46 & 0.35 & \textit{0.44} & \textit{\textbf{0.32}} & 0.45 & 0.34 & 0.45 & \textbf{0.33} \\
+ & All (long) & 0.59 & 0.45 & \textit{0.43} & 0.34 & \textbf{0.43} & \textit{\textbf{0.33}} & \textit{0.43} & \textit{\textbf{0.33}} \\
+isiZulu & Mono & 0.86 & 0.47 & \textit{0.69} & \textit{0.34} & 0.70 & \textit{0.34} & 0.70 & 0.35 \\
+ & Biling & 0.59 & 0.29 & 0.71 & 0.39 & 0.57 & \textit{0.27} & \textit{0.55} & \textit{0.27} \\
+ & Biling (50\%) & 0.63 & 0.36 & 0.63 & 0.35 & \textit{0.62} & \textit{0.33} & \textit{0.62} & \textit{0.33} \\
+ & CS & 0.48 & 0.23 & 0.47 & 0.22 & 0.48 & 0.22 & \textit{0.46} & \textit{0.21} \\
+ & All & \textit{\textbf{0.41}} & \textit{\textbf{0.18}} & \textbf{0.42} & \textbf{0.19} & \textbf{0.42} & \textit{\textbf{0.18}} & \textbf{0.42} & \textbf{0.19} \\
+\bottomrule
+\end{tabular}
