@@ -60,12 +60,14 @@ def get_tira_mono_test_files(run_dirs: Sequence[str]) -> List[str]:
 # dataframe helpers #
 # ----------------- #
 
-def get_runs_df(run_dirs: Sequence[str], all_run_dates=False) -> pd.DataFrame:
+def get_runs_df(run_dirs: Sequence[str], all_run_dates=False, latest_run_only=False) -> pd.DataFrame:
     df_list = []
     for run_dir in tqdm(run_dirs):
         run_tuples = get_runs_with_date(run_dir)
         if not run_tuples:
             continue
+        if latest_run_only:
+            run_tuples = [run_tuples[0]]
         run_name = os.path.basename(run_dir.removesuffix('/'))
         exp_df_list = []
         for run_path, run_date in run_tuples:
@@ -203,6 +205,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--globstr', '-g', nargs='+')
     parser.add_argument('--output', '-o')
     parser.add_argument('--all_run_dates', action='store_true')
+    parser.add_argument('--latest_run_only', action='store_true')
     parser.add_argument('--baseline')
 
     return parser
@@ -219,7 +222,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     run_dirs = [run_dir for run_dir in run_dirs if os.path.isdir(run_dir)]
     print(f"\tFound {len(run_dirs)} runs.")
 
-    df = get_runs_df(run_dirs)
+    df = get_runs_df(run_dirs, args.all_run_dates, args.latest_run_only)
     csv_list = get_checkpoint_evals(run_dirs)
     print(f"\tFound {len(csv_list)} evaluation datafiles.")
     if csv_list:
