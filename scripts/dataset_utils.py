@@ -27,6 +27,7 @@ DATASET_ARGS = {
     'eval_datasets': {'nargs': '+', 'help': 'Extra datasets for validation'},
     'eval_dataset_languages': {'nargs': '+', 'help': 'Language for each extra validation set'},
     'train_datasets': {'nargs': '+', 'help': 'Extra datasets for training'},
+    'train_data_pct': {'type': float, 'help': 'Portion of train data to use (from 0 to 1)'},
     'train_dataset_languages': {'nargs': '+', 'help': 'Language for each extra train set'},
     'g2p': {'action': 'store_true'},
     'transcription_ids': {'action': 'store_true', 'help': "Instead of tokenizing str in `transcription` column, load token ids directly from `transcription_ids` column"},
