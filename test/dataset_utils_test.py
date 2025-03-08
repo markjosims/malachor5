@@ -4,7 +4,7 @@ from datasets import Dataset
 
 import sys
 sys.path.append('scripts')
-from dataset_utils import load_and_prepare_dataset, DATASET_ARGS, TIRA_ASR_DS, FLEURS, TIRA_BILING
+from dataset_utils import load_and_prepare_dataset, DATASET_ARG_NAMES, TIRA_ASR_DS, FLEURS, TIRA_BILING
 
 def test_dataset_language():
     args = Namespace(
@@ -14,7 +14,7 @@ def test_dataset_language():
         num_records=50,
         action='evaluate',
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -34,7 +34,7 @@ def test_dataset_multi_language():
         num_records=50,
         action='evaluate',
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -56,7 +56,7 @@ def test_eval_datasets():
         eval_dataset_languages=['en', 'sw+en'],
         action='evaluate',
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -101,7 +101,7 @@ def test_decoder_input_added():
         num_records=50,
         action='evaluate',
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -128,7 +128,7 @@ def test_label_prefix_added():
         num_records=50,
         action='evaluate',
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -159,7 +159,7 @@ def test_skip_recordings():
         action='train',
         skip_recordings=['HH20210312'],
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)
@@ -177,7 +177,7 @@ def test_train_datasets():
         action='train',
         num_records=10,
     )
-    for arg in DATASET_ARGS:
+    for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
     ds, _ = load_and_prepare_dataset(args)

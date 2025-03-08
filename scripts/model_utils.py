@@ -18,6 +18,7 @@ from transformers import (
 from transformers.modeling_outputs import BaseModelOutput
 import pickle
 from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
+from argparse_utils import make_subparser_from_argdict
 import numpy as np
 import kenlm
 from datasets import Dataset
@@ -31,6 +32,30 @@ LR_ARG_DEFAULTS = {
     'sb_savedir': 'models/speechbrain',
 }
 device_type = lambda s: int(s) if s!='cpu' else s
+
+# -------------- #
+# argparse dicts #
+# -------------- #
+
+PROCESSOR_ARGS = {
+    'processor': {'type': str, 'help': 'path to processor (if different than model)'},
+    'char_vocab': {'type': str, 'help': 'delete all chars not in vocab file in post-correction'},
+    'condense_tones': {'action': 'store_true', 'help': 'when post-correcting keep only first tone in a sequence of tone diacritics'},
+    'whisper_normalize': {'action': 'store_true', 'help': 'use Whisper normalizer in post-correction pipeline'},
+    'langs_for_metrics': {'nargs': '+', 'help': 'Calculate error rates for each language individually during eval'}
+}
+
+MODEL_ARGS = {
+    'model': {'abbrevation': 'm', 'type': str},
+    'device': {'abbreviation' :'D', 'default': DEVICE, 'type': device_type},
+    'peft_type': {'choices': ['LoRA', 'lang_token']},
+}
+
+SLI_ARGS = {
+    'sli_embed_model': {'type': str},
+    'embed_api': {'choices': ['hf', 'sb'], 'default': 'sb'},
+    'sb_savedir': {'default': 'models/speechbrain'},
+}
 
 # ---------------------- #
 # custom trainer objects #
@@ -463,26 +488,14 @@ def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwar
 # ---------------- #
 
 def add_processor_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--processor')
-    parser.add_argument('--g2p', action='store_true')
-    parser.add_argument('--transcription_ids', action='store_true')
-    parser.add_argument('--label_key', default='transcription')
-    parser.add_argument('--language', '-l', nargs='+')
-    parser.add_argument('--load_ds_cache', '-c', action='store_true')
-    parser.add_argument('--char_vocab')
-    parser.add_argument('--condense_tones', action='store_true')
-    parser.add_argument('--whisper_normalize', action='store_true')
+    make_subparser_from_argdict(PROCESSOR_ARGS, parser, 'processor_args')
     return parser
 
 def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--model', '-m')
-    parser.add_argument('--device', '-D', default=DEVICE, type=device_type)
-    parser.add_argument('--peft_type', choices=['LoRA', 'lang_token'])
+    make_subparser_from_argdict(MODEL_ARGS, parser, 'model_args')
     return parser
 
 
 def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--sli_embed_model')
-    parser.add_argument('--embed_api', choices=['hf', 'sb'], default='sb')
-    parser.add_argument('--sb_savedir', default='models/speechbrain')
+    make_subparser_from_argdict(SLI_ARGS, parser, 'sli_args')
     return parser

@@ -11,32 +11,30 @@ from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
 from tokenization_utils import *
+from argparse_utils import make_subparser_from_argdict
 import numpy as np
 from copy import copy
 from tqdm import tqdm
 
-# TODO: clean up args across scripts
-DATASET_ARG_MAP = {
-    'dataset': str,
-    'num_records': int,
-    'stream': bool,
-    'fleurs_lang': str,
-    'skip_idcs': lambda x: [int(i) for i in x],
-    'skip_recordings': list,
-    'make_split': bool,
-    'processor': str,
-    'model': str,
-    'action': str,
-    'g2p': str,
-    'load_ds_cache': bool,
-    'transcription_ids': str,
-    'label_key': str,
-    'eval_datasets': list,
-    'eval_dataset_languages': list,
-    'train_datasets': list,
-    'train_dataset_languages': list,
+DATASET_ARGS = {
+    'dataset': {'type': str},
+    'num_records': {'abbreviation': 'n', 'type': int},
+    'stream': {'type': bool, 'action': 'store_true'},
+    'fleurs_lang': {'type': str},
+    'skip_idcs': {'nargs': '+', 'type': lambda x: [int(i) for i in x]},
+    'skip_recordings': {'nargs': '+'},
+    'make_split': {'type': bool},
+    'eval_datasets': {'nargs': '+', 'help': 'Extra datasets for validation'},
+    'eval_dataset_languages': {'nargs': '+', 'help': 'Language for each extra validation set'},
+    'train_datasets': {'nargs': '+', 'help': 'Extra datasets for training'},
+    'train_dataset_languages': {'nargs': '+', 'help': 'Language for each extra train set'},
+    'g2p': {'action': 'store_true'},
+    'transcription_ids': {'action': 'store_true', 'help': "Instead of tokenizing str in `transcription` column, load token ids directly from `transcription_ids` column"},
+    'label_key': {'default':'transcription'},
+    'language': {'abbreviation': '-l', 'nargs': '+'},
+    'load_ds_cache': {'abbreviation': '-c', 'action': 'store_true'},
 }
-DATASET_ARGS = list(DATASET_ARG_MAP.keys())
+DATASET_ARG_NAMES = list(DATASET_ARGS.keys())
 
 # ------------- #
 # data collator #
@@ -391,16 +389,5 @@ def iso2_to_fleurs(iso2, raise_error=False):
 # ---------------- #
 
 def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
-    parser.add_argument('--dataset', '-d')
-    parser.add_argument('--num_records', '-n', type=int)
-    parser.add_argument('--stream', action='store_true')
-    parser.add_argument('--fleurs_lang')
-    parser.add_argument('--skip_idcs', nargs='+', type=int)
-    parser.add_argument('--make_split', action='store_true')
-    parser.add_argument('--eval_datasets', nargs='+')
-    parser.add_argument('--eval_dataset_languages', nargs='+')
-    parser.add_argument('--train_datasets', nargs='+')
-    parser.add_argument('--train_dataset_languages', nargs='+')
-    parser.add_argument('--skip_recordings', nargs='+')
-    parser.add_argument('--train_data_pct', type=float)
+    make_subparser_from_argdict(DATASET_ARGS, parser, 'dataset_args')
     return parser

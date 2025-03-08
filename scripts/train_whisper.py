@@ -9,17 +9,63 @@ import numpy as np
 from jiwer import wer, cer
 import pandas as pd
 import os
+import json
 from glob import glob
 from tqdm import tqdm
-from dataset_utils import load_and_prepare_dataset, load_data_collator, add_dataset_args
+from dataset_utils import load_and_prepare_dataset, load_data_collator, DATASET_ARGS
 from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS, normalize_eng_words_only
-from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, add_processor_args, add_whisper_model_args, prepare_trainer_for_peft
+from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, PROCESSOR_ARGS, MODEL_ARGS, prepare_trainer_for_peft
+from argparse_utils import make_subparser_from_argdict
 from string_norm import get_remove_oov_char_funct, condense_tones
 from eval import get_metrics_by_language
 from copy import deepcopy
 import re
 
-DEFAULT_HYPERPARAMS = {
+# weights for loss regularization functions
+LOSS_REGULARIZATION_HYPERPARAMS = {
+    'lid_loss_alpha': {'type': float},
+    'ewc_lambda': {'type': float}
+}
+
+# parameters associated with language prompt tuning
+PROMPT_TUNING_HYPERPARAMS = {
+    'mean_embed_path': {'type': str},
+    'embed_dist_lambda': {'type': float, 'default': 1},
+    'embed_dist_type': {'choices': ['euclidean', 'cosine'], 'default': 'euclidean'},
+}
+
+# output paths for actions other than train/evaluate/test
+EXTRA_OUTPUT_ARGS = {
+    'lid_logits_path': {'type': str, 'help': "For args.action=='get_lid_probs'"},
+    'fisher_matrix_path': {'type': str, 'help': "Outpu path for fisher matrix for args.action=='calculate_fisher, read path for ewc regularization"},
+}
+
+EVAL_ARGS = {
+    'eval_checkpoints': {
+        'nargs':'+',
+        'help': "For evaluating multiple checkpoints. To evaluate all checkpoints, pass 'all', else pass a list of checkpoint numbers (NOT paths)."
+    },
+    'eval_output': {'type': str, 'help': 'Path to save evaluation output and predictions to. If training, evaluate last checkpoint.'},
+}
+
+# args for LM-boosted decoding
+LM_ARGS = {
+    'lm': {'nargs':'+', 'type': str},
+    'lm_betas': {'nargs':'+', 'type': float},
+    'lm_alpha': {'type':float, 'default': 0.5},
+    'lm_input': {'choices':['text', 'tokens'], 'default': 'text'},
+}
+
+TRAIN_PROG_ARGS = {
+    'output': {'abbreviation': 'o', 'help': 'Directory to save model to'},
+    'ft_peft_model': {'action': 'store_true'},
+    'resume_from_checkpoint': {'action': 'store_true'},
+    'checkpoint': {'type': int},
+    'action': {'choices': ['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_probs'], 'default': 'train'},
+}
+
+# hyperparams associated with `transformers.Seq2SeqTrainingArguments`
+DEFAULT_TRAINER_HYPERPARAMS = {
     'group_by_length': True,
     'per_device_train_batch_size': 8,
     'per_device_eval_batch_size': 8,
@@ -41,56 +87,54 @@ DEFAULT_HYPERPARAMS = {
     'remove_unused_columns': False,
     'eval_on_start': False,
     'use_cpu': False,
-    # 'debug': 'underflow_overflow', 
 }
-HYPERPARAM_ABBREVIATIONS = {
+TRAINER_HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
     'per_device_eval_batch_size': 'B',
     'num_train_epochs': 'e',
     'gradient_accumulation_steps': 'g',
 }
 
+def get_hyperparam_argdict():
+    """
+    Return a dictioanry of shape {
+        `arg_name`: {
+            'abbreviation': str,
+            'default', val,
+            ?'action': str,
+            ?'type': type,
+        }
+    }
+    for trainer hyperparams
+    """
+    argdict = {}
+    for k, v in DEFAULT_TRAINER_HYPERPARAMS.items():
+        k_dict = {'default': v}
+
+        if k in TRAINER_HYPERPARAM_ABBREVIATIONS:
+            k_dict['abbreviation']=TRAINER_HYPERPARAM_ABBREVIATIONS[k]
+        if type(v) is bool:
+            k_dict['action']='store_true'
+        else:
+            k_dict['type']=type(v)
+        argdict[k]=k_dict
+    return argdict
+
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
-    parser.add_argument('--output', '-o')
-    parser.add_argument('--ft_peft_model', action='store_true')
-    parser.add_argument('--resume_from_checkpoint', action='store_true')
-    parser.add_argument('--checkpoint')
-    parser.add_argument('--action', choices=['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_probs'], default='train')
-    parser.add_argument('--all_chkpnts', action='store_true')
-    parser.add_argument('--num_chkpnts', type=int, help='useful for debugging `--all_chkpnts`')
-    parser.add_argument('--chkpnts', nargs='+')
-    parser.add_argument('--eval_output')
-    parser.add_argument('--mean_embed_path')
-    parser.add_argument('--embed_dist_lambda', type=float, default=1)
-    parser.add_argument('--embed_dist_type', choices=['euclidean', 'cosine'], default='euclidean')
-    parser.add_argument('--fisher_matrix_path')
-    parser.add_argument('--lid_logits_path')
-    parser.add_argument('--lid_loss_alpha', type=float)
-    parser.add_argument('--lm', nargs='+')
-    parser.add_argument('--lm_betas', nargs='+', type=float)
-    parser.add_argument('--lm_alpha', type=float, default=0.5)
-    parser.add_argument('--lm_input', choices=['text', 'tokens'], default='text')
-    parser.add_argument('--langs_for_metrics', nargs='+')
-    parser = add_processor_args(parser)
-    parser = add_whisper_model_args(parser)
-    parser = add_dataset_args(parser)
-    parser = add_hyperparameter_args(parser)
-    return parser
-
-def add_hyperparameter_args(parser: ArgumentParser) -> None:
-    hyper_args = parser.add_argument_group(
-        'hyperparameters',
-        description='Hyperparameter values for training'
-    )
-    for k, v in DEFAULT_HYPERPARAMS.items():
-        flags=['--'+k,]
-        if k in HYPERPARAM_ABBREVIATIONS:
-            flags.append('-'+HYPERPARAM_ABBREVIATIONS[k])
-        if type(v) is bool:
-            hyper_args.add_argument(*flags, default=v, action='store_true')
-        else:
-            hyper_args.add_argument(*flags, type=type(v), default=v)
+    argdicts = [
+        (TRAIN_PROG_ARGS, 'prog_args')
+        (DATASET_ARGS, 'dataset_args'),
+        (MODEL_ARGS, 'model_args'),
+        (PROCESSOR_ARGS, 'processor_args'),
+        (get_hyperparam_argdict(), 'trainer_hyperparams'),
+        (LM_ARGS, 'lm_decoding'),
+        (LOSS_REGULARIZATION_HYPERPARAMS, 'loss_regularization'),
+        (PROMPT_TUNING_HYPERPARAMS, 'prompt_tuning'),
+        (EVAL_ARGS, 'eval'),
+    ]
+    for argdict, name in argdicts:
+        make_subparser_from_argdict(argdict, parser, name)
     return parser
 
 # -------------------- #
@@ -307,12 +351,10 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
                 os.path.join(args.output, 'checkpoint-*/')
     )
     chkpnts.sort(key=lambda s:int(s.removesuffix('/').split(sep='-')[-1]))
-    if args.num_chkpnts:
-        chkpnts=chkpnts[:args.num_chkpnts]
-    elif args.chkpnts:
+    if args.eval_checkpoints != ['all']:
         chkpnts=[
             chkpnt for chkpnt in chkpnts
-            if chkpnt.removesuffix('/').split(sep='-')[-1] in args.chkpnts
+            if chkpnt.removesuffix('/').split(sep='-')[-1] in args.eval_checkpoints
         ]
     eval_output_stem=args.eval_output or args.output
     os.makedirs(eval_output_stem, exist_ok=True)
@@ -371,12 +413,31 @@ def init_trainer(args, processor, training_args, compute_metrics, model, ds, dat
     
     return trainer
 
+# -------------- #
+# saving results #
+# -------------- #
+
+def make_experiment_json(args):
+    json_path = os.path.join(args.output, 'experiment.json')
+    if args.action == 'train':
+        exp_json = {
+            'experiment_name': os.path.basename(args.output),
+            'experiment_path': args.output,
+            'base_checkpoint': args.model,
+        }
+        breakpoint()
+    else:
+        raise NotImplementedError
+
+    with open(json_path, 'w') as f:
+        json.dump(exp_json, f)
+
 # ------------- #
 # training args #
 # ------------- #
 
 def get_training_args(args):
-    arg_dict={k: getattr(args, k) for k in DEFAULT_HYPERPARAMS.keys()}
+    arg_dict={k: getattr(args, k) for k in DEFAULT_TRAINER_HYPERPARAMS.keys()}
     for k, v in arg_dict.items():
         # -1 passed to CLI indicates arg value should be None
         if v==-1:
@@ -405,7 +466,7 @@ def perform_train(args: Namespace) -> int:
     print("Defining training args...")
     training_args = get_training_args(args)
 
-    if not args.all_chkpnts:
+    if not args.eval_checkpoints:
         print("Loading model...")
         model = load_whisper_model_for_training_or_eval(args)
         print("Setting model generation config...")
@@ -426,7 +487,7 @@ def perform_train(args: Namespace) -> int:
         if args.eval_output:
             evaluate_dataset(args, ds['validation'], trainer, processor)
     elif args.action=='evaluate':
-        if args.all_chkpnts:
+        if args.eval_checkpoints:
             evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics)
         else:
             evaluate_dataset(args, ds['validation'], trainer, processor)
@@ -438,6 +499,7 @@ def perform_train(args: Namespace) -> int:
         # args.action == 'test'
         evaluate_dataset(args, ds['test'], trainer, processor)
 
+    make_experiment_json(args)
 
     return 0
 

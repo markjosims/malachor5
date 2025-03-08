@@ -517,7 +517,7 @@ def test_experiment_json(tmpdir):
     assert os.path.exists(json_path)
     with open(json_path) as f:
         exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.name
+    assert exp_json['experiment_name'] == tmpdir.basename
     assert exp_json['experiment_path'] == str(tmpdir)
     assert exp_json['num_train_epochs'] == 2
     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
