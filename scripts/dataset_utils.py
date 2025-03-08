@@ -11,7 +11,7 @@ from string_norm import get_epitran
 from transformers import WhisperProcessor
 import os
 from tokenization_utils import *
-from argparse_utils import make_subparser_from_argdict
+from argparse_utils import make_arggroup_from_argdict
 import numpy as np
 from copy import copy
 from tqdm import tqdm
@@ -389,5 +389,5 @@ def iso2_to_fleurs(iso2, raise_error=False):
 # ---------------- #
 
 def add_dataset_args(parser: ArgumentParser) -> ArgumentParser:
-    make_subparser_from_argdict(DATASET_ARGS, parser, 'dataset_args')
+    make_arggroup_from_argdict(DATASET_ARGS, parser, 'dataset_args')
     return parser

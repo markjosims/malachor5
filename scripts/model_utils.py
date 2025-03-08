@@ -18,7 +18,7 @@ from transformers import (
 from transformers.modeling_outputs import BaseModelOutput
 import pickle
 from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
-from argparse_utils import make_subparser_from_argdict
+from argparse_utils import make_arggroup_from_argdict
 import numpy as np
 import kenlm
 from datasets import Dataset
@@ -488,14 +488,14 @@ def load_lr(lr_model: Optional[str]=None, args: Optional[Namespace]=None, **kwar
 # ---------------- #
 
 def add_processor_args(parser: ArgumentParser) -> ArgumentParser:
-    make_subparser_from_argdict(PROCESSOR_ARGS, parser, 'processor_args')
+    make_arggroup_from_argdict(PROCESSOR_ARGS, parser, 'processor_args')
     return parser
 
 def add_whisper_model_args(parser: ArgumentParser) -> ArgumentParser:
-    make_subparser_from_argdict(MODEL_ARGS, parser, 'model_args')
+    make_arggroup_from_argdict(MODEL_ARGS, parser, 'model_args')
     return parser
 
 
 def add_sli_args(parser: ArgumentParser) -> ArgumentParser:
-    make_subparser_from_argdict(SLI_ARGS, parser, 'sli_args')
+    make_arggroup_from_argdict(SLI_ARGS, parser, 'sli_args')
     return parser
