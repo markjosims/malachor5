@@ -19,11 +19,11 @@ from tqdm import tqdm
 DATASET_ARGS = {
     'dataset': {'type': str},
     'num_records': {'abbreviation': 'n', 'type': int},
-    'stream': {'type': bool, 'action': 'store_true'},
+    'stream': {'action': 'store_true'},
     'fleurs_lang': {'type': str},
     'skip_idcs': {'nargs': '+', 'type': lambda x: [int(i) for i in x]},
     'skip_recordings': {'nargs': '+'},
-    'make_split': {'type': bool},
+    'make_split': {'action': 'store_true'},
     'eval_datasets': {'nargs': '+', 'help': 'Extra datasets for validation'},
     'eval_dataset_languages': {'nargs': '+', 'help': 'Language for each extra validation set'},
     'train_datasets': {'nargs': '+', 'help': 'Extra datasets for training'},
