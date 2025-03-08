@@ -1,9 +1,10 @@
 import torch
 import numpy as np
+import json
 import sys
 import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, perform_train
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -498,7 +499,38 @@ def test_compute_lid_loss():
     assert equal_prob_cs_loss_colwise > equal_prob_cs_loss
     # nvm I don't understand cross entropy
 
+def test_experiment_json(tmpdir):
+    """
+    Train model and check that `experiment.json` is saved successfully
+    """
+    parser = init_parser()
+    args = parser.parse_args([])
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 10
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 2
 
+    perform_train(args)
+    json_path = str(tmpdir/'experiment.json')
+    assert os.path.exists(json_path)
+    with open(json_path) as f:
+        exp_json = json.load(f)
+    assert exp_json['experiment_name'] == tmpdir.name
+    assert exp_json['experiment_path'] == str(tmpdir)
+    assert exp_json['num_train_epochs'] == 2
+    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+    train_data = exp_json['train_data']
+    assert type(train_data) is list
+    assert len(train_data) == 1
+    assert train_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+    assert train_data[0]['dataset_path'] == TIRA_ASR_DS
+    assert train_data[0]['num_records'] == 10
 
-
-    
+    val_data = exp_json['val_data']
+    assert type(val_data) is list
+    assert len(val_data) == 1
+    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+    assert val_data[0]['num_records'] == 10
