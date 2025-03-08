@@ -5,12 +5,14 @@ def make_parser_from_argdict(argdict, parser: Optional[ArgumentParser]=None) -> 
     if parser is None:
         parser = ArgumentParser()
     for arg, arg_d in argdict.items():
+        assert arg == arg.strip()
         kwargs = arg_d.copy()
         abbreviation = kwargs.pop('abbreviation', None)
         if abbreviation is not None:
+            assert abbreviation == abbreviation.strip()
             parser.add_argument('--'+arg, '-'+abbreviation, **kwargs)
         else:
-            parser.add_argument(arg, **kwargs)
+            parser.add_argument('--'+arg, **kwargs)
     return parser
 
 def make_arggroup_from_argdict(argdict, parser: ArgumentParser, title: str) -> ArgumentParser:
