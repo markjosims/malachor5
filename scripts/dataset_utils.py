@@ -30,9 +30,9 @@ DATASET_ARGS = {
     'train_dataset_languages': {'nargs': '+', 'help': 'Language for each extra train set'},
     'g2p': {'action': 'store_true'},
     'transcription_ids': {'action': 'store_true', 'help': "Instead of tokenizing str in `transcription` column, load token ids directly from `transcription_ids` column"},
-    'label_key': {'default':'transcription'},
-    'language': {'abbreviation': '-l', 'nargs': '+'},
-    'load_ds_cache': {'abbreviation': '-c', 'action': 'store_true'},
+    'label_key': {'default': 'transcription'},
+    'language': {'abbreviation': 'l', 'nargs': '+'},
+    'load_ds_cache': {'abbreviation': 'c', 'action': 'store_true'},
 }
 DATASET_ARG_NAMES = list(DATASET_ARGS.keys())
 
