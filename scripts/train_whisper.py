@@ -1,7 +1,7 @@
 # Finetune Whisper model on a new dataset using HF
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import Sequence, Optional
 from transformers import Seq2SeqTrainingArguments
 import torch
@@ -397,10 +397,7 @@ def get_training_args(args):
 # main #
 # ---- #
 
-def main(argv: Sequence[Optional[str]]=None) -> int:
-    parser=init_parser()
-    args=parser.parse_args(argv)
-
+def perform_train(args: Namespace) -> int:
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Defining metrics...")
@@ -444,6 +441,10 @@ def main(argv: Sequence[Optional[str]]=None) -> int:
 
     return 0
 
+def main(argv: Sequence[Optional[str]]=None) -> int:
+    parser=init_parser()
+    args=parser.parse_args(argv)
+    return perform_train(args)
 
 
 if __name__ == '__main__':
