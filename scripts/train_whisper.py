@@ -129,6 +129,7 @@ def init_parser() -> ArgumentParser:
         (PROCESSOR_ARGS, 'processor_args'),
         (get_hyperparam_argdict(), 'trainer_hyperparams'),
         (LM_ARGS, 'lm_decoding'),
+        (EXTRA_OUTPUT_ARGS, 'extra_output_args'),
         (LOSS_REGULARIZATION_HYPERPARAMS, 'loss_regularization'),
         (PROMPT_TUNING_HYPERPARAMS, 'prompt_tuning'),
         (EVAL_ARGS, 'eval'),
