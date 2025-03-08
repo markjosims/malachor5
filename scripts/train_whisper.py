@@ -123,7 +123,7 @@ def get_hyperparam_argdict():
 def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     argdicts = [
-        (TRAIN_PROG_ARGS, 'prog_args')
+        (TRAIN_PROG_ARGS, 'prog_args'),
         (DATASET_ARGS, 'dataset_args'),
         (MODEL_ARGS, 'model_args'),
         (PROCESSOR_ARGS, 'processor_args'),
