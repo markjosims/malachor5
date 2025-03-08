@@ -38,7 +38,8 @@ DATASET_ARGS = {
     'label_key': {'default': 'transcription'},
     'language': {'abbreviation': 'l', 'nargs': '+'},
     'load_ds_cache': {'abbreviation': 'c', 'action': 'store_true'},
-} + TRAIN_DS_ARGS + EVAL_DS_ARGS
+}
+DATASET_ARGS.update(**TRAIN_DS_ARGS, **EVAL_DS_ARGS)
 DATASET_ARG_NAMES = list(DATASET_ARGS.keys())
 
 # ------------- #
