@@ -46,7 +46,7 @@ PROCESSOR_ARGS = {
 }
 
 MODEL_ARGS = {
-    'model': {'abbrevation': 'm', 'type': str},
+    'model': {'abbreviation': 'm', 'type': str},
     'device': {'abbreviation' :'D', 'default': DEVICE, 'type': device_type},
     'peft_type': {'choices': ['LoRA', 'lang_token']},
 }
