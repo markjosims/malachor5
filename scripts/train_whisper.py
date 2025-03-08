@@ -20,6 +20,7 @@ from string_norm import get_remove_oov_char_funct, condense_tones
 from eval import get_metrics_by_language
 from copy import deepcopy
 import re
+import sys
 
 # weights for loss regularization functions
 LOSS_REGULARIZATION_HYPERPARAMS = {
@@ -425,8 +426,8 @@ def make_experiment_json(args):
             'experiment_name': os.path.basename(args.output),
             'experiment_path': args.output,
             'base_checkpoint': args.model,
+            'argv': ' '.join(sys.argv),
         }
-        breakpoint()
     else:
         raise NotImplementedError
 
