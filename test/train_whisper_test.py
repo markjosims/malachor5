@@ -521,6 +521,7 @@ def test_experiment_json(tmpdir):
     assert exp_json['experiment_path'] == str(tmpdir)
     assert exp_json['num_train_epochs'] == 2
     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+    assert type(exp_json['argv']) is str
     train_data = exp_json['train_data']
     assert type(train_data) is list
     assert len(train_data) == 1
