@@ -500,7 +500,7 @@ def get_training_args(args):
 # main #
 # ---- #
 
-def perform_train(args: Namespace) -> int:
+def train(args: Namespace) -> int:
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Defining metrics...")
@@ -548,7 +548,7 @@ def perform_train(args: Namespace) -> int:
 def main(argv: Sequence[Optional[str]]=None) -> int:
     parser=init_parser()
     args=parser.parse_args(argv)
-    return perform_train(args)
+    return train(args)
 
 
 if __name__ == '__main__':

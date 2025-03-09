@@ -4,7 +4,7 @@ import json
 import sys
 import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, perform_train
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
 
@@ -512,7 +512,7 @@ def test_experiment_json(tmpdir):
     args.model = 'openai/whisper-tiny'
     args.num_train_epochs = 2
 
-    perform_train(args)
+    train(args)
     json_path = str(tmpdir/'experiment.json')
     assert os.path.exists(json_path)
     with open(json_path) as f:
