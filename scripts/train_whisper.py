@@ -4,6 +4,7 @@
 from argparse import ArgumentParser, Namespace
 from typing import Sequence, Optional
 from transformers import Seq2SeqTrainingArguments
+from tbparse import SummaryReader
 import torch
 import numpy as np
 from jiwer import wer, cer
@@ -17,6 +18,8 @@ from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS, normalize_eng_words_
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, PROCESSOR_ARGS, MODEL_ARGS, prepare_trainer_for_peft
 from argparse_utils import make_arggroup_from_argdict
 from string_norm import get_remove_oov_char_funct, condense_tones
+from datetime import datetime
+from uuid import uuid4
 from eval import get_metrics_by_language
 from copy import deepcopy
 import re
@@ -419,21 +422,38 @@ def init_trainer(args, processor, training_args, compute_metrics, model, ds, dat
 # saving results #
 # -------------- #
 
-def make_experiment_json(args):
+def get_latest_run_path(logdir: str) -> str:
+    runs = glob(os.path.join(logdir, 'events.out.tfevents*'))
+    runs.sort(key=os.path.getmtime)
+    return runs[-1]
+
+def get_run_df(training_args):
+    run_path = get_latest_run_path(training_args.logging_dir)
+    reader = SummaryReader(run_path)
+    run_df = reader.scalars
+    return run_df
+
+def make_experiment_json(args, training_args):
+    # TODO: handle adding to existing file
     json_path = os.path.join(args.output, 'experiment.json')
     if args.action == 'train':
         exp_json = {
             'experiment_name': os.path.basename(args.output),
             'experiment_path': args.output,
             'base_checkpoint': args.model,
-            'argv': ' '.join(sys.argv),
+            'executions': [{
+                'uuid': os.environ['UUID'],
+                'start_time': os.environ['STARTTIME'],
+                'argv': ' '.join(sys.argv),
+            }]
         }
         for k in DEFAULT_TRAINER_HYPERPARAMS.keys():
             # these keys are saved to individual evaluation events
             if k not in ['generation_num_beams', 'predict_with_generate']:
                 exp_json[k] = getattr(args, k)
-        exp_json['train_data'] = gather_train_dataset_metadata(args)
-        exp_json['val_data'] = gather_val_dataset_metadata(args)
+        tb_df = get_run_df(training_args)
+        exp_json['train_data'], exp_json['train_events'] = gather_train_dataset_metadata(args, tb_df)
+        exp_json['val_data'] = gather_val_dataset_metadata(args, tb_df)
         
     else:
         raise NotImplementedError
@@ -441,21 +461,22 @@ def make_experiment_json(args):
     with open(json_path, 'w') as f:
         json.dump(exp_json, f)
 
-def gather_train_dataset_metadata(args):
+def gather_train_dataset_metadata(args, tb_df):
     split = 'train'
-    split_data = gather_dataset_metadata(args, split)
+    split_data = gather_dataset_metadata(args, split, tb_df)
+    # train events kept as separate key from train_data
+    event_list = gather_events_for_ds(split, tb_df)
+    return split_data, event_list
+
+def gather_val_dataset_metadata(args, tb_df):
+    split = 'eval'
+    split_data = gather_dataset_metadata(args, split, tb_df)
     return split_data
 
-def gather_val_dataset_metadata(args):
-    split = 'validation'
-    split_data = gather_dataset_metadata(args, split)
-    # TODO: get metrics per dataset
-    return split_data
-
-def gather_dataset_metadata(args, split):
+def gather_dataset_metadata(args, split, tb_df):
     lang = '+'.join(args.language) or None
     ds_list = [args.dataset,] + (getattr(args, f'{split}_datasets', None) or [])
-    ds_langs = [lang], (getattr(args, f'{split}_dataset_languages', None) or [])
+    ds_langs = [lang] + (getattr(args, f'{split}_dataset_languages', None) or [])
     if len(ds_list)>1 and len(ds_langs)==1:
         ds_langs*=len(ds_list)
     split_data = []
@@ -465,14 +486,43 @@ def gather_dataset_metadata(args, split):
                 'dataset_path': ds,
                 'language': lang
         }
+        # add dataset-specific arg values
         for k in ['num_records', 'train_data_pct', 'skip_idcs', 'skip_recordings']:
+            # 'skip' and 'train' args only used for train dataset
             if (split!='train') and (('train' in k) or ('skip' in k)):
                 continue
             v = getattr(args, k, None)
             if v is not None:
                 ds_metadata[k]=v
+        # for testing and validation, save events under dataset object
+        if split!='train':
+            # if only one dataset, name will not be included in tag
+            if len(ds_list)==1:
+                ds_name = None
+            # if using multiple languages, will consist of dataset name + language name
+            # event will be stored under 'dataset_stem' which,
+            elif args.eval_dataset_languages:
+                ds_name = f'{ds}-{lang}'
+            # only one language, dataset stem has no suffix
+            else:
+                ds_name = ds
+            ds_metadata['events']=gather_events_for_ds(split, tb_df, ds_name=ds_name)
         split_data.append(ds_metadata)
     return split_data
+
+def gather_events_for_ds(split, tb_df, ds_name=None):
+    uuid = os.environ['UUID']
+    timestr = os.environ['STARTTIME']
+    split_mask = tb_df['tag'].str.contains(split)
+    if ds_name is not None:
+        ds_mask = tb_df['tag'].str.contains(ds_name)
+        masked_df = tb_df[split_mask&ds_mask]
+    else:
+        masked_df = tb_df[split_mask]
+    masked_df['uuid']=uuid
+    masked_df['start_time']=timestr
+    event_list = masked_df.to_dict(orient='records')
+    return event_list
 
 # ------------- #
 # training args #
@@ -501,6 +551,12 @@ def get_training_args(args):
 # ---- #
 
 def train(args: Namespace) -> int:
+    # set environment variable for UUID and starting datetime
+    timestr = str(datetime.now())
+    uuid = str(uuid4())
+    os.environ['STARTTIME']=timestr
+    os.environ['UUID']=uuid
+
     print("Preparing dataset...")
     ds, processor = load_and_prepare_dataset(args)
     print("Defining metrics...")
@@ -541,7 +597,7 @@ def train(args: Namespace) -> int:
         # args.action == 'test'
         evaluate_dataset(args, ds['test'], trainer, processor)
 
-    make_experiment_json(args)
+    make_experiment_json(args, training_args)
 
     return 0
 
