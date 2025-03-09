@@ -12,7 +12,7 @@ import os
 import json
 from glob import glob
 from tqdm import tqdm
-from dataset_utils import load_and_prepare_dataset, load_data_collator, DATASET_ARGS
+from dataset_utils import load_and_prepare_dataset, load_data_collator, DATASET_ARGS, TRAIN_DS_ARGS, EVAL_DS_ARGS
 from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS, normalize_eng_words_only
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, PROCESSOR_ARGS, MODEL_ARGS, prepare_trainer_for_peft
 from argparse_utils import make_arggroup_from_argdict
@@ -428,11 +428,51 @@ def make_experiment_json(args):
             'base_checkpoint': args.model,
             'argv': ' '.join(sys.argv),
         }
+        for k in DEFAULT_TRAINER_HYPERPARAMS.keys():
+            # these keys are saved to individual evaluation events
+            if k not in ['generation_num_beams', 'predict_with_generate']:
+                exp_json[k] = getattr(args, k)
+        exp_json['train_data'] = gather_train_dataset_metadata(args)
+        exp_json['val_data'] = gather_val_dataset_metadata(args)
+        
     else:
         raise NotImplementedError
 
     with open(json_path, 'w') as f:
         json.dump(exp_json, f)
+
+def gather_train_dataset_metadata(args):
+    split = 'train'
+    split_data = gather_dataset_metadata(args, split)
+    return split_data
+
+def gather_val_dataset_metadata(args):
+    split = 'validation'
+    split_data = gather_dataset_metadata(args, split)
+    # TODO: get metrics per dataset
+    return split_data
+
+def gather_dataset_metadata(args, split):
+    lang = '+'.join(args.language) or None
+    ds_list = [args.dataset,] + (getattr(args, f'{split}_datasets', None) or [])
+    ds_langs = [lang], (getattr(args, f'{split}_dataset_languages', None) or [])
+    if len(ds_list)>1 and len(ds_langs)==1:
+        ds_langs*=len(ds_list)
+    split_data = []
+    for ds, lang in zip(ds_list, ds_langs):
+        ds_metadata = {
+                'dataset': os.path.basename(ds),
+                'dataset_path': ds,
+                'language': lang
+        }
+        for k in ['num_records', 'train_data_pct', 'skip_idcs', 'skip_recordings']:
+            if (split!='train') and (('train' in k) or ('skip' in k)):
+                continue
+            v = getattr(args, k, None)
+            if v is not None:
+                ds_metadata[k]=v
+        split_data.append(ds_metadata)
+    return split_data
 
 # ------------- #
 # training args #
