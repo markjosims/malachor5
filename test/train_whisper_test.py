@@ -521,13 +521,32 @@ def test_experiment_json(tmpdir):
     assert exp_json['experiment_path'] == str(tmpdir)
     assert exp_json['num_train_epochs'] == 2
     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-    assert type(exp_json['argv']) is str
+
+    execution_list = exp_json['executions']
+    assert type(execution_list) is list
+    assert len(execution_list) == 1
+    assert type(execution_list[0]) is dict
+    assert type(execution_list[0]['uuid']) is str
+    assert type(execution_list[0]['start_time']) is str
+    assert type(execution_list[0]['argv']) is str
+
     train_data = exp_json['train_data']
     assert type(train_data) is list
     assert len(train_data) == 1
+    assert type(train_data[0]) is dict
     assert train_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
     assert train_data[0]['dataset_path'] == TIRA_ASR_DS
     assert train_data[0]['num_records'] == 10
+
+    train_events = exp_json['train_events']
+    assert type(train_events) is list
+    assert len(train_events) > 1
+    for event in train_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
 
     val_data = exp_json['val_data']
     assert type(val_data) is list
@@ -535,3 +554,13 @@ def test_experiment_json(tmpdir):
     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
     assert val_data[0]['dataset_path'] == TIRA_ASR_DS
     assert val_data[0]['num_records'] == 10
+
+    val_events = val_data[0]['events']
+    assert type(val_events) is list
+    assert len(val_events) > 1
+    for event in val_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
