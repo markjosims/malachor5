@@ -580,7 +580,7 @@ def train(args: Namespace) -> int:
     if args.action=='train':
         print("Training!")
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
-        save_dir=os.path.join(args.output, 'pretrained')
+        save_dir=os.path.join(args.output, 'model')
         trainer.save_model(save_dir)
         processor.save_pretrained(save_dir)
 
