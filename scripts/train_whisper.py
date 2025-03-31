@@ -449,8 +449,9 @@ def make_experiment_json(args, training_args):
         }
         for k in DEFAULT_TRAINER_HYPERPARAMS.keys():
             # these keys are saved to individual evaluation events
-            if k not in ['generation_num_beams', 'predict_with_generate']:
-                exp_json[k] = getattr(args, k)
+            if k in ['generation_num_beams', 'predict_with_generate']:
+                pass
+            exp_json[k] = getattr(args, k)
         tb_df = get_run_df(training_args)
         exp_json['train_data'], exp_json['train_events'] = gather_train_dataset_metadata(args, tb_df)
         exp_json['val_data'] = gather_val_dataset_metadata(args, tb_df)
