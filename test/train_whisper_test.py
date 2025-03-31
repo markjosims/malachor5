@@ -519,7 +519,6 @@ def test_experiment_json(tmpdir):
         exp_json = json.load(f)
     assert exp_json['experiment_name'] == tmpdir.basename
     assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['num_train_epochs'] == 2
     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
 
     execution_list = exp_json['executions']
@@ -529,6 +528,7 @@ def test_experiment_json(tmpdir):
     assert type(execution_list[0]['uuid']) is str
     assert type(execution_list[0]['start_time']) is str
     assert type(execution_list[0]['argv']) is str
+    assert execution_list[0]['num_train_epochs'] == 2
 
     train_data = exp_json['train_data']
     assert type(train_data) is list
@@ -548,7 +548,7 @@ def test_experiment_json(tmpdir):
         assert 'uuid' in event
         assert 'start_time' in event
 
-    val_data = exp_json['val_data']
+    val_data = exp_json['eval_data']
     assert type(val_data) is list
     assert len(val_data) == 1
     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
@@ -591,7 +591,6 @@ def test_experiment_json_multi_ds(tmpdir):
         exp_json = json.load(f)
     assert exp_json['experiment_name'] == tmpdir.basename
     assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['num_train_epochs'] == 2
     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
 
     execution_list = exp_json['executions']
@@ -601,6 +600,8 @@ def test_experiment_json_multi_ds(tmpdir):
     assert type(execution_list[0]['uuid']) is str
     assert type(execution_list[0]['start_time']) is str
     assert type(execution_list[0]['argv']) is str
+    assert execution_list[0]['num_train_epochs'] == 2
+
 
     train_data = exp_json['train_data']
     assert type(train_data) is list
@@ -628,7 +629,7 @@ def test_experiment_json_multi_ds(tmpdir):
         assert 'uuid' in event
         assert 'start_time' in event
 
-    val_data = exp_json['val_data']
+    val_data = exp_json['eval_data']
     assert type(val_data) is list
     assert len(val_data) == 3
     datasets = [d['dataset'] for d in val_data]
@@ -653,3 +654,134 @@ def test_experiment_json_multi_ds(tmpdir):
             assert 'step' in event
             assert 'uuid' in event
             assert 'start_time' in event
+
+def test_experiment_json_multi_exp(tmpdir):
+    """
+    Train model, then eval w beam search, then test.
+    Check that all three executions were saved in `experiment.json`
+    """
+    parser = init_parser()
+    args = parser.parse_args([])
+
+    # train
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 2
+    args.model = 'openai/whisper-tiny'
+    args.num_train_epochs = 2
+    train(args)
+
+    # evaluate
+    args.model = str(tmpdir)
+    args.action = 'evaluate'
+    args.predict_with_generate = True
+    args.generation_num_beams = 2
+    train(args)
+
+    # test
+    args.dataset = FLEURS
+    args.language = ['en']
+    args.action = 'test'
+    args.predict_with_generate = False
+    args.generation_num_beams = 1
+    train(args)
+
+    # check `experiment.json`
+    json_path = str(tmpdir/'experiment.json')
+    assert os.path.exists(json_path)
+    with open(json_path) as f:
+        exp_json = json.load(f)
+    assert exp_json['experiment_name'] == tmpdir.basename
+    assert exp_json['experiment_path'] == str(tmpdir)
+    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+    execution_list = exp_json['executions']
+    assert type(execution_list) is list
+    assert len(execution_list) == 3
+
+    assert type(execution_list[0]) is dict
+    train_uuid = execution_list[0]['uuid']
+    assert type(train_uuid) is str
+    assert type(execution_list[0]['start_time']) is str
+    assert type(execution_list[0]['argv']) is str
+    assert execution_list[0]['num_train_epochs'] == 2
+    assert execution_list[0]['action'] == 'train'
+
+    assert type(execution_list[1]) is dict
+    eval_uuid = execution_list[1]['uuid']
+    assert type(eval_uuid) is str
+    assert type(execution_list[1]['start_time']) is str
+    assert type(execution_list[1]['argv']) is str
+    assert execution_list[1]['action'] == 'evaluate'
+
+    assert type(execution_list[2]) is dict
+    test_uuid = execution_list[2]['uuid']
+    assert type(test_uuid) is str
+    assert type(execution_list[2]['start_time']) is str
+    assert type(execution_list[2]['argv']) is str
+    assert execution_list[2]['action'] == 'test'
+
+    assert train_uuid != eval_uuid
+    assert eval_uuid != test_uuid
+    assert test_uuid != train_uuid
+
+
+    val_data = exp_json['eval_data']
+    assert type(val_data) is list
+    assert len(val_data) == 2
+    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+    assert val_data[0]['language'] == 'sw'
+    assert val_data[0]['num_records'] == 2
+    assert val_data[0]['predict_with_generate'] is False
+    assert val_data[0]['generation_num_beams'] == 1
+
+    val_events = val_data[0]['events']
+    assert type(val_events) is list
+    assert len(val_events) > 1
+    for event in val_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
+
+    assert val_data[1]['dataset'] == os.path.basename(TIRA_ASR_DS)
+    assert val_data[1]['dataset_path'] == TIRA_ASR_DS
+    assert val_data[1]['language'] == 'sw'
+    assert val_data[1]['num_records'] == 2
+    assert val_data[1]['predict_with_generate'] is True
+    assert val_data[1]['generation_num_beams'] == 2
+
+
+    val_events = val_data[1]['events']
+    assert type(val_events) is list
+    assert len(val_events) > 1
+    for event in val_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
+
+    test_data = exp_json['test_data']
+    assert type(test_data) is list
+    assert len(test_data) == 2
+    assert test_data[0]['dataset'] == os.path.basename(FLEURS)
+    assert test_data[0]['dataset_path'] == FLEURS
+    assert test_data[0]['language'] == 'en'
+    assert test_data[0]['num_records'] == 2
+    assert test_data[0]['predict_with_generate'] is False
+    assert test_data[0]['generation_num_beams'] == 1
+
+    test_events = test_data[0]['events']
+    assert type(test_events) is list
+    assert len(test_events) > 1
+    for event in test_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
+
