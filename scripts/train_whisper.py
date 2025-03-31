@@ -339,9 +339,9 @@ def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=Tr
         args.eval_output+'.csv' if args.eval_output
         else os.path.join(args.checkpoint or args.output, f'{args.action}-predictions.csv')
     )
-    predictions.metrics.pop(f'{metric_key_prefix}_labels')
-    predictions.metrics.pop(f'{metric_key_prefix}_preds')
-    predictions.metrics.pop(f'{metric_key_prefix}_preds_processed', None)
+    # predictions.metrics.pop(f'{metric_key_prefix}_labels')
+    # predictions.metrics.pop(f'{metric_key_prefix}_preds')
+    # predictions.metrics.pop(f'{metric_key_prefix}_preds_processed', None)
 
     torch.save(
         predictions,
