@@ -481,8 +481,9 @@ def gather_dataset_metadata(args, split, tb_df):
         ds_langs*=len(ds_list)
     split_data = []
     for ds, lang in zip(ds_list, ds_langs):
+        ds_basename = os.path.basename(ds)
         ds_metadata = {
-                'dataset': os.path.basename(ds),
+                'dataset': ds_basename,
                 'dataset_path': ds,
                 'language': lang
         }
@@ -502,10 +503,10 @@ def gather_dataset_metadata(args, split, tb_df):
             # if using multiple languages, will consist of dataset name + language name
             # event will be stored under 'dataset_stem' which,
             elif args.eval_dataset_languages:
-                ds_name = f'{ds}-{lang}'
+                ds_name = f'{ds_basename}-{lang}'
             # only one language, dataset stem has no suffix
             else:
-                ds_name = ds
+                ds_name = ds_basename
             ds_metadata['events']=gather_events_for_ds(split, tb_df, ds_name=ds_name)
         split_data.append(ds_metadata)
     return split_data
@@ -513,9 +514,9 @@ def gather_dataset_metadata(args, split, tb_df):
 def gather_events_for_ds(split, tb_df, ds_name=None):
     uuid = os.environ['UUID']
     timestr = os.environ['STARTTIME']
-    split_mask = tb_df['tag'].str.contains(split)
+    split_mask = tb_df['tag'].str.contains(split, regex=False)
     if ds_name is not None:
-        ds_mask = tb_df['tag'].str.contains(ds_name)
+        ds_mask = tb_df['tag'].str.contains(ds_name, regex=False)
         masked_df = tb_df[split_mask&ds_mask]
     else:
         masked_df = tb_df[split_mask]
