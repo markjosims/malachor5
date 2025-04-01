@@ -2,7 +2,7 @@
 # Large part of code taken from https://huggingface.co/blog/fine-tune-whisper on Sep 17 2024
 
 from argparse import ArgumentParser, Namespace
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Dict, Any
 from transformers import Seq2SeqTrainingArguments
 from tbparse import SummaryReader
 import torch
@@ -92,6 +92,8 @@ DEFAULT_TRAINER_HYPERPARAMS = {
     'eval_on_start': False,
     'use_cpu': False,
 }
+# stored again as these impact eval in a way other args don't
+GENERATE_ARGS = ['generation_num_beams', 'predict_with_generate']
 TRAINER_HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
     'per_device_eval_batch_size': 'B',
@@ -353,9 +355,9 @@ def evaluate_dataset(args, ds_split, trainer, processor, save_results_to_disk=Tr
 
 def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics):
     chkpnts=glob(
-                os.path.join(args.output, 'checkpoint-*/')
+        os.path.join(args.output, 'checkpoint-*')
     )
-    chkpnts.sort(key=lambda s:int(s.removesuffix('/').split(sep='-')[-1]))
+    chkpnts.sort(key=lambda s:get_checkpoint_num(s))
     if args.eval_checkpoints != ['all']:
         chkpnts=[
             chkpnt for chkpnt in chkpnts
@@ -364,6 +366,12 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
     eval_output_stem=args.eval_output or args.output
     os.makedirs(eval_output_stem, exist_ok=True)
     metrics=[]
+
+    # add execution metadata before looping through checkpoints
+    # as for each checkpoint we call `make_experiment_json` to add the events
+    # from that evaluation
+    add_exec_json(args)
+
     for chkpnt in tqdm(chkpnts, desc='Evaluating checkpoints'):
         chkpnt=chkpnt.removesuffix('/')
         args.checkpoint=chkpnt
@@ -375,12 +383,15 @@ def evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics
         data_collator=load_data_collator(chkpnt_model, processor)
         trainer = init_trainer(args, processor, training_args, compute_metrics, chkpnt_model, ds, data_collator)
         predictions=evaluate_dataset(args, ds['validation'], trainer, processor)
+        make_experiment_json(args, predictions=predictions, add_execution_object=False)
         if type(predictions) is dict:
+            # multiple datasets
             for ds_name, ds_preds in predictions.items():
                 metrics.append(ds_preds.metrics)
                 metrics[-1]['checkpoint']=chkpnt
                 metrics[-1]['dataset']=ds_name
         else:
+            # single dataset
             metrics.append(predictions.metrics)
             metrics[-1]['checkpoint']=chkpnt
 
@@ -422,45 +433,141 @@ def init_trainer(args, processor, training_args, compute_metrics, model, ds, dat
 # saving results #
 # -------------- #
 
+def get_checkpoint_num(checkpoint_dir):
+    return int(checkpoint_dir.removesuffix('/').split(sep='-')[-1])
+
+def get_step_of_checkpoint(checkpoint_dir) -> int:
+    with open(os.path.join(checkpoint_dir, 'trainer_state.json')) as f:
+        trainer_state = json.load(f)
+    return trainer_state['global_step']
+
+def get_latest_checkpoint(model_dir):
+    checkpoints = glob(os.path.join(model_dir, 'checkpoint-*'))
+    checkpoints.sort(key=get_checkpoint_num)
+    return checkpoints[-1]
+
+def get_global_step(args) -> int:
+    if args.checkpoint:
+        return get_step_of_checkpoint(args.checkpoint)
+    latest_checkpoint = get_latest_checkpoint(args.output)
+    return get_step_of_checkpoint(latest_checkpoint)
+
 def get_latest_run_path(logdir: str) -> str:
     runs = glob(os.path.join(logdir, 'events.out.tfevents*'))
     runs.sort(key=os.path.getmtime)
     return runs[-1]
 
-def get_run_df(training_args):
-    run_path = get_latest_run_path(training_args.logging_dir)
-    reader = SummaryReader(run_path)
-    run_df = reader.scalars
-    return run_df
+def get_run_df(training_args=None, predictions=None, args=None):
+    if training_args is not None:
+        run_path = get_latest_run_path(training_args.logging_dir)
+        reader = SummaryReader(run_path)
+        run_df = reader.scalars
+        return run_df
+    global_step = get_global_step(args)
+    metric_list = []
+    for k, v in predictions.metrics.items():
+        metric_list.append({
+            'tag': k,
+            'value': v,
+            'step': global_step
+        })
+    return pd.DataFrame(metric_list)
 
-def make_experiment_json(args, training_args):
-    # TODO: handle adding to existing file
+def merge_eval_or_test_data(data_list, incoming_data):
+    """
+    Try to find an existing data object where all keys match except for `events`.
+    If none is found, append to end of list.
+    """
+    incoming_events = incoming_data['events']
+    for tgt_data in data_list:
+        for k, v in tgt_data.items():
+            if k=='events':
+                continue
+            if incoming_data[k]!=v:
+                break
+        else: # no breaks; tgt_data is identical to incoming_data
+            tgt_data['events'].extend(incoming_events)
+            return data_list
+    data_list.append(incoming_data)
+    return data_list
+
+def make_experiment_json(args, training_args=None, predictions=None, add_execution_object=True):
+    # TODO to combine later executions back into main file we need to:
+    # - [X] only write experiment-level keys if json doesnt already exist
+    # - [X] append execution-specific data to `executions` list
+    # - [ ] BEFORE TRAINING make sure train data is same as original run if applicable
+    # - [X] pass predictions object from evaluatr/test calls
+    # - [X] convert predictions object to df
+    # - [X] get step for model being evaluated/tested
+    # - [X] append train/eval/test events to respective list
+    # - [ ] merge val data objects if they have the same metadata
+    # - [ ] single execution object when evaluating multiple checkpoints
     json_path = os.path.join(args.output, 'experiment.json')
-    if args.action == 'train':
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            exp_json = json.load(f)
+    else:
         exp_json = {
             'experiment_name': os.path.basename(args.output),
             'experiment_path': args.output,
             'base_checkpoint': args.model,
-            'executions': [{
-                'uuid': os.environ['UUID'],
-                'start_time': os.environ['STARTTIME'],
-                'argv': ' '.join(sys.argv),
-            }]
+            'executions': [],
+            'train_data': {},
+            'train_events': [],
+            'test_data': [],
+            'eval_data': [],
         }
-        for k in DEFAULT_TRAINER_HYPERPARAMS.keys():
-            # these keys are saved to individual evaluation events
-            if k in ['generation_num_beams', 'predict_with_generate']:
-                pass
-            exp_json[k] = getattr(args, k)
-        tb_df = get_run_df(training_args)
-        exp_json['train_data'], exp_json['train_events'] = gather_train_dataset_metadata(args, tb_df)
-        exp_json['val_data'] = gather_val_dataset_metadata(args, tb_df)
-        
+    tb_df = get_run_df(training_args=training_args, predictions=predictions, args=args)
+    if add_execution_object:
+        exp_json = add_exec_json(args, exp_json=exp_json)
+    if args.action == 'train':
+        train_data, train_events = gather_train_dataset_metadata(args, tb_df)
+        eval_data = gather_val_dataset_metadata(args, tb_df)
+        if not exp_json['train_data']:
+            exp_json['train_data'] = train_data
+        exp_json['train_events'].extend(train_events)
+        for eval_data_obj in eval_data:
+            merge_eval_or_test_data(exp_json['eval_data'], eval_data_obj)
+    elif args.action == 'evaluate':
+        eval_data = gather_val_dataset_metadata(args, tb_df)
+        for eval_data_obj in eval_data:
+            merge_eval_or_test_data(exp_json['eval_data'], eval_data_obj)
+    elif args.action == 'test':
+        test_data = gather_test_dataset_metadata(args, tb_df)
+        for test_data_obj in test_data:
+            merge_eval_or_test_data(exp_json['test_data'], test_data_obj)
     else:
-        raise NotImplementedError
+        raise NotImplementedError('`experiment.json` only saved for train, evaluate and test.')
 
     with open(json_path, 'w') as f:
         json.dump(exp_json, f)
+
+def add_exec_json(args, exp_json=None) -> Optional[Dict[str, Any]]:
+    """
+    Add metadata for current execution to `experiment.json`.
+    If passing `exp_json` object, append object with execution metadata to `executions`
+    attr then return.
+    If not passing, load `experiment.json`, append and save.
+    """
+    exec_json = {
+        'uuid': os.environ['UUID'],
+        'start_time': os.environ['STARTTIME'],
+        'argv': ' '.join(sys.argv),
+        'action': args.action,
+    }
+    for k in DEFAULT_TRAINER_HYPERPARAMS.keys():
+        exec_json[k] = getattr(args, k)
+    
+    if exp_json is not None:
+        exp_json['executions'].append(exec_json)
+        return exp_json
+    json_path = os.path.join(args.output, 'experiment.json')
+    with open(json_path) as f:
+        exp_json = json.load(f)
+    exp_json['executions'].append(exec_json)
+    with open(json_path, 'w') as f:
+        json.dump(exp_json, f)
+        
 
 def gather_train_dataset_metadata(args, tb_df):
     split = 'train'
@@ -471,6 +578,11 @@ def gather_train_dataset_metadata(args, tb_df):
 
 def gather_val_dataset_metadata(args, tb_df):
     split = 'eval'
+    split_data = gather_dataset_metadata(args, split, tb_df)
+    return split_data
+
+def gather_test_dataset_metadata(args, tb_df):
+    split = 'test'
     split_data = gather_dataset_metadata(args, split, tb_df)
     return split_data
 
@@ -508,6 +620,9 @@ def gather_dataset_metadata(args, split, tb_df):
             # only one language, dataset stem has no suffix
             else:
                 ds_name = ds_basename
+            # include eval/test-specific args
+            for arg in [*GENERATE_ARGS, *LM_ARGS.keys()]:
+                ds_metadata[arg]=getattr(args, arg, None)
             ds_metadata['events']=gather_events_for_ds(split, tb_df, ds_name=ds_name)
         split_data.append(ds_metadata)
     return split_data
@@ -580,27 +695,29 @@ def train(args: Namespace) -> int:
     if args.action=='train':
         print("Training!")
         trainer.train(resume_from_checkpoint=args.checkpoint or args.resume_from_checkpoint)
-        save_dir=os.path.join(args.output, 'model')
-        trainer.save_model(save_dir)
-        processor.save_pretrained(save_dir)
+
+        trainer.save_model(args.output)
+        processor.save_pretrained(args.output)
+        make_experiment_json(args, training_args=training_args)
 
         if args.eval_output:
-            evaluate_dataset(args, ds['validation'], trainer, processor)
+            predictions = evaluate_dataset(args, ds['validation'], trainer, processor)
+            make_experiment_json(args, predictions=predictions)
+        
     elif args.action=='evaluate':
         if args.eval_checkpoints:
             evaluate_all_checkpoints(args, ds, processor, training_args, compute_metrics)
         else:
-            evaluate_dataset(args, ds['validation'], trainer, processor)
+            predictions = evaluate_dataset(args, ds['validation'], trainer, processor)
+            make_experiment_json(args, predictions=predictions)
     elif args.action=='calculate_fisher':
         calculate_fisher_matrix(args, trainer, model)
     elif args.action=='get_lid_probs':
         get_lid_probs(args, trainer, model)
     else:
         # args.action == 'test'
-        evaluate_dataset(args, ds['test'], trainer, processor)
-
-    make_experiment_json(args, training_args)
-
+        predictions = evaluate_dataset(args, ds['test'], trainer, processor)
+        make_experiment_json(args, predictions=predictions)
     return 0
 
 def main(argv: Sequence[Optional[str]]=None) -> int:
