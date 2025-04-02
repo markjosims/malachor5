@@ -252,7 +252,7 @@ def get_segment_slice(
 def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
     if not end:
         # whisper may not predict an end timestamp for the last chunk in the recording
-        end = len(wav[0])/SAMPLE_RATE
+        end = wav.shape[-1]/SAMPLE_RATE
     if end<=start:
         # Whisper may predict 0 length for short speech turns
         # default to setting length of 200ms
