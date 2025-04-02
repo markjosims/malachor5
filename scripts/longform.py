@@ -86,8 +86,8 @@ def perform_asr(
         generate_kwargs=generate_kwargs,
         **kwargs,
     )
-    for chunk in result['chunks']:
-        chunk['timestamp'] = fix_whisper_timestamps(*chunk['timestamp'], audio)
+    if return_timestamps:
+        result = fix_chunk_timestamps(result, audio)   
     return result
 
 def load_asr_pipelines_for_sli(sli_map: Dict[str, Any], args: Optional[Namespace]=None) -> Dict[str, Pipeline]:
@@ -258,6 +258,16 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
         # default to setting length of 200ms
         end=start+200
     return start, end
+
+def fix_chunk_timestamps(result, audio):
+    if type(result) is dict:
+        for chunk in result['chunks']:
+            chunk['timestamp'] = fix_whisper_timestamps(*chunk['timestamp'], audio)
+        return result
+    return [
+        fix_chunk_timestamps(segment_result, segment_audio)
+        for segment_result, segment_audio in zip(result, audio)
+    ]
 
 # ------------ #
 # Elan helpers #
