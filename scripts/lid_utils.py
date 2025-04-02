@@ -8,10 +8,10 @@ if importlib.util.find_spec('enchant') is not None:
     import enchant
 
 tira_words_path = 'meta/tira_words.txt'
-with open(tira_words_path) as f:
+with open(tira_words_path, encoding='utf8') as f:
     TIRA_WORDS = [word.strip() for word in f.readlines()]
 zulu_words_path = 'meta/zulu_words.txt'
-with open(zulu_words_path) as f:
+with open(zulu_words_path, encoding='utf8') as f:
     ZULU_WORDS = [word.strip() for word in f.readlines()]
 
 
