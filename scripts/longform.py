@@ -86,6 +86,8 @@ def perform_asr(
         generate_kwargs=generate_kwargs,
         **kwargs,
     )
+    for chunk in result['chunks']:
+        chunk['timestamp'] = fix_whisper_timestamps(*chunk['timestamp'], audio)
     return result
 
 def load_asr_pipelines_for_sli(sli_map: Dict[str, Any], args: Optional[Namespace]=None) -> Dict[str, Pipeline]:
@@ -248,7 +250,7 @@ def get_segment_slice(
     return audio[:,start_idx:end_idx]
 
 def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
-    if end is None:
+    if not end:
         # whisper may not predict an end timestamp for the last chunk in the recording
         end = len(wav[0])/SAMPLE_RATE
     if end<=start:
