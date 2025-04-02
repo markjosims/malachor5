@@ -358,6 +358,7 @@ def init_parser() -> ArgumentParser:
         help=f"ASR model path. Default is {ASR_URI}.",
         default=ASR_URI,
     )
+    parser.add_argument('--pipeline', '-p', choices=['asr', 'vad+sli+asr'])
     parser.add_argument(
         "--checkpoint",
         help="Path to load model checkpoint from, if different from model path."
