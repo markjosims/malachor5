@@ -1,6 +1,7 @@
 import sys
 sys.path.append('scripts')
 from dataset_utils import SPECIAL_TOKENS_FLAT
+import numpy as np
 
 def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
@@ -13,8 +14,8 @@ def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
         assert len(chunk['timestamp'])==2
         start = chunk['timestamp'][0]
         end = chunk['timestamp'][1]
-        assert type(start) is float
-        assert type(end) is float
+        assert type(start) is float or isinstance(start, np.floating)
+        assert type(end) is float or isinstance(end, np.floating)
         assert end>start
 
 def assert_tokens_in_row(row, token_names, col='labels'):
