@@ -42,14 +42,27 @@ def test_vad():
     vad_out = perform_vad(wav)
     assert_chunk_dict_shape(vad_out, chunks_key='vad_chunks')
 
-def test_asr():
+def test_asr_whisper():
     """
     `perform_asr` should return a dict with key `text` mapping to a str
     and key 'chunks' which mapping to a list of dicts each with `timestamps`
     and `text` keys
     """
     wav = load_and_resample(SAMPLE_WAVPATH)
-    asr_out = perform_asr(wav, model_path='openai/whisper-tiny')
+    asr_out = perform_asr(wav, model_path='openai/whisper-tiny', model_family='whisper', return_timestamps=True)
+    assert_chunk_dict_shape(asr_out)
+    assert 'text' in asr_out
+    assert type(asr_out['text']) is str
+    for chunk in asr_out['chunks']:
+        assert 'text' in chunk
+        assert type(chunk['text']) is str
+
+def test_asr_wav2vec2():
+    """
+    `perform_asr` should return a dict with key `text` mapping to a str
+    """
+    wav = load_and_resample(SAMPLE_WAVPATH)
+    asr_out = perform_asr(wav, model_path='facebook/wav2vec2-base-960h', return_timestamps='word')
     assert_chunk_dict_shape(asr_out)
     assert 'text' in asr_out
     assert type(asr_out['text']) is str

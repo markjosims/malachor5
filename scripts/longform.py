@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Dict, List, Union, Any, Tuple
+from typing import Optional, Sequence, Dict, List, Union, Any, Tuple, Literal
 from argparse import ArgumentParser, Namespace
 from transformers import Pipeline, pipeline, WhisperTokenizer
 import pandas as pd
@@ -37,8 +37,7 @@ def perform_asr(
         audio: Union[torch.Tensor, np.ndarray],
         pipe: Union[Pipeline, Dict[str, Pipeline], None] = None,
         model_path: str = ASR_URI,
-        return_timestamps = True,
-        generate_kwargs=None,
+        model_family: Literal['whisper', 'wav2vec2'] = 'whisper',
         sli_map=None,
         args=None,
         **kwargs,
@@ -80,15 +79,23 @@ def perform_asr(
             for chunk in audio:
                 chunk['wav']=chunk['wav'][0,:].numpy()
         audio = [chunk['wav'] for chunk in audio]
+    pipe_kwargs = prepare_pipe_kwargs(kwargs, model_family)
     result = pipe(
         audio,
-        return_timestamps=return_timestamps,
-        generate_kwargs=generate_kwargs,
-        **kwargs,
+        **pipe_kwargs,
     )
-    if return_timestamps:
+    if pipe_kwargs.get('return_timestamps', None):
         result = fix_chunk_timestamps(result, audio)   
     return result
+
+def prepare_pipe_kwargs(pipe_kwargs, model_family):
+    if model_family == 'wav2vec2':
+        if pipe_kwargs.get('return_timestamps', None) is True:
+            tqdm.write("`return_timestamps` must be 'word' or 'char' for CTC, not `True`. Setting to 'word'")
+            pipe_kwargs['return_timestamps']='word'
+        pipe_kwargs.pop('generate_kwargs', None)
+    return pipe_kwargs
+
 
 def load_asr_pipelines_for_sli(sli_map: Dict[str, Any], args: Optional[Namespace]=None) -> Dict[str, Pipeline]:
     # avoid side effects
