@@ -193,28 +193,6 @@ def perform_sli(
         **kwargs
     )
 
-# ------------ #
-# ELAN methods #
-# ------------ #
-
-def get_ipa_labels(elan_fp: str) -> List[Dict[str, Union[str, float]]]:
-    """
-    Read data from IPA Transcription tier in a .eaf file
-    indicated by `elan_fp`. Return list of dicts containing
-    start time, end time and value for each annotation.
-    """
-    eaf = Elan.Eaf(elan_fp)
-    ipa_tuples = eaf.get_annotation_data_for_tier('IPA Transcription')
-    ipa_labels = [{'start': a[0], 'end': a[1], 'value': a[2]} for a in ipa_tuples]
-    return ipa_labels
-    
-def change_file_suffix(media_fp: str, ext: str, tgt_dir: Optional[str]=None) -> str:
-    media_suff = os.path.splitext(media_fp)[-1]
-    wav_fp = media_fp.replace(media_suff, ext)
-    if tgt_dir:
-        basename = os.path.basename(wav_fp)
-        return os.path.join(tgt_dir, basename)
-    return wav_fp
 
 # ---------------------- #
 # Audio handling methods #
@@ -282,6 +260,25 @@ def fix_whisper_timestamps(start: float, end: float, wav: torch.Tensor):
 # ------------ #
 # Elan helpers #
 # ------------ #
+
+def get_ipa_labels(elan_fp: str) -> List[Dict[str, Union[str, float]]]:
+    """
+    Read data from IPA Transcription tier in a .eaf file
+    indicated by `elan_fp`. Return list of dicts containing
+    start time, end time and value for each annotation.
+    """
+    eaf = Elan.Eaf(elan_fp)
+    ipa_tuples = eaf.get_annotation_data_for_tier('IPA Transcription')
+    ipa_labels = [{'start': a[0], 'end': a[1], 'value': a[2]} for a in ipa_tuples]
+    return ipa_labels
+    
+def change_file_suffix(media_fp: str, ext: str, tgt_dir: Optional[str]=None) -> str:
+    media_suff = os.path.splitext(media_fp)[-1]
+    wav_fp = media_fp.replace(media_suff, ext)
+    if tgt_dir:
+        basename = os.path.basename(wav_fp)
+        return os.path.join(tgt_dir, basename)
+    return wav_fp
 
 def pipeout_to_eaf(
         chunk_list: List[Dict[str, Any]],
