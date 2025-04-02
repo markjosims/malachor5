@@ -1,11 +1,13 @@
-import enchant
 from unidecode import unidecode
 import string
 import importlib.util
-
+from nltk.corpus import words
 from string_norm import has_tira_chars, remove_punct
+
+ENCHANT = False
 if importlib.util.find_spec('enchant') is not None:
     import enchant
+    ENCHANT = True
 
 tira_words_path = 'meta/tira_words.txt'
 with open(tira_words_path, encoding='utf8') as f:
@@ -28,7 +30,10 @@ def strip_punct(f):
 
 @strip_punct
 def is_en_word(w: str) -> bool:
-    return en_dict.check(w)
+    if ENCHANT:
+        return en_dict.check(w)
+    else:
+        return w.lower() in words.words()
 
 @strip_punct
 def has_unicode(s):
