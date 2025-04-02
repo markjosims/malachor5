@@ -13,5 +13,5 @@ speechbrain
 epitran
 peft
 jiwer
-pyenchant
-git+https://github.com/kpu/kenlm/archive/master.zip
+https://github.com/kpu/kenlm/archive/master.zip
+nemo_toolkit[all]
