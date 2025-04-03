@@ -73,7 +73,7 @@ def get_remove_oov_char_funct(vocab_file: str) -> Callable[str, str]:
     Returns a function that takes a str and outputs the same str with any characters
     not in the vocab file removed.
     """
-    with open(vocab_file) as f:
+    with open(vocab_file, encoding='utf8') as f:
         chars=f.read()
     return lambda s: ''.join(c for c in s if c in chars)
 
