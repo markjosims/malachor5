@@ -500,8 +500,8 @@ def make_experiment_json(args, training_args=None, predictions=None, add_executi
     # - [X] convert predictions object to df
     # - [X] get step for model being evaluated/tested
     # - [X] append train/eval/test events to respective list
-    # - [ ] merge val data objects if they have the same metadata
-    # - [ ] single execution object when evaluating multiple checkpoints
+    # - [X] merge val data objects if they have the same metadata
+    # - [X] single execution object when evaluating multiple checkpoints
     json_path = os.path.join(args.output, 'experiment.json')
     if os.path.exists(json_path):
         with open(json_path) as f:
