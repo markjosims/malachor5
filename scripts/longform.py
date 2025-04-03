@@ -433,14 +433,35 @@ def init_parser() -> ArgumentParser:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = init_parser()
     args = parser.parse_args(argv)
-    return annotate(args)
+    if args.pipeline=='vad+sli+asr':
+        return vad_sli_asr_pipeline(args)
+    elif args.pipeline=='asr':
+        return asr_pipeline(args)
+    return 1
 
+def asr_pipeline(args) -> int:
+    pipeline = load_whisper_pipeline(args)
+    wav_paths = glob(os.path.join(args.input, '*.wav'))
+    for wav_path in tqdm(wav_paths, desc='Annotating wavs'):
+        asr_out = perform_asr(
+            pipe=pipeline,
+            return_timestamps=args.return_word_timestamps,
+        )
+        eaf=pipeout_to_eaf(asr_out, tier_name='asr')
+        eaf_path = change_file_suffix(wav_path, '.eaf', tgt_dir=args.output)
+        eaf.to_file(eaf_path)
+        df=pipeout_to_df(
+            asr_out,
+            tier_name='asr',
+            df=df,
+            wav_source=wav_path,
+            eaf_path=eaf_path,
+        )
+        txt_path = change_file_suffix(wav_path, '.txt', tgt_dir=args.output)
+        with open(txt_path, 'w', encoding='utf8') as f:
+            f.write(asr_out['text']) 
 
-def annotate(args) -> int:
-    """
-    For now assuming a VAD>SLI>ASR pipeline
-    TODO: Implement other pipelines later
-    """
+def vad_sli_asr_pipeline(args) -> int:
     wav_paths = glob(os.path.join(args.input, '*.wav'))
     vad_pipe = load_vad_pipeline(args.vad_uri, args.min_duration_on, args.min_duration_off)
     _, args = load_lr(args=args)
