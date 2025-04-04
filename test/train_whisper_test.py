@@ -45,7 +45,7 @@ def test_lang_col_generate(tmpdir):
     for en_pred, ar_pred, zh_pred in zip(en_preds, ar_preds, zh_preds):
         assert not np.array_equal(en_pred, ar_pred)
         assert not np.array_equal(en_pred, zh_pred)
-        assert not np.array_equal(zh_pred, sw_pred)
+        assert not np.array_equal(zh_pred, ar_pred)
 
 
 
