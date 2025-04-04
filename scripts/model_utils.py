@@ -348,15 +348,38 @@ class WhisperTrainer(Seq2SeqTrainer):
     
     def get_lid_logits(
             self,
-            logits: torch.FloatTensor,
+            input_features: Optional[torch.FloatTensor] = None,
+            encoder_outputs: Optional[Union[torch.FloatTensor, BaseModelOutput]] = None,
             generation_config: Optional[GenerationConfig] = None,
+            num_segment_frames: int = 3000,
         ) -> torch.Tensor:
         """
         Same as `WhisperGenerationMixin.detect_language` from `generation_whisper.py`
         except returns a tensor of LID logits for the input batch rather than the argmax.
         """
-        generation_config = generation_config or self.model.generation_config
-        non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool, device=logits.device)
+        if input_features is None and encoder_outputs is None:
+            raise ValueError("You have to specify either `input_features` or `encoder_outputs`")
+        elif input_features is not None and encoder_outputs is not None:
+            raise ValueError("Make sure to specificy only one of `input_features` or `encoder_outputs` - not both!")
+        elif input_features is not None:
+            inputs = {"input_features": input_features[:, :, :num_segment_frames]}
+            batch_size = input_features.shape[0]
+        elif encoder_outputs is not None:
+            inputs = {"encoder_outputs": encoder_outputs}
+            batch_size = (
+                encoder_outputs[0].shape[0] if isinstance(encoder_outputs, BaseModelOutput) else encoder_outputs[0]
+            )
+
+        generation_config = generation_config or self.generation_config
+        decoder_input_ids = (
+            torch.ones((batch_size, 1), device=self.device, dtype=torch.long)
+            * generation_config.decoder_start_token_id
+        )
+
+        with torch.no_grad():
+            logits = self(**inputs, decoder_input_ids=decoder_input_ids).logits[:, -1]
+
+        non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool)
         non_lang_mask[list(generation_config.lang_to_id.values())] = False
 
         logits[:, non_lang_mask] = -np.inf
