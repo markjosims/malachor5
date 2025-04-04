@@ -356,7 +356,7 @@ class WhisperTrainer(Seq2SeqTrainer):
         except returns a tensor of LID logits for the input batch rather than the argmax.
         """
         generation_config = generation_config or self.model.generation_config
-        non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool)
+        non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool, device=logits.device)
         non_lang_mask[list(generation_config.lang_to_id.values())] = False
 
         logits[:, non_lang_mask] = -np.inf
