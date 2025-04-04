@@ -43,10 +43,10 @@ def test_lang_col_generate(tmpdir):
     en_preds = predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions
     sw_preds = predictions_dict[FLEURS.split('/')[-1]+'-sw'].predictions
     zh_preds = predictions_dict[FLEURS.split('/')[-1]+'-zh'].predictions
-    for en_pred, sw_pred, zh_pred in zip(en_preds, sw_preds, zh_preds):
-        assert not torch.equal(en_preds, sw_preds)
-        assert not torch.equal(en_preds, zh_preds)
-        assert not torch.equal(zh_preds, sw_preds)
+    for en_pred, sw_pred, zh_pred in zip(en_preds, hi_preds, zh_preds):
+        assert not np.array_equal(en_pred, sw_pred)
+        assert not np.array_equal(en_pred, zh_pred)
+        assert not np.array_equal(zh_pred, sw_pred)
 
 
 
