@@ -1,12 +1,21 @@
 from unidecode import unidecode
 import string
 import importlib.util
+import nltk
 from nltk.corpus import words
 from string_norm import has_tira_chars, remove_punct
 
+try:
+    en_words = set(words.words())
+except LookupError:
+    nltk.download('words')
+    en_words = set(words.words())
+
 ENCHANT = False
+en_dict = None
 if importlib.util.find_spec('enchant') is not None:
     import enchant
+    en_dict = enchant.request_dict('en_US')
     ENCHANT = True
 
 tira_words_path = 'meta/tira_words.txt'
@@ -21,7 +30,6 @@ with open(zulu_words_path, encoding='utf8') as f:
 # Text LID methods #
 # ---------------- #
 
-en_dict = enchant.request_dict('en_US')
 
 def strip_punct(f):
     def g(s):
@@ -33,7 +41,7 @@ def is_en_word(w: str) -> bool:
     if ENCHANT:
         return en_dict.check(w)
     else:
-        return w.lower() in words.words()
+        return w.lower() in en_words
 
 @strip_punct
 def has_unicode(s):
