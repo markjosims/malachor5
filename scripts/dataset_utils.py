@@ -243,7 +243,7 @@ def load_and_prepare_dataset(args):
             label_key=args.label_key,
             decoder_prompt_ids=decoder_prompt_ids,
         ),
-        num_proc=4,
+        num_proc=1,
         remove_columns=colnames,
         cache_file_names=ds_cache_files,
         load_from_cache_file=bool(args.load_ds_cache),
