@@ -6,7 +6,7 @@ from pympi import Elan
 import pandas as pd
 import sys
 sys.path.append('scripts')
-from longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf, annotate, init_parser, SAMPLE_RATE
+from longform import perform_vad, perform_asr, diarize, load_and_resample, perform_sli, pipeout_to_eaf, init_parser, vad_sli_asr_pipeline, SAMPLE_RATE
 from dataset_utils import build_sb_dataloader
 from model_utils import LOGREG_PATH
 import os
@@ -213,7 +213,7 @@ def test_annotate(tmpdir):
     args.lr_model = LOGREG_PATH
     args.input=tmpdir
     args.output=tmpdir
-    annotate(args)
+    vad_sli_asr_pipeline(args)
 
     for i in range(3):
         assert os.path.exists(tmpdir/f'sample{i}.eaf')
