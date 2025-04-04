@@ -370,7 +370,7 @@ class WhisperTrainer(Seq2SeqTrainer):
                 encoder_outputs[0].shape[0] if isinstance(encoder_outputs, BaseModelOutput) else encoder_outputs[0]
             )
 
-        generation_config = generation_config or self.generation_config
+        generation_config = generation_config or self.model.generation_config
         decoder_input_ids = (
             torch.ones((batch_size, 1), device=self.device, dtype=torch.long)
             * generation_config.decoder_start_token_id
