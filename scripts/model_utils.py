@@ -372,12 +372,12 @@ class WhisperTrainer(Seq2SeqTrainer):
 
         generation_config = generation_config or self.model.generation_config
         decoder_input_ids = (
-            torch.ones((batch_size, 1), device=self.device, dtype=torch.long)
+            torch.ones((batch_size, 1), device=self.model.device, dtype=torch.long)
             * generation_config.decoder_start_token_id
         )
 
         with torch.no_grad():
-            logits = self(**inputs, decoder_input_ids=decoder_input_ids).logits[:, -1]
+            logits = self.model(**inputs, decoder_input_ids=decoder_input_ids).logits[:, -1]
 
         non_lang_mask = torch.ones_like(logits[0], dtype=torch.bool)
         non_lang_mask[list(generation_config.lang_to_id.values())] = False
