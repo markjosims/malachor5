@@ -957,3 +957,61 @@ def test_experiment_json_eval_all_epochs(tmpdir):
             assert False
     assert found_checkpoint1
     assert found_checkpoint2
+
+def test_experiment_json_eval_baseline(tmpdir):
+    """
+    Evaluate whisper-tiny w/o fine-tuning, then check `experiment.json` produced with `step=None`.
+    """
+    parser = init_parser()
+    args = parser.parse_args([])
+
+    # evaluate
+    args.output = str(tmpdir)
+    args.dataset = TIRA_ASR_DS
+    args.language = ['sw']
+    args.num_records = 2
+    args.model = 'openai/whisper-tiny'
+    args.action = 'evaluate'
+    train(args)
+
+    # check `experiment.json`
+    json_path = str(tmpdir/'experiment.json')
+    assert os.path.exists(json_path)
+    with open(json_path) as f:
+        exp_json = json.load(f)
+    assert exp_json['experiment_name'] == tmpdir.basename
+    assert exp_json['experiment_path'] == str(tmpdir)
+    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+    execution_list = exp_json['executions']
+    assert type(execution_list) is list
+    assert len(execution_list) == 1
+
+    assert type(execution_list[0]) is dict
+    val_uuid = execution_list[0]['uuid']
+    assert type(val_uuid) is str
+    assert type(execution_list[0]['start_time']) is str
+    assert type(execution_list[0]['argv']) is str
+    assert execution_list[0]['num_train_epochs'] == 2
+    assert execution_list[0]['action'] == 'evaluate'
+
+
+    val_data = exp_json['eval_data']
+    assert type(val_data) is list
+    assert len(val_data) == 2
+    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+    assert val_data[0]['language'] == 'sw'
+    assert val_data[0]['num_records'] == 2
+
+    val_events = val_data[0]['events']
+    assert type(val_events) is list
+    assert len(val_events) > 1
+    for event in val_events:
+        assert 'tag' in event
+        assert 'value' in event
+        assert 'step' in event
+        assert 'uuid' in event
+        assert 'start_time' in event
+        assert event['uuid']==val_uuid
+        assert event['step'] is None
