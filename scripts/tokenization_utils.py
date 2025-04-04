@@ -2,19 +2,22 @@ import json
 from transformers import WhisperTokenizer
 import sys
 sys.path.append('scripts')
+import os
 from lid_utils import get_word_language
 from string_norm import remove_punct, unicode_normalize
 
+PYARROW_DIR=os.environ.get('MALACHOR5_PYARROW_DIR', 'data/pyarrow-datasets')
+DATA_DIR=os.environ.get('MALACHOR5_DATA_DIR', 'data/')
 TRANSCRIBE_TOKEN_ID=50359
 BOS_TOKEN_ID=50258
 EOS_TOKEN_ID=50257
 NOTIMESTAMPS_ID=50363
-TIRA_ASR_DS = 'data/pyarrow-datasets/tira-asr'
-TIRA_DRZ = 'data/pyarrow-datasets/tira-drz'
-TIRA_LONGFORM = 'data/longform-drz'
-TIRA_SLI = 'data/pyarrow-datasets/tira-sli'
-FLEURS = 'data/pyarrow-datasets/fl_en'
-TIRA_BILING = 'data/pyarrow-datasets/HH20210913'
+TIRA_ASR_DS = os.path.join(PYARROW_DIR, 'tira-asr')
+TIRA_DRZ = os.path.join(PYARROW_DIR, 'tira-drz')
+TIRA_LONGFORM = os.path.join(DATA_DIR, 'longform-drz')
+TIRA_SLI = os.path.join(PYARROW_DIR, 'tira-sli')
+FLEURS = os.path.join(PYARROW_DIR, 'fl_en')
+TIRA_BILING = os.path.join(PYARROW_DIR, 'HH20210913')
 with open('meta/whisper_special_tokens.json') as f:
     SPECIAL_TOKENS = json.load(f)
 LANG_TOKENS = SPECIAL_TOKENS['lang']

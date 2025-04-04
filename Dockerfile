@@ -13,8 +13,8 @@ RUN python3 -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
 # Install dependencies in the virtual environment
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r docker-requirements.txt
+COPY pinned-requirements.cpu.txt .
+RUN pip install --no-cache-dir -r pinned-requirements.cpu.txt
 
 # Set entrypoint (modify as needed)
 CMD ["/bin/bash"]
