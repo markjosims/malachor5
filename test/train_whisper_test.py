@@ -23,7 +23,7 @@ def test_lang_col_generate(tmpdir):
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
     args.eval_datasets=[FLEURS, FLEURS]
-    args.eval_dataset_languages=['hi', 'zh']
+    args.eval_dataset_languages=['ar', 'zh']
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
@@ -40,10 +40,10 @@ def test_lang_col_generate(tmpdir):
     predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
 
     en_preds = predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions
-    hi_preds = predictions_dict[FLEURS.split('/')[-1]+'-hi'].predictions
+    ar_preds = predictions_dict[FLEURS.split('/')[-1]+'-ar'].predictions
     zh_preds = predictions_dict[FLEURS.split('/')[-1]+'-zh'].predictions
-    for en_pred, sw_pred, zh_pred in zip(en_preds, hi_preds, zh_preds):
-        assert not np.array_equal(en_pred, sw_pred)
+    for en_pred, ar_pred, zh_pred in zip(en_preds, ar_preds, zh_preds):
+        assert not np.array_equal(en_pred, ar_pred)
         assert not np.array_equal(en_pred, zh_pred)
         assert not np.array_equal(zh_pred, sw_pred)
 
