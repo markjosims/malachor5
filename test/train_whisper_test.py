@@ -4,7 +4,6 @@ import json
 import sys
 import os
 sys.path.append('scripts')
-import torch
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval
@@ -24,7 +23,7 @@ def test_lang_col_generate(tmpdir):
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
     args.eval_datasets=[FLEURS, FLEURS]
-    args.eval_dataset_languages=['sw', 'zh']
+    args.eval_dataset_languages=['hi', 'zh']
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
@@ -41,7 +40,7 @@ def test_lang_col_generate(tmpdir):
     predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
 
     en_preds = predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions
-    sw_preds = predictions_dict[FLEURS.split('/')[-1]+'-sw'].predictions
+    hi_preds = predictions_dict[FLEURS.split('/')[-1]+'-hi'].predictions
     zh_preds = predictions_dict[FLEURS.split('/')[-1]+'-zh'].predictions
     for en_pred, sw_pred, zh_pred in zip(en_preds, hi_preds, zh_preds):
         assert not np.array_equal(en_pred, sw_pred)
