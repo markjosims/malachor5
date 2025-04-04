@@ -6,7 +6,7 @@ import os
 sys.path.append('scripts')
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
-from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, prepare_trainer_for_peft
+from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval
 
 def test_lang_col_generate(tmpdir):
     """
