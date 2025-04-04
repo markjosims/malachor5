@@ -5,18 +5,16 @@ from datasets import Dataset
 import sys
 sys.path.append('scripts')
 from dataset_utils import load_and_prepare_dataset, DATASET_ARG_NAMES, TIRA_ASR_DS, FLEURS, TIRA_BILING
+from train_whisper import init_parser
 
 def test_dataset_language():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['en'],
-        model='openai/whisper-tiny',
-        num_records=50,
-        action='evaluate',
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['en']
+    args.model='openai/whisper-tiny'
+    args.num_records=50
+    args.action='evaluate'
+
     ds, _ = load_and_prepare_dataset(args)
     ds.map(
         lambda row: assert_tokens_in_row(
@@ -27,16 +25,13 @@ def test_dataset_language():
     )
 
 def test_dataset_multi_language():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['en', 'sw'],
-        model='openai/whisper-tiny',
-        num_records=50,
-        action='evaluate',
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['en', 'sw']
+    args.model='openai/whisper-tiny'
+    args.num_records=50
+    args.action='evaluate'
+
     ds, _ = load_and_prepare_dataset(args)
     ds.map(
         lambda row: assert_tokens_in_row(
@@ -47,18 +42,15 @@ def test_dataset_multi_language():
     )
 
 def test_eval_datasets():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['sw'],
-        model='openai/whisper-tiny',
-        num_records=50,
-        eval_datasets=[FLEURS, TIRA_BILING],
-        eval_dataset_languages=['en', 'sw+en'],
-        action='evaluate',
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.model='openai/whisper-tiny'
+    args.num_records=50
+    args.eval_datasets=[FLEURS, TIRA_BILING]
+    args.eval_dataset_languages=['en', 'sw+en']
+    args.action='evaluate'
+
     ds, _ = load_and_prepare_dataset(args)
     eval_datasets=ds['validation']
     assert type(eval_datasets) is dict
@@ -73,9 +65,9 @@ def test_eval_datasets():
         batched=False,
     )
 
-    assert 'tira-clean-split-sw' in eval_datasets
-    assert type(eval_datasets['tira-clean-split-sw']) is Dataset
-    eval_datasets['tira-clean-split-sw'].map(
+    assert 'tira-asr-sw' in eval_datasets
+    assert type(eval_datasets['tira-asr-sw']) is Dataset
+    eval_datasets['tira-asr-sw'].map(
         lambda row: assert_tokens_in_row(
             row,
             token_names=['sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps'],
@@ -94,16 +86,13 @@ def test_eval_datasets():
     )
 
 def test_decoder_input_added():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['sw'],
-        model='openai/whisper-tiny',
-        num_records=50,
-        action='evaluate',
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.model='openai/whisper-tiny'
+    args.num_records=50
+    args.action='evaluate'
+    
     ds, _ = load_and_prepare_dataset(args)
     assert 'forced_decoder_ids' in ds['validation'][0]
     ds['validation'].map(
@@ -121,16 +110,13 @@ def test_decoder_input_added():
     )
 
 def test_label_prefix_added():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['sw'],
-        model='openai/whisper-tiny',
-        num_records=50,
-        action='evaluate',
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.model='openai/whisper-tiny'
+    args.num_records=50
+    args.action='evaluate'
+
     ds, _ = load_and_prepare_dataset(args)
     ds['validation'].map(
         lambda row: assert_labels_begin_with(
@@ -152,31 +138,28 @@ def test_label_prefix_added():
     )
 
 def test_skip_recordings():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['sw'],
-        model='openai/whisper-tiny',
-        action='train',
-        skip_recordings=['HH20210312'],
-    )
-    for arg in DATASET_ARG_NAMES:
-        if not hasattr(args, arg):
-            setattr(args, arg, None)
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.model='openai/whisper-tiny'
+    args.action='train'
+    args.skip_recordings=['HH20210312']
+
     ds, _ = load_and_prepare_dataset(args)
     # 16384 records in the base train dataset
     # minus 230 records from recording HH20210312
     assert len(ds['train'])==16154
 
 def test_train_datasets():
-    args = Namespace(
-        dataset=TIRA_ASR_DS,
-        language=['sw'],
-        train_datasets=[FLEURS, FLEURS],
-        train_dataset_languages=['en', 'en+sw'],
-        model='openai/whisper-tiny',
-        action='train',
-        num_records=10,
-    )
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.train_datasets=[FLEURS, FLEURS]
+    args.train_dataset_languages=['en', 'en+sw']
+    args.model='openai/whisper-tiny'
+    args.action='train'
+    args.num_records=10
+    
     for arg in DATASET_ARG_NAMES:
         if not hasattr(args, arg):
             setattr(args, arg, None)
@@ -186,6 +169,6 @@ def test_train_datasets():
     fleurs.map(assert_tokens_not_in_row, fn_kwargs={'token_names':['sw']})
     tira_biling = ds['train'].filter(lambda row: row['dataset']=='fl_en-en+sw')
     tira_biling.map(assert_tokens_in_row, fn_kwargs={'token_names':['en', 'sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps']})
-    tira_mono = ds['train'].filter(lambda row: row['dataset']=='tira-clean-split-sw')
+    tira_mono = ds['train'].filter(lambda row: row['dataset']=='tira-asr-sw')
     tira_mono.map(assert_tokens_in_row, fn_kwargs={'token_names':['sw', 'transcribe', 'startoftranscript', 'eos', 'notimestamps']})
     tira_mono.map(assert_tokens_not_in_row, fn_kwargs={'token_names':['en']})
