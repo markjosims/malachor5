@@ -70,7 +70,7 @@ TRAIN_PROG_ARGS = {
 
 # hyperparams associated with `transformers.Seq2SeqTrainingArguments`
 DEFAULT_TRAINER_HYPERPARAMS = {
-    'group_by_length': True,
+    'group_by_length': False,
     'per_device_train_batch_size': 8,
     'per_device_eval_batch_size': 8,
     'gradient_accumulation_steps': 1,
