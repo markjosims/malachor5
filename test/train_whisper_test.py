@@ -36,7 +36,7 @@ def test_lang_col_generate(tmpdir):
             data_collator=data_collator,
             compute_metrics=compute_metrics,
             tokenizer=processor.feature_extractor,
-        )
+    )
     predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
     swahili_token = LANG_TOKENS['sw']['id']
     en_token = LANG_TOKENS['en']['id']
