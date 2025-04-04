@@ -14,8 +14,7 @@ ENV PATH="/venv/bin:$PATH"
 
 # Install dependencies in the virtual environment
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r testing-requirements.txt
+RUN pip install --no-cache-dir -r docker-requirements.txt
 
 # Set entrypoint (modify as needed)
 CMD ["/bin/bash"]
