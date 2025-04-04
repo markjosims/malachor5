@@ -170,13 +170,14 @@ class WhisperTrainer(Seq2SeqTrainer):
             # expected shape is [(1, ID), (2, ID), ...]
             forced_decoder_ids = [(i+1, tok_id) for i, tok_id in enumerate(inputs.pop('forced_decoder_ids')[0])]
             gen_kwargs['forced_decoder_ids']=forced_decoder_ids
-        return super().prediction_step(
+        prediction = super().prediction_step(
             model,
             inputs,
             prediction_loss_only=prediction_loss_only,
             ignore_keys=ignore_keys,
             **gen_kwargs,
         )
+        return prediction
     
     def evaluate(
         self,
