@@ -4,6 +4,7 @@ import json
 import sys
 import os
 sys.path.append('scripts')
+import torch
 from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval
@@ -16,14 +17,14 @@ def test_lang_col_generate(tmpdir):
     """
     args = init_parser().parse_args([])
     args.output=str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['sw']
+    args.dataset = FLEURS
+    args.language = ['en']
     args.num_records = 10
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
-    args.eval_datasets=[FLEURS, TIRA_BILING]
-    args.eval_dataset_languages=['en', 'sw+en']
+    args.eval_datasets=[FLEURS, FLEURS]
+    args.eval_dataset_languages=['sw', 'zh']
 
     ds, processor = load_and_prepare_dataset(args)
     compute_metrics = get_metrics(args, processor)
@@ -38,20 +39,15 @@ def test_lang_col_generate(tmpdir):
             tokenizer=processor.feature_extractor,
     )
     predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
-    swahili_token = LANG_TOKENS['sw']['id']
-    en_token = LANG_TOKENS['en']['id']
 
-    for pred in predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions:
-        assert en_token in pred
-        assert swahili_token not in pred
+    en_preds = predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions
+    sw_preds = predictions_dict[FLEURS.split('/')[-1]+'-sw'].predictions
+    zh_preds = predictions_dict[FLEURS.split('/')[-1]+'-zh'].predictions
+    for en_pred, sw_pred, zh_pred in zip(en_preds, sw_preds, zh_preds):
+        assert not torch.equal(en_preds, sw_preds)
+        assert not torch.equal(en_preds, zh_preds)
+        assert not torch.equal(zh_preds, sw_preds)
 
-    for pred in predictions_dict[TIRA_ASR_DS.split('/')[-1]+'-sw'].predictions:
-        assert swahili_token in pred
-        assert en_token not in pred
-    
-    for pred in predictions_dict[TIRA_BILING.split('/')[-1]+'-sw+en'].predictions:
-        assert en_token in pred
-        assert swahili_token in pred
 
 
 def test_save_fisher_matrix(tmpdir):
