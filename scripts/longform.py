@@ -64,7 +64,6 @@ def perform_asr(
                 audio=chunks_with_language,
                 pipe=pipe[model_for_language],
                 generate_kwargs=generate_kwargs,
-                return_timestamps=return_timestamps,
                 **kwargs
             )
             for orig_chunk, result_chunk in zip(chunks_with_language, language_result):
