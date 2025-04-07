@@ -14,6 +14,8 @@ ENV PATH="/venv/bin:$PATH"
 
 # Install dependencies in the virtual environment
 COPY pinned-requirements.cpu.txt .
+RUN pip install --upgrade pip
+RUN pip install setuptools
 RUN pip install --no-cache-dir -r pinned-requirements.cpu.txt
 
 # Set entrypoint (modify as needed)
