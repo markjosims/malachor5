@@ -16,3 +16,4 @@ jiwer
 https://github.com/kpu/kenlm/archive/master.zip
 nemo_toolkit[all]
 PyYAML==6.0.2
+tbparse
