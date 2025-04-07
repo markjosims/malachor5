@@ -441,12 +441,14 @@ def get_step_of_checkpoint(checkpoint_dir) -> int:
 def get_latest_checkpoint(model_dir):
     checkpoints = glob(os.path.join(model_dir, 'checkpoint-*'))
     checkpoints.sort(key=get_checkpoint_num)
-    return checkpoints[-1]
+    return checkpoints[-1] if checkpoints else None
 
 def get_global_step(args) -> int:
     if args.checkpoint:
         return get_step_of_checkpoint(args.checkpoint)
     latest_checkpoint = get_latest_checkpoint(args.output)
+    if latest_checkpoint is None:
+        return None
     return get_step_of_checkpoint(latest_checkpoint)
 
 def get_latest_run_path(logdir: str) -> str:
