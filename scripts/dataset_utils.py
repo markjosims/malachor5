@@ -228,6 +228,8 @@ def load_and_prepare_dataset(args):
     if args.train_data_pct and 'train' in ds:
         num_train = int(len(ds['train'])*(args.train_data_pct))
         ds['train'] = ds['train'].shuffle(seed=42).select(range(num_train))
+
+    # load epitran object if performing grapheme2phoneme conversion
     epitran=get_epitran(
         args.fleurs_lang,
         lang_key='fleurs' if 'fleurs' in args.dataset
