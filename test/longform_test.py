@@ -200,7 +200,7 @@ def test_pipeout_to_eaf():
     sli_eaf = pipeout_to_eaf(sli_out, chunk_key='sli_pred')
     assert type(sli_eaf) is Elan.Eaf
 
-    asr_out = perform_asr(wav, model_path='openai/whisper-tiny')
+    asr_out = perform_asr(wav, model_path='openai/whisper-tiny', return_timestamps=True)
     asr_eaf = pipeout_to_eaf(asr_out['chunks'])
     assert type(asr_eaf) is Elan.Eaf
 
