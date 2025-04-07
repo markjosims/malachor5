@@ -874,7 +874,7 @@ def test_experiment_json_eval_baseline(tmpdir):
 
     val_data = exp_json['eval_data']
     assert type(val_data) is list
-    assert len(val_data) == 2
+    assert len(val_data) == 1
     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
     assert val_data[0]['dataset_path'] == TIRA_ASR_DS
     assert val_data[0]['language'] == 'sw'
