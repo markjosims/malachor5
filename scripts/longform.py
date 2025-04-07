@@ -58,7 +58,7 @@ def perform_asr(
                 continue
             tqdm.write(f"{len(chunks_with_language)} chunks for {sli_label}")
             language_code=language_obj['whisper_lang_code']
-            generate_kwargs=generate_kwargs if generate_kwargs else {}
+            generate_kwargs=kwargs.get('generate_kwargs', {})
             generate_kwargs['forced_decoder_ids']=get_forced_decoder_ids(language=language_code, tokenizer=tokenizer)#['language']=language_code
             language_result = perform_asr(
                 audio=chunks_with_language,
