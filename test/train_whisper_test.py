@@ -847,6 +847,7 @@ def test_experiment_json_eval_baseline(tmpdir):
     args.num_records = 2
     args.model = 'openai/whisper-tiny'
     args.action = 'evaluate'
+    args.num_train_epochs = 2
     train(args)
 
     # check `experiment.json`
