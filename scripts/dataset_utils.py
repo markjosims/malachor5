@@ -26,7 +26,7 @@ EVAL_DS_ARGS = {
     'eval_dataset_languages': {'nargs': '+', 'help': 'Language for each extra validation set'},
 }
 DATASET_ARGS = {
-    'dataset': {'type': str},
+    'dataset': {'type': str, 'abbreviation': 'd'},
     'num_records': {'abbreviation': 'n', 'type': int},
     'stream': {'action': 'store_true'},
     'fleurs_lang': {'type': str},
