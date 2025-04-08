@@ -91,7 +91,6 @@ def test_prompt_generate(tmpdir):
         predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
         predictions.append(predictions_dict.predictions)
 
-    breakpoint()
     for pred_foo, pred_bar in zip(*predictions):
         assert not np.array_equal(pred_foo, pred_bar)
 
