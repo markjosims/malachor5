@@ -230,7 +230,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', nargs='+', help="Folders containing experiment.json files.")
     parser.add_argument('--output', '-o', help='Filepath to save aggregated experiment.json object to.')
-    args = parser.parse_args(sys.argv)
+    args = parser.parse_args(sys.argv[1:])
     json_aggregate = aggregate_all_experiments(args.input)
     with open(args.output, 'w', encoding='utf8') as f:
         json.dump(json_aggregate, f, indent=2, ensure_ascii=False)
