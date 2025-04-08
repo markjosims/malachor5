@@ -6,6 +6,7 @@ import pandas as pd
 import sys
 from typing import Dict, Optional, Any
 from training_arg_utils import DEFAULT_TRAINER_HYPERPARAMS, LM_ARGS, GENERATE_ARGS
+from argparse import ArgumentParser
 
 def get_checkpoint_num(checkpoint_dir):
     return int(checkpoint_dir.removesuffix('/').split(sep='-')[-1])
@@ -216,3 +217,20 @@ def gather_events_for_ds(split, tb_df, ds_name=None):
     masked_df['start_time']=timestr
     event_list = masked_df.to_dict(orient='records')
     return event_list
+
+def aggregate_all_experiments(dirlist):
+    json_paths = [os.path.join(dirname, 'experiment.json') for dirname in dirlist]
+    json_objs = []
+    for json_path in json_paths:
+        with open(json_path, 'r', encoding='utf8') as f:
+            json_objs.append(json.load(f))
+    return json_objs
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--input', '-i', nargs='+', help="Folders containing experiment.json files.")
+    parser.add_argument('--output', '-o', help='Filepath to save aggregated experiment.json object to.')
+    args = parser.parse_args(sys.argv)
+    json_aggregate = aggregate_all_experiments(args.input)
+    with open(args.output, 'w', encoding='utf8') as f:
+        json.dump(json_aggregate, f, indent=2, ensure_ascii=False)
