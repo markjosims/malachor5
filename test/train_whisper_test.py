@@ -47,7 +47,52 @@ def test_lang_col_generate(tmpdir):
         assert not np.array_equal(en_pred, zh_pred)
         assert not np.array_equal(zh_pred, ar_pred)
 
+def test_prompt_generate(tmpdir):
+    """
+    Test that setting prompt changes output of `generate` when evaluating.
+    """
+    args = init_parser().parse_args([])
+    args.output=str(tmpdir)
+    args.dataset = FLEURS
+    args.language = ['en']
+    args.num_records = 3
+    args.predict_with_generate=True
+    args.model = 'openai/whisper-tiny'
+    args.action = 'evaluate'
+    args.per_device_eval_batch_size=1
 
+    # define two prompt files
+    prompt_foo = str(tmpdir/'foo.json')
+    with open(prompt_foo, 'w') as f:
+        prompts = {'validation': ['Sad of light', 'archipelago bean a Chiles', 'A pond to help countries']}
+        json.dump(prompts, f)
+    prompt_bar = str(tmpdir/'bar.json')
+    with open(prompt_bar, 'w') as f:
+        prompts = {'validation': ['Bar bar bar, bar bar']*3}
+        json.dump(prompts, f)
+
+    predictions = []
+    model = load_whisper_model_for_training_or_eval(args)
+
+    for prompt_file in [prompt_foo, prompt_bar]:
+        args.prompt_file = prompt_file
+
+        ds, processor = load_and_prepare_dataset(args)
+        compute_metrics = get_metrics(args, processor)
+        training_args = get_training_args(args)
+        data_collator = load_data_collator(model, processor)
+        trainer = WhisperTrainer(
+                args=training_args,
+                model=model,
+                data_collator=data_collator,
+                compute_metrics=compute_metrics,
+                tokenizer=processor.feature_extractor,
+        )
+        predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
+        predictions.append(predictions_dict.predictions)
+
+    for pred_foo, pred_bar in zip(*predictions):
+        assert not np.array_equal(pred_foo, pred_bar)
 
 def test_save_fisher_matrix(tmpdir):
     """

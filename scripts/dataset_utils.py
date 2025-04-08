@@ -75,7 +75,10 @@ class DataCollatorSpeechSeq2SeqWithPadding:
             batch['forced_decoder_ids']=torch.stack(
                 [torch.tensor(feature['forced_decoder_ids']) for feature in features]
             )
-
+        if 'prompt_ids' in features[0]:
+            if len(features)>1:
+                raise ValueError("Can only use prompts with an eval batch size of 1.")
+            batch['prompt_ids']=torch.tensor(features[0]['prompt_ids'])
         batch["labels"] = labels
 
         return batch

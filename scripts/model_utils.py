@@ -165,11 +165,14 @@ class WhisperTrainer(Seq2SeqTrainer):
     ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
         if len(gen_kwargs) == 0 and hasattr(self, "_gen_kwargs"):
             gen_kwargs = self._gen_kwargs.copy()
+        breakpoint()
         if 'forced_decoder_ids' in inputs:
             # need to set one array of ids as the decoder prompt for whole batch
             # expected shape is [(1, ID), (2, ID), ...]
             forced_decoder_ids = [(i+1, tok_id) for i, tok_id in enumerate(inputs.pop('forced_decoder_ids')[0])]
             gen_kwargs['forced_decoder_ids']=forced_decoder_ids
+        if 'prompt_ids' in inputs:
+            gen_kwargs['prompt_ids']=inputs.pop('prompt_ids')
         prediction = super().prediction_step(
             model,
             inputs,
