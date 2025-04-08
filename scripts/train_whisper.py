@@ -93,7 +93,7 @@ DEFAULT_TRAINER_HYPERPARAMS = {
     'use_cpu': False,
 }
 # stored again as these impact eval in a way other args don't
-GENERATE_ARGS = ['generation_num_beams', 'predict_with_generate']
+GENERATE_ARGS = ['generation_num_beams', 'predict_with_generate', 'prompt_file']
 TRAINER_HYPERPARAM_ABBREVIATIONS = {
     'per_device_train_batch_size': 'b',
     'per_device_eval_batch_size': 'B',
