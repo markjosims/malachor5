@@ -586,7 +586,7 @@ def gather_test_dataset_metadata(args, tb_df):
     return split_data
 
 def gather_dataset_metadata(args, split, tb_df):
-    lang = '+'.join(args.language) or None
+    lang = '+'.join(args.language) if args.language else None
     ds_list = [args.dataset,] + (getattr(args, f'{split}_datasets', None) or [])
     ds_langs = [lang] + (getattr(args, f'{split}_dataset_languages', None) or [])
     if len(ds_list)>1 and len(ds_langs)==1:
