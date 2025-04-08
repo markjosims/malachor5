@@ -1,6 +1,7 @@
 from argparse import Namespace
 from test_utils import assert_tokens_in_row, assert_labels_begin_with, assert_labels_end_with, assert_tokens_appear_once, assert_tokens_not_in_row
 from datasets import Dataset
+import json
 
 import sys
 sys.path.append('scripts')
@@ -108,6 +109,45 @@ def test_decoder_input_added():
             token_names=['sw', 'transcribe', 'startoftranscript', 'notimestamps'],
         )
     )
+
+def test_prompt_input_ids_added(tmpdir):
+    args = init_parser().parse_args([])
+    args.dataset=TIRA_ASR_DS
+    args.language=['sw']
+    args.model='openai/whisper-tiny'
+    args.num_records=5
+    prompt_file = str(tmpdir/'prompts.txt')
+    args.prompt_file=prompt_file
+
+    prompts = {
+        'validation': [
+            'This is a prompt',
+            'This is also a prompt.',
+            'This is a prompt?!?',
+            'Promptly prompting proper promptable prompters.',
+            'Foo bar baz.'
+        ],
+        'test': [
+            'Testing the prompt.',
+            'Prompting the test.',
+            'Prompting the test.',
+            'Foo bar bazzing the test.',
+            'Baz barring the foo.',
+        ]
+    }
+    with open(prompt_file, 'w') as f:
+        json.dump(prompts, f)
+    ds, processor = load_and_prepare_dataset(args)
+    validation_prompts = processor.batch_decode(
+        ds['validation']['prompt_ids'], skip_special_tokens=True
+    )
+    test_prompts = processor.batch_decode(
+        ds['test']['prompt_ids'], skip_special_tokens=True
+    )
+    assert validation_prompts == prompts['validation']
+    assert test_prompts == prompts['test']
+    assert 'prompt_ids' not in ds['train'].column_names
+        
 
 def test_label_prefix_added():
     args = init_parser().parse_args([])
