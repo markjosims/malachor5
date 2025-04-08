@@ -64,7 +64,7 @@ def test_prompt_generate(tmpdir):
     # define two prompt files
     prompt_foo = str(tmpdir/'foo.json')
     with open(prompt_foo, 'w') as f:
-        prompts = {'validation': ['Sad of light', 'archipelago bean a Chiles', 'A pond to help countries']}
+        prompts = {'validation': ['Foo foo! Foo foo foo foo, foo']*3}
         json.dump(prompts, f)
     prompt_bar = str(tmpdir/'bar.json')
     with open(prompt_bar, 'w') as f:
@@ -91,6 +91,7 @@ def test_prompt_generate(tmpdir):
         predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
         predictions.append(predictions_dict.predictions)
 
+    breakpoint()
     for pred_foo, pred_bar in zip(*predictions):
         assert not np.array_equal(pred_foo, pred_bar)
 
