@@ -38,6 +38,7 @@ DATASET_ARGS = {
     'label_key': {'default': 'transcription'},
     'language': {'abbreviation': 'l', 'nargs': '+'},
     'load_ds_cache': {'abbreviation': 'c', 'action': 'store_true'},
+    'prompt_file': {'help': "json file containing text prompts for validation and/or test splits, in same order as rows in dataset."}
 }
 DATASET_ARGS.update(**TRAIN_DS_ARGS, **EVAL_DS_ARGS)
 DATASET_ARG_NAMES = list(DATASET_ARGS.keys())
@@ -118,6 +119,10 @@ def prepare_dataset(
         row['forced_decoder_ids']=decoder_prompt_ids
     else:
         label_ids = processor.tokenizer(label, return_tensors='np').input_ids[0]
+
+    # add prompt_ids if applicable
+    if 'prompt' in row:
+        row['prompt_ids'] = processor.tokenizer(row['prompt'], return_tensors='np').input_ids[0]
     row["labels"]=label_ids
     return row
 
@@ -236,6 +241,12 @@ def load_and_prepare_dataset(args):
         else 'commonvoice_code' if 'common_voice' in args.dataset
         else 'whisper'
     ) if args.g2p else None
+    if args.prompt_file:
+        with open(args.prompt_file, encoding='utf8') as f:
+            prompt_dict = json.load(f)
+        for split in ['validation', 'test']:
+            if split in ds:
+                ds[split] = ds[split].add_column('prompt', prompt_dict[split])
     ds = ds.map(
         lambda b: prepare_dataset(
             b,

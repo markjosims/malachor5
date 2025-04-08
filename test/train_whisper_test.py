@@ -47,7 +47,42 @@ def test_lang_col_generate(tmpdir):
         assert not np.array_equal(en_pred, zh_pred)
         assert not np.array_equal(zh_pred, ar_pred)
 
+def test_lang_col_generate(tmpdir):
+    """
+    Test that setting `--language` arg correctly
+    ensures forced decoding to the given language during decoding
+    with generate.
+    """
+    args = init_parser().parse_args([])
+    args.output=str(tmpdir)
+    args.dataset = FLEURS
+    args.language = ['en']
+    args.num_records = 10
+    args.predict_with_generate=True
+    args.model = 'openai/whisper-tiny'
+    args.action = 'evaluate'
 
+    ds, processor = load_and_prepare_dataset(args)
+    compute_metrics = get_metrics(args, processor)
+    training_args = get_training_args(args)
+    model = load_whisper_model_for_training_or_eval(args)
+    data_collator = load_data_collator(model, processor)
+    trainer = WhisperTrainer(
+            args=training_args,
+            model=model,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+    )
+    predictions_dict = evaluate_dataset(args, ds['validation'], trainer, processor, save_results_to_disk=False)
+
+    en_preds = predictions_dict[FLEURS.split('/')[-1]+'-en'].predictions
+    ar_preds = predictions_dict[FLEURS.split('/')[-1]+'-ar'].predictions
+    zh_preds = predictions_dict[FLEURS.split('/')[-1]+'-zh'].predictions
+    for en_pred, ar_pred, zh_pred in zip(en_preds, ar_preds, zh_preds):
+        assert not np.array_equal(en_pred, ar_pred)
+        assert not np.array_equal(en_pred, zh_pred)
+        assert not np.array_equal(zh_pred, ar_pred)
 
 def test_save_fisher_matrix(tmpdir):
     """
