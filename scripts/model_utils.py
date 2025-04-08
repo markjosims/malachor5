@@ -165,7 +165,6 @@ class WhisperTrainer(Seq2SeqTrainer):
     ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
         if len(gen_kwargs) == 0 and hasattr(self, "_gen_kwargs"):
             gen_kwargs = self._gen_kwargs.copy()
-        breakpoint()
         if 'forced_decoder_ids' in inputs:
             # need to set one array of ids as the decoder prompt for whole batch
             # expected shape is [(1, ID), (2, ID), ...]
@@ -295,7 +294,6 @@ class WhisperTrainer(Seq2SeqTrainer):
                 logits[:,0,lang_ids],
                 dim=1,
             )
-        # breakpoint()
         lid_loss = torch.nn.functional.cross_entropy(
             lid_probs,
             ground_truth_lid_mat
