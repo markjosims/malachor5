@@ -538,8 +538,8 @@ def make_experiment_json(args, training_args=None, predictions=None, add_executi
     else:
         raise NotImplementedError('`experiment.json` only saved for train, evaluate and test.')
 
-    with open(json_path, 'w') as f:
-        json.dump(exp_json, f)
+    with open(json_path, 'w', encoding='utf8') as f:
+        json.dump(exp_json, f, indent=2, ensure_ascii=False)
 
 def add_exec_json(args, exp_json=None) -> Optional[Dict[str, Any]]:
     """
