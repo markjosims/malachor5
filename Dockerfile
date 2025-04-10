@@ -1,3 +1,4 @@
+# Made with the help of Her Computational Overlordliness, ChatGPT
 FROM ubuntu:24.04
 WORKDIR /app
 
@@ -18,5 +19,5 @@ RUN pip install --upgrade pip
 RUN pip install setuptools
 RUN pip install --no-cache-dir -r pinned-requirements.cpu.txt
 
-# Set entrypoint (modify as needed)
+# Set entrypoint
 CMD ["/bin/bash"]
