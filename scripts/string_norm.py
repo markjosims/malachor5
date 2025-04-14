@@ -36,6 +36,8 @@ with open('meta/language_codes.json') as f:
     LANG_CODES = json.load(f)
 with open('meta/tira2arpabet.json', encoding='utf8') as f:
     TIRA2ARPABET = json.load(f)
+with open('meta/tira2mfa.json', encoding='utf8') as f:
+    TIRA2MFA = json.load(f)
 
 # ----------- #
 # g2p methods #
@@ -63,6 +65,14 @@ def tira2arpabet(tira_str: str) -> str:
     arpa_str = make_replacements(no_punct_str, TIRA2ARPABET)
     trimmed_whitespace = ' '.join(arpa_str.split())
     return trimmed_whitespace
+
+def tira2mfa(tira_str: str) -> str:
+    no_diac_str = strip_diacs(tira_str)
+    no_punct_str = remove_punct(no_diac_str)
+    mfa_str = make_replacements(no_punct_str, TIRA2MFA)
+    trimmed_whitespace = ' '.join(mfa_str.split())
+    return trimmed_whitespace
+
 
 # --------------------------- #
 # ASR post-processing methods #
