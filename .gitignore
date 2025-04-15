@@ -166,6 +166,7 @@ cython_debug/
 data/
 *.wav
 *.csv
+*.pfsx
 
 # VS Code
 settings.json
