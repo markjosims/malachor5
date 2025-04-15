@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union, List, Literal
 from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
@@ -10,8 +10,15 @@ import numpy as np
 # embedding helpers #
 # ----------------- #
 
-def embed_speech(audio: Union[str, List[str], torch.Tensor]) -> torch.Tensor:
-    speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-tiny-speech')
+def embed_speech(
+        audio: Union[str, List[str], torch.Tensor],
+        speech_encoder: Union[str, SpeechEncoder]=None,
+        encoder_size: Literal["tiny", "base", "small"]="tiny",
+    ) -> torch.Tensor:
+    if speech_encoder is None:
+        speech_encoder = f'anyspeech/clap-ipa-{encoder_size}-speech'
+    if type(speech_encoder) is str:
+        speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
     speech_encoder.eval().to(DEVICE)
 
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
@@ -32,8 +39,15 @@ def embed_speech(audio: Union[str, List[str], torch.Tensor]) -> torch.Tensor:
         speech_embed = speech_encoder(**audio_input)['pooler_output']
     return speech_embed
 
-def embed_text(text: Union[str, List[str]]) -> torch.Tensor:
-    phone_encoder = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-tiny-phone')
+def embed_text(
+        text: Union[str, List[str]],
+        phone_encoder: Union[str, PhoneEncoder]=None,
+        encoder_size: Literal["tiny", "base", "small"]="tiny",
+    ) -> torch.Tensor:
+    if phone_encoder is None:
+        phone_encoder = f'anyspeech/clap-ipa-{encoder_size}-phone'
+    if type(phone_encoder) is str:
+        phone_encoder = PhoneEncoder.from_pretrained(phone_encoder)
     phone_encoder.eval().to(DEVICE)
 
     tokenizer = DebertaV2Tokenizer.from_pretrained('charsiu/IPATokenizer')

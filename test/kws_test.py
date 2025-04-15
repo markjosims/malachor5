@@ -50,6 +50,21 @@ def test_embed_text_batch():
     assert text_embed.shape[1] == 384
     assert text_embed.shape[0] == 3
 
+@pytest.mark.parametrize(
+    "encoder_size,encoder_dim",
+    [
+        ('tiny', 384),
+        ('base', 512),
+        ('small', 512),
+    ]
+)
+def test_embed_size(encoder_size, encoder_dim):
+    speech_embed = embed_speech(NYEN_PATH, encoder_size=encoder_size)
+    assert speech_embed.shape[1]==encoder_dim
+    
+    text_embed = embed_text("ɲɛ̂n", encoder_size=encoder_size)
+    assert text_embed.shape[1]==encoder_dim
+
 def test_cos_sim():
     nyen_speech = embed_speech(NYEN_PATH)
     albrrizo_speech = embed_speech(ALBRRIZO_PATH)
