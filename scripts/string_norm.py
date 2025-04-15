@@ -4,10 +4,6 @@ import unicodedata
 import json
 import epitran
 
-"""
-Copied from zugubul
-"""
-
 DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde',]
 
 COMBINING = {
@@ -17,14 +13,10 @@ COMBINING = {
     'circm': "\u0302",
     'caron': "\u030C",
     'tilde': "\u0303",
+    'bridge': "\u032A",
 }
 COMBINING_TO_NAME = {
-    "\u0300": 'grave',
-    "\u0304": 'macrn',
-    "\u0301": 'acute',
-    "\u0302": 'circm',
-    "\u030C": 'caron',
-    "\u0303": 'tilde',
+    v: k for k, v in COMBINING.items()
 }
 TONE_LETTERS = {
     'grave': "L",
@@ -40,28 +32,47 @@ COMPOSITE = {
     "o": {"acute": "ó", "macrn": "ō", "grave": "ò", "caron": "ǒ", "circm": "ô", "tilde": "õ",},
     "u": {"acute": "ú", "macrn": "ū", "grave": "ù", "caron": "ǔ", "circm": "û", "tilde": "ũ",},
 }
+with open('meta/language_codes.json') as f:
+    LANG_CODES = json.load(f)
+with open('meta/tira2arpabet.json', encoding='utf8') as f:
+    TIRA2ARPABET = json.load(f)
+with open('meta/tira2mfa.json', encoding='utf8') as f:
+    TIRA2MFA = json.load(f)
 
-# ------------------- #
-# IPA transliteration #
-# ------------------- #
+# ----------- #
+# g2p methods #
+# ----------- #
 
 def get_epitran(lang_tag, lang_key='fleurs', script: Optional[str]=None):
     """
     Instantiate and return an Epitran transliteration object
     for the given `fleurs_lang`.
     """
-    with open('meta/language_codes.json') as f:
-        lang_codes = json.load(f)
     if type(lang_tag) is list and len(lang_tag)==1:
         lang_tag=lang_tag[0]
     elif type(lang_tag) is list:
         return {tag: get_epitran(lang_key=lang_key, script=script) for tag in lang_tag}
-    lang_dict = [d for d in lang_codes if d.get(lang_key, None)==lang_tag][0]
+    lang_dict = [d for d in LANG_CODES if d.get(lang_key, None)==lang_tag][0]
     iso3 = lang_dict['iso3']
     if not script:
         script=lang_dict['fleurs_script']
     
     return epitran.Epitran(f"{iso3}-{script}")
+
+def tira2arpabet(tira_str: str) -> str:
+    no_diac_str = strip_diacs(tira_str)
+    no_punct_str = remove_punct(no_diac_str)
+    arpa_str = make_replacements(no_punct_str, TIRA2ARPABET)
+    trimmed_whitespace = ' '.join(arpa_str.split())
+    return trimmed_whitespace
+
+def tira2mfa(tira_str: str) -> str:
+    no_diac_str = strip_diacs(tira_str)
+    no_punct_str = remove_punct(no_diac_str)
+    mfa_str = make_replacements(no_punct_str, TIRA2MFA)
+    trimmed_whitespace = ' '.join(mfa_str.split())
+    return trimmed_whitespace
+
 
 # --------------------------- #
 # ASR post-processing methods #
@@ -152,7 +163,9 @@ def make_replacements(text: str, reps: Dict[str, str]) -> str:
     and values are outtabs to replace them.
     Avoids transitivity by first replacing intabs to a unique char not found in the original string.
     """
-    max_ord = max_ord_in_str(text)
+    max_ord_str = max_ord_in_str(text)
+    max_ord_reps = max_ord_in_str(''.join([*reps.keys(), *reps.values()]))
+    max_ord = max(max_ord_str, max_ord_reps)
     intab2unique = {
         k: chr(max_ord+i+1) for i, k in enumerate(reps.keys())
     }
@@ -168,7 +181,6 @@ def make_replacements(text: str, reps: Dict[str, str]) -> str:
         text = text.replace(intab, sentinel)
     for sentinel, outtab in unique2outtab.items():
         text = text.replace(sentinel, outtab)
-
     return text
 
 def remove_punct(text: str) -> str:

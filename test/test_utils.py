@@ -3,6 +3,11 @@ sys.path.append('scripts')
 from dataset_utils import SPECIAL_TOKENS_FLAT
 import numpy as np
 
+SAMPLE_BILING_PATH = 'test/data/sample_biling.wav'
+NYEN_PATH = 'test/data/nyen.wav'
+XDDERE_PATH = 'test/data/xddere.wav'
+ALBRRIZO_PATH = 'test/data/albrrizo.wav'
+
 def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
     assert chunks_key in chunk_dict
