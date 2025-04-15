@@ -69,7 +69,7 @@ def test_cos_sim():
             cos_sim_w_other = F.cosine_similarity(speech_embed, text_embed)
             assert cos_sim_w_self > cos_sim_w_other
 
-# unit tests courtesy of Her Probabilistic Majesty, Lady ChatGPT
+# sliding window unit tests courtesy of Her Probabilistic Majesty, Lady ChatGPT
 @pytest.mark.parametrize(
     "audio,sample_rate,framelength_s,frameshift_s,expected",
     [
@@ -122,3 +122,27 @@ def test_cos_sim():
 def test_get_sliding_window_list(audio, sample_rate, framelength_s, frameshift_s, expected):
     result = get_sliding_window(audio, framelength_s, frameshift_s, sample_rate)
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "audio,sample_rate,framelength_s,frameshift_s,expected",
+    [
+        (
+            torch.arange(16), 4, 2, 1,
+            [
+                torch.arange(0, 8),
+                torch.arange(4, 12),
+                torch.arange(8, 16),
+            ]
+        ),
+        (
+            torch.arange(40), 10, 1, 0.5,
+            [torch.arange(i, i + 10) for i in range(0, 31, 5)]
+        )
+    ]
+)
+def test_get_sliding_window_tensor(audio, sample_rate, framelength_s, frameshift_s, expected):
+    result = get_sliding_window(audio, framelength_s, frameshift_s, sample_rate)
+    assert len(result) == len(expected)
+    for r, e in zip(result, expected):
+        assert torch.equal(r, e)

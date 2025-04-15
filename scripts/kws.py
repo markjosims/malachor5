@@ -52,7 +52,7 @@ def get_sliding_window(
         frameshift_s: float,
         sample_rate: int = SAMPLE_RATE,
     ):
-    if not audio or len(audio)==0:
+    if len(audio)==0:
         return []
     framelength_samples = int(framelength_s * sample_rate)
     frameshift_samples = int(frameshift_s * sample_rate)
