@@ -11,19 +11,22 @@ def test_embed_speech():
     for filepath in [NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH]:
         speech_embed = embed_speech(filepath)
         assert type(speech_embed) is torch.Tensor
-        assert speech_embed.shape == [1,256]
+        assert speech_embed.shape[1] == 384
+        assert speech_embed.shape[0] == 1
     # test loading embedding from tensor of samples
     for filepath in [NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH]:
         wav = load_and_resample(filepath)
         speech_embed = embed_speech(wav)
         assert type(speech_embed) is torch.Tensor
-        assert speech_embed.shape == [1,256]
+        assert speech_embed.shape[1] == 384
+        assert speech_embed.shape[0] == 1
 
 def test_embed_text():
     for ipa_str in ["ɲɛ̂n", "ɜ̀lbrìðɔ̀", "èd̪ɛ̀ɾɛ̀"]:
         text_embed = embed_text(ipa_str)
         assert type(text_embed) is torch.Tensor
-        assert text_embed.shape == [1,256]
+        assert text_embed.shape[1] == 384
+        assert text_embed.shape[0] == 1
 
 def test_cos_sim():
     nyen_speech = embed_speech(NYEN_PATH)
