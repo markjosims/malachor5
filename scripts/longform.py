@@ -228,6 +228,20 @@ def load_and_resample(
         raise ValueError("Cannot flatten wav unless converting to mono!")
     return wav
 
+def prepare_tensor_for_feature_extraction(
+        audio: Union[torch.Tensor, List[torch.Tensor], np.ndarray, List[np.ndarray]]
+):
+    """
+    Cast tensor to numpy and remove extra dimensions.
+    If `audio` is list of tensors/arrays, do reshaping on each element of list.
+    """
+    if type(audio) is list:
+        return [prepare_tensor_for_feature_extraction(tensor) for tensor in audio]
+    if type(audio) is torch.Tensor:
+        audio = audio.numpy()
+    audio = np.squeeze(audio)
+    return audio
+
 def sec_to_samples(time_sec: float) -> int:
     """`time_sec` is a time value in seconds.
     Returns same time value in samples using
