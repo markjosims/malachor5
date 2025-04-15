@@ -2,7 +2,7 @@ from typing import Union, List
 from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
-from longform import load_and_resample
+from longform import load_and_resample, prepare_tensor_for_feature_extraction
 import torch
 import numpy as np
 
@@ -14,7 +14,11 @@ def embed_speech(audio: Union[str, List[str], torch.Tensor]) -> torch.Tensor:
 
     if type(audio) is str:
         audio = load_and_resample(audio)
-    audio = audio.squeeze()
+    if type(audio) is list and type(audio[0]) is str:
+        audio = [load_and_resample(fp) for fp in audio]
+    audio = prepare_tensor_for_feature_extraction(audio)
+
+    # audio = audio.squeeze()
     audio_input = processor(
         audio,
         sampling_rate=16_000, # these kwargs avoid bugs
