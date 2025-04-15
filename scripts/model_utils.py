@@ -24,7 +24,7 @@ import kenlm
 from datasets import Dataset
 
 
-DEVICE = 0 if torch.cuda.is_available() else -1
+DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 LOGREG_PATH = 'models/voxlingua_logreg.pkl'
 LR_ARG_DEFAULTS = {
     'batch_size': 8,
