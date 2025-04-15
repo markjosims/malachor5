@@ -27,13 +27,13 @@ def test_embed_speech_batch():
     speech_embed = embed_speech(audio_paths)
     assert type(speech_embed) is torch.Tensor
     assert speech_embed.shape[0] == 3
-    assert speech_embed.shape[1] == 1
+    assert speech_embed.shape[1] == 384
 
     wavs = [load_and_resample(fp) for fp in audio_paths]
     speech_embed = embed_speech(wavs)
     assert type(speech_embed) is torch.Tensor
     assert speech_embed.shape[0] == 3
-    assert speech_embed.shape[1] == 1
+    assert speech_embed.shape[1] == 384
 
 def test_embed_text():
     for ipa_str in ["ɲɛ̂n", "ɜ̀lbrìðɔ̀", "èd̪ɛ̀ɾɛ̀"]:
