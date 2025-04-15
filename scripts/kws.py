@@ -167,6 +167,7 @@ def perform_kws(args):
             return_timestamps=True,
         )
         audio_frames = [frame.pop('samples') for frame in sliding_windows]
+        breakpoint()
         sim_mat = get_keyword_sim(
             audio_list=audio_frames,
             text_list=keyword_list,
@@ -191,5 +192,5 @@ def perform_kws(args):
 
 if __name__ == '__main__':
     parser = init_kws_parser()
-    args = parser.parse_args(sys.argv)
+    args = parser.parse_args(sys.argv[1:])
     perform_kws(args)
