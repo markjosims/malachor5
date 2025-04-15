@@ -12,13 +12,10 @@ def embed_speech(audio: Union[str, List[str], torch.Tensor]) -> torch.Tensor:
 
     processor = AutoProcessor.from_pretrained('openai/whisper-tiny')
 
-    if type(audio) is str:
+    if (type(audio) is str) or (type(audio) is list and type(audio[0]) is str):
         audio = load_and_resample(audio)
-    if type(audio) is list and type(audio[0]) is str:
-        audio = [load_and_resample(fp) for fp in audio]
     audio = prepare_tensor_for_feature_extraction(audio)
 
-    # audio = audio.squeeze()
     audio_input = processor(
         audio,
         sampling_rate=16_000, # these kwargs avoid bugs

@@ -207,7 +207,7 @@ def perform_sli(
 # ---------------------- #
 
 def load_and_resample(
-        fp: str,
+        fp: Union[str, List[str]],
         sr: int = SAMPLE_RATE,
         to_mono: bool = True,
         flatten: bool = False,
@@ -218,6 +218,8 @@ def load_and_resample(
     If `to_mono` is passed, convert to mono by dropping the second channel.
     If `flatten` is also passed, squeeze.
     """
+    if type(fp) is list:
+        return [load_and_resample(sub_fp, sr=sr, to_mono=to_mono, flatten=flatten) for sub_fp in fp]
     wav_orig, sr_orig = torchaudio.load(fp)
     wav = torchaudio.functional.resample(wav_orig, sr_orig, sr)
     if to_mono and len(wav.shape)==2:
