@@ -34,7 +34,6 @@ def embed_text(text: Union[str, List[str]]) -> torch.Tensor:
         return_token_type_ids=False,
         padding=True,
     )
-    audio_input=audio_input.to(DEVICE)
     ipa_input=ipa_input.to(DEVICE)
 
     with torch.no_grad():
