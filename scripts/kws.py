@@ -6,6 +6,10 @@ from longform import load_and_resample, prepare_tensor_for_feature_extraction, S
 import torch
 import numpy as np
 
+# ----------------- #
+# embedding helpers #
+# ----------------- #
+
 def embed_speech(audio: Union[str, List[str], torch.Tensor]) -> torch.Tensor:
     speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-tiny-speech')
     speech_encoder.eval().to(DEVICE)
@@ -45,6 +49,10 @@ def embed_text(text: Union[str, List[str]]) -> torch.Tensor:
     with torch.no_grad():
         phone_embed = phone_encoder(**ipa_input)['pooler_output']
     return phone_embed
+
+# ------------- #
+# audio helpers #
+# ------------- #
 
 def get_sliding_window(
         audio: torch.Tensor,
