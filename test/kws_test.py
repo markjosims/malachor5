@@ -1,12 +1,15 @@
 import sys
 sys.path.append('scripts')
-from kws import embed_speech, embed_text, get_sliding_window, get_keyword_sim
+from kws import embed_speech, embed_text, get_sliding_window, get_keyword_sim, perform_kws, init_kws_parser
 from test_utils import NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH
 from test_utils import NYEN_IPA, ALBRRIZO_IPA, XDDERE_IPA
+from test_utils import SAMPLE_BILING_PATH
 from longform import load_and_resample
 import torch
 import torch.nn.functional as F
 import pytest
+import os
+import json
 
 def test_embed_speech():
     # test loading embedding from filepath
@@ -205,3 +208,26 @@ def test_get_sliding_window_tensor(audio, sample_rate, framelength_s, frameshift
     assert len(result) == len(expected)
     for r, e in zip(result, expected):
         assert torch.equal(r, e)
+
+def test_perform_kws(tmpdir):
+    parser = init_kws_parser()
+    args=parser.parse_args([])
+    args.input = [SAMPLE_BILING_PATH]
+    args.output_dir=tmpdir
+    args.keywords = [NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA]
+    perform_kws(args)
+    wav_basename = os.path.basename(SAMPLE_BILING_PATH)
+    wav_path = os.path.join(tmpdir, wav_basename)
+    json_path = wav_path.replace('.wav', '.json')
+    with open(json_path, encoding='utf8') as f:
+        json_obj = json.load(f)
+    assert json_obj['audio_input'] == SAMPLE_BILING_PATH
+    assert type(json_obj['timestamps']) is list
+    assert type(json_obj['timestamps'][0]) is dict
+    assert 'start_s' in json_obj['timestamps'][0]
+    assert 'end_s' in json_obj['timestamps'][0]
+    assert type(json_obj['keywords']) is list
+    assert json_obj['keywords'] == [NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA]
+    assert type(json_obj['similarity_matrix']) is list
+    assert type(json_obj['similarity_matrix'][0]) is list
+    assert len(json_obj['similarity_matrix'][0]) == 3

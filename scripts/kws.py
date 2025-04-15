@@ -4,8 +4,10 @@ from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
 import torch
-import torch.nn.functional as F
-import numpy as np
+from argparse import ArgumentParser
+import json
+import sys
+import os
 
 # ----------------- #
 # embedding helpers #
@@ -88,11 +90,29 @@ def get_keyword_sim(
 # audio helpers #
 # ------------- #
 
+def get_frame(
+        audio: torch.Tensor,
+        frame_start: int,
+        frame_end: int,
+        sample_rate: int = SAMPLE_RATE,
+        return_timestamps: bool = False,        
+):
+    if return_timestamps:
+        frame_start_s = frame_start/sample_rate
+        frame_end_s = frame_end/sample_rate
+        return {
+            'start_s': frame_start_s,
+            'end_s': frame_end_s,
+            'samples': audio[frame_start:frame_end]
+        }
+    return audio[frame_start:frame_end]
+
 def get_sliding_window(
         audio: torch.Tensor,
         framelength_s: float,
         frameshift_s: float,
         sample_rate: int = SAMPLE_RATE,
+        return_timestamps: bool = False,
     ):
     if len(audio)==0:
         return []
@@ -103,8 +123,73 @@ def get_sliding_window(
     frame_end = framelength_samples
     windows = []
     while frame_end<len(audio):
-        windows.append(audio[frame_start:frame_end])
+        frame = get_frame(audio, frame_start, frame_end, sample_rate, return_timestamps)
+        windows.append(frame)
         frame_start+=frameshift_samples
         frame_end+=frameshift_samples
-    windows.append(audio[frame_start:])
+    # append last truncated frame
+    frame = get_frame(audio, frame_start, len(audio), sample_rate, return_timestamps)
+    windows.append(frame)
+    
     return windows
+
+# ------ #
+# script #
+# ------ #
+
+def init_kws_parser():
+    parser = ArgumentParser()
+    parser.add_argument('--input', '-i', help="Input audio files", nargs='+')
+    parser.add_argument('--keyword_file', '-kf')
+    parser.add_argument('--keywords', '-kws', nargs='+')
+    parser.add_argument('--framelength_s', default=2)
+    parser.add_argument('--frameshift_s', default=0.5)
+    parser.add_argument('--sample_rate', default=SAMPLE_RATE)
+    parser.add_argument('--encoder_size', default='tiny')
+    parser.add_argument('--speech_encoder')
+    parser.add_argument('--phone_encoder')
+    parser.add_argument('--output_dir', '-o')
+
+    return parser
+
+def perform_kws(args):
+    keyword_list = args.keywords
+    if keyword_list is None:
+        with open(args.keyword_file, encoding='utf8') as f:
+            keyword_list = [line.strip() for line in f.readlines()]
+    for audio in args.input:
+        wav = load_and_resample(audio)
+        sliding_windows = get_sliding_window(
+            wav,
+            framelength_s=args.framelength_s,
+            frameshift_s=args.frameshift_s,
+            sample_rate=args.sample_rate,
+            return_timestamps=True,
+        )
+        audio_frames = [frame.pop('samples') for frame in sliding_windows]
+        sim_mat = get_keyword_sim(
+            audio_list=audio_frames,
+            text_list=keyword_list,
+            speech_encoder=args.speech_encoder,
+            phone_encoder=args.phone_encoder,
+            encoder_size=args.encoder_size,
+        )
+        sim_mat = sim_mat.tolist()
+        
+        json_obj = {
+            'audio_input': audio,
+            'keywords': keyword_list,
+            'timestamps': sliding_windows,
+            'similarity_matrix': sim_mat
+        }
+        json_path = audio.replace('.wav', '.json')
+        if args.output_dir:
+            json_basename = os.path.basename(json_path)
+            json_path = os.path.join(args.output_dir, json_basename)
+        with open(json_path, 'w', encoding='utf8') as f:
+            json.dump(json_obj, f, ensure_ascii=False, indent=2)
+
+if __name__ == '__main__':
+    parser = init_kws_parser()
+    args = parser.parse_args(sys.argv)
+    perform_kws(args)
