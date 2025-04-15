@@ -8,6 +8,10 @@ NYEN_PATH = 'test/data/nyen.wav'
 XDDERE_PATH = 'test/data/xddere.wav'
 ALBRRIZO_PATH = 'test/data/albrrizo.wav'
 
+NYEN_IPA = 'ɲɛ̂n'
+XDDERE_IPA = 'èd̪ɛ̀ɾɛ̀'
+ALBRRIZO_IPA = 'ɜ̀lbrìðɔ̀'
+
 def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
     assert chunks_key in chunk_dict

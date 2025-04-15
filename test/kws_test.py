@@ -2,6 +2,7 @@ import sys
 sys.path.append('scripts')
 from kws import embed_speech, embed_text, get_sliding_window
 from test_utils import NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH
+from test_utils import NYEN_IPA, ALBRRIZO_IPA, XDDERE_IPA
 from longform import load_and_resample
 import torch
 import torch.nn.functional as F
@@ -37,14 +38,14 @@ def test_embed_speech_batch():
     assert speech_embed.shape[1] == 384
 
 def test_embed_text():
-    for ipa_str in ["ɲɛ̂n", "ɜ̀lbrìðɔ̀", "èd̪ɛ̀ɾɛ̀"]:
+    for ipa_str in [NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA]:
         text_embed = embed_text(ipa_str)
         assert type(text_embed) is torch.Tensor
         assert text_embed.shape[1] == 384
         assert text_embed.shape[0] == 1
 
 def test_embed_text_batch():
-    ipa_strs = ["ɲɛ̂n", "ɜ̀lbrìðɔ̀", "èd̪ɛ̀ɾɛ̀"]
+    ipa_strs = [NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA]
     text_embed = embed_text(ipa_strs)
     assert type(text_embed) is torch.Tensor
     assert text_embed.shape[1] == 384
@@ -62,7 +63,7 @@ def test_embed_size(encoder_size, encoder_dim):
     speech_embed = embed_speech(NYEN_PATH, encoder_size=encoder_size)
     assert speech_embed.shape[1]==encoder_dim
     
-    text_embed = embed_text("ɲɛ̂n", encoder_size=encoder_size)
+    text_embed = embed_text(NYEN_IPA, encoder_size=encoder_size)
     assert text_embed.shape[1]==encoder_dim
 
 def test_cos_sim():
@@ -70,9 +71,9 @@ def test_cos_sim():
     albrrizo_speech = embed_speech(ALBRRIZO_PATH)
     xddere_speech = embed_speech(XDDERE_PATH)
 
-    nyen_text = embed_text("ɲɛ̂n")
-    albrrizo_text = embed_text("ɜ̀lbrìðɔ̀")
-    xddere_text = embed_text("èd̪ɛ̀ɾɛ̀")
+    nyen_text = embed_text(NYEN_IPA)
+    albrrizo_text = embed_text(ALBRRIZO_IPA)
+    xddere_text = embed_text(XDDERE_IPA)
 
     speech_embeds = [nyen_speech, albrrizo_speech, xddere_speech]
     text_embeds = [nyen_text, albrrizo_text, xddere_text]
