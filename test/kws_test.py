@@ -1,10 +1,11 @@
 import sys
 sys.path.append('scripts')
-from kws import embed_speech, embed_text
+from kws import embed_speech, embed_text, get_sliding_window
 from test_utils import NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH
 from longform import load_and_resample
 import torch
 import torch.nn.functional as F
+import pytest
 
 def test_embed_speech():
     # test loading embedding from filepath
@@ -67,3 +68,57 @@ def test_cos_sim():
                 continue
             cos_sim_w_other = F.cosine_similarity(speech_embed, text_embed)
             assert cos_sim_w_self > cos_sim_w_other
+
+# unit tests courtesy of Her Probabilistic Majesty, Lady ChatGPT
+@pytest.mark.parametrize(
+    "audio,sample_rate,framelength_s,frameshift_s,expected",
+    [
+        # Test with list input
+        (
+            list(range(16)), 4, 2, 1,
+            [
+                list(range(0, 8)),
+                list(range(4, 12)),
+                list(range(8, 16)),
+            ]
+        ),
+        # Test with partial frame at the end
+        (
+            list(range(10)), 5, 1, 0.6,
+            [
+                list(range(0, 5)),
+                list(range(3, 8)),
+                list(range(6, 10)),
+            ]
+        ),
+        # Test with exact fit
+        (
+            list(range(12)), 4, 1, 1,
+            [
+                list(range(0, 4)),
+                list(range(4, 8)),
+                list(range(8, 12)),
+            ]
+        ),
+        # Test with short audio
+        (
+            list(range(5)), 10, 1, 0.5,
+            [list(range(5))]
+        ),
+        # Test with non-integer stride
+        (
+            list(range(20)), 10, 0.5, 0.3,
+            [
+                list(range(0, 5)),
+                list(range(3, 8)),
+                list(range(6, 11)),
+                list(range(9, 14)),
+                list(range(12, 17)),
+                list(range(15, 20)),
+            ]
+        ),
+    ]
+)
+def test_get_sliding_window_list(audio, sample_rate, framelength_s, frameshift_s, expected):
+    result = get_sliding_window(audio, framelength_s, frameshift_s, sample_rate)
+    assert result == expected
