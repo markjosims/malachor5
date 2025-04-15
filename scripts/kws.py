@@ -4,6 +4,7 @@ from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 # ----------------- #
@@ -63,6 +64,25 @@ def embed_text(
     with torch.no_grad():
         phone_embed = phone_encoder(**ipa_input)['pooler_output']
     return phone_embed
+
+def get_keyword_sim(
+        audio_list: Union[List[str], List[torch.Tensor]],
+        text_list: List[str],
+        speech_encoder=None,
+        phone_encoder=None,
+        encoder_size='tiny',
+):  
+    speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
+    text_embeds = embed_text(text_list, phone_encoder, encoder_size)
+
+    speech_embed_norm = torch.linalg.vector_norm(speech_embeds, dim=1)[:, None]
+    normalized_speech_embeds = speech_embeds/speech_embed_norm
+    
+    text_embed_norm = torch.linalg.vector_norm(text_embeds, dim=1)[:, None]
+    normalized_text_embeds = text_embeds/text_embed_norm
+
+    sim_mat = torch.mm(normalized_speech_embeds, normalized_text_embeds.transpose(0,1))
+    return sim_mat
 
 # ------------- #
 # audio helpers #

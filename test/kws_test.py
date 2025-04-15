@@ -1,6 +1,6 @@
 import sys
 sys.path.append('scripts')
-from kws import embed_speech, embed_text, get_sliding_window
+from kws import embed_speech, embed_text, get_sliding_window, get_keyword_sim
 from test_utils import NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH
 from test_utils import NYEN_IPA, ALBRRIZO_IPA, XDDERE_IPA
 from longform import load_and_resample
@@ -84,6 +84,49 @@ def test_cos_sim():
                 continue
             cos_sim_w_other = F.cosine_similarity(speech_embed, text_embed)
             assert cos_sim_w_self > cos_sim_w_other
+
+def test_keyword_sim():
+    """
+    `get_keyword_sim` should return matrix:
+
+                        text(nyen)      text(xddere)    text(albrrizo)
+    speech(xddere)      O               X               O
+    speech(albrrizo)    O               O               X
+    speech(nyen)        X               O               O
+    """
+    sim_mat = get_keyword_sim(
+        audio_list=[XDDERE_PATH, ALBRRIZO_PATH, NYEN_PATH],
+        text_list=[NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA],
+    )
+    
+
+    assert torch.argmax(sim_mat[0,:]).item()==1
+    assert torch.argmax(sim_mat[1,:]).item()==2
+    assert torch.argmax(sim_mat[2,:]).item()==0
+
+    assert torch.argmax(sim_mat[:,0]).item()==2
+    assert torch.argmax(sim_mat[:,1]).item()==0
+    assert torch.argmax(sim_mat[:,2]).item()==1
+
+def test_keyword_sim_nonsquare():
+    """
+    `get_keyword_sim` should return matrix:
+
+                        text(nyen)      text(xddere)
+    speech(xddere)      O               X
+    speech(albrrizo)    O               O
+    speech(nyen)        X               O
+    """
+    distmat = get_keyword_sim(
+        audio_list=[XDDERE_PATH, ALBRRIZO_PATH, NYEN_PATH],
+        text_list=[NYEN_IPA, XDDERE_IPA, ALBRRIZO_IPA],
+    )
+
+    assert torch.argmax(distmat[0,:]).item()==1
+    assert torch.argmax(distmat[2,:]).item()==0
+
+    assert torch.argmax(distmat[:,0]).item()==2
+    assert torch.argmax(distmat[:,1]).item()==0
 
 # sliding window unit tests courtesy of Her Probabilistic Majesty, Lady ChatGPT
 @pytest.mark.parametrize(
