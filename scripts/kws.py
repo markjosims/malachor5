@@ -128,13 +128,13 @@ def get_sliding_window(
     frame_start = 0
     frame_end = framelength_samples
     windows = []
-    while frame_end<audio.shape[1]:
+    while frame_end<len(audio):
         frame = get_frame(audio, frame_start, frame_end, sample_rate, return_timestamps)
         windows.append(frame)
         frame_start+=frameshift_samples
         frame_end+=frameshift_samples
     # append last truncated frame
-    frame = get_frame(audio, frame_start, audio.shape[1], sample_rate, return_timestamps)
+    frame = get_frame(audio, frame_start, len(audio), sample_rate, return_timestamps)
     windows.append(frame)
     
     return windows
@@ -165,7 +165,7 @@ def perform_kws(args):
         with open(args.keyword_file, encoding='utf8') as f:
             keyword_list = [line.strip() for line in f.readlines()]
     for audio in args.input:
-        wav = load_and_resample(audio)
+        wav = load_and_resample(audio).squeeze()
         sliding_windows = get_sliding_window(
             wav,
             framelength_s=args.framelength_s,
