@@ -109,9 +109,9 @@ def get_frame(
         return {
             'start_s': frame_start_s,
             'end_s': frame_end_s,
-            'samples': audio[:,frame_start:frame_end]
+            'samples': audio[frame_start:frame_end]
         }
-    return audio[:,frame_start:frame_end]
+    return audio[frame_start:frame_end]
 
 def get_sliding_window(
         audio: torch.Tensor,
