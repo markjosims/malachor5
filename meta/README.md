@@ -1,5 +1,11 @@
 - `language_codes.json`: Dictionary mapping Whisper language names to FLEURS language codes. Only contains data for languages that overlap between Whisper and FLEURS.
+- `whisper_special_tokens.json`: Default set of functional and language tokens in Whisper
 - `tira_asr_unique_chars.txt`: str containing every unique char in the Tira ASR dataset. Used in post-processing to constrain Whisper output to only contain Tira characters.
-- `HH20210312.eaf` - test
-- `HH20220327-2.eaf` - test
-- `HH20210913.eaf` - validation
+- `multispeaker_template.etf`: ELAN template containing tiers for all speakers in Tira elicitation recordings
+- `HH20210312.eaf`: Tira bilingual test data
+- `HH20220327-2.eaf`: Tira bilingual test data
+- `HH20210913.eaf`: Tira bilingual validation data
+- `tira_words.txt`: all unique words in Tira ASR dataset
+- `tira2arpabet.json`: swaps for converting Tira IPA to ARPABET. Used in `tira2arpabet` function in `string_norm.py`
+- `tira2mfa.json`: swaps for converting Tira IPA to IPA set used in MFA English. Used in `tira2mfa` function in `string_norm.py`
+- `zulu_words.txt`: all unique words in isiZulu dataset from SASO
