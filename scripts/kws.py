@@ -1,4 +1,4 @@
-from typing import Union, List, Literal
+from typing import Union, List, Literal, Sequence, Any, Generator
 from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 import json
 import sys
 import os
+from tqdm import tqdm
 
 # ----------------- #
 # embedding helpers #
@@ -90,6 +91,11 @@ def get_keyword_sim(
 # audio helpers #
 # ------------- #
 
+def dataloader(data: Sequence[Any], batch_size: int) -> Generator[Sequence[any], None, None]:
+    for start_index in tqdm(range(0, len(data), batch_size)):
+        end_index = start_index+batch_size
+        yield data[start_index:end_index]
+
 def get_frame(
         audio: torch.Tensor,
         frame_start: int,
@@ -103,9 +109,9 @@ def get_frame(
         return {
             'start_s': frame_start_s,
             'end_s': frame_end_s,
-            'samples': audio[frame_start:frame_end]
+            'samples': audio[:,frame_start:frame_end]
         }
-    return audio[frame_start:frame_end]
+    return audio[:,frame_start:frame_end]
 
 def get_sliding_window(
         audio: torch.Tensor,
@@ -122,13 +128,13 @@ def get_sliding_window(
     frame_start = 0
     frame_end = framelength_samples
     windows = []
-    while frame_end<len(audio):
+    while frame_end<audio.shape[1]:
         frame = get_frame(audio, frame_start, frame_end, sample_rate, return_timestamps)
         windows.append(frame)
         frame_start+=frameshift_samples
         frame_end+=frameshift_samples
     # append last truncated frame
-    frame = get_frame(audio, frame_start, len(audio), sample_rate, return_timestamps)
+    frame = get_frame(audio, frame_start, audio.shape[1], sample_rate, return_timestamps)
     windows.append(frame)
     
     return windows
@@ -149,6 +155,7 @@ def init_kws_parser():
     parser.add_argument('--speech_encoder')
     parser.add_argument('--phone_encoder')
     parser.add_argument('--output_dir', '-o')
+    parser.add_argument('--batch_size', '-b', type=int, default=32)
 
     return parser
 
@@ -167,14 +174,16 @@ def perform_kws(args):
             return_timestamps=True,
         )
         audio_frames = [frame.pop('samples') for frame in sliding_windows]
-        sim_mat = get_keyword_sim(
-            audio_list=audio_frames,
-            text_list=keyword_list,
-            speech_encoder=args.speech_encoder,
-            phone_encoder=args.phone_encoder,
-            encoder_size=args.encoder_size,
-        )
-        sim_mat = sim_mat.tolist()
+        sim_mat = []
+        for batch in dataloader(audio_frames, batch_size=args.batch_size):
+            batch_sim_mat = get_keyword_sim(
+                audio_list=batch,
+                text_list=keyword_list,
+                speech_encoder=args.speech_encoder,
+                phone_encoder=args.phone_encoder,
+                encoder_size=args.encoder_size,
+            )
+            sim_mat.extend(batch_sim_mat.tolist())
         
         json_obj = {
             'audio_input': audio,
@@ -191,5 +200,5 @@ def perform_kws(args):
 
 if __name__ == '__main__':
     parser = init_kws_parser()
-    args = parser.parse_args(sys.argv)
+    args = parser.parse_args(sys.argv[1:])
     perform_kws(args)
