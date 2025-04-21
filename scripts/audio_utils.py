@@ -10,6 +10,10 @@ import os
 # dataset methods #
 # --------------- #
 def row_to_wav(row: Dict[str, Any], outdir: str) -> None:
+    """
+    Reads samples a Dataset Audio row (in the form of a dictionary)
+    and save as a wav in the specified `outdir`.
+    """
     basepath = row['audio']['path']
     path = os.path.join(outdir, basepath)
     wav_array = row['audio']['array']
@@ -19,6 +23,12 @@ def row_to_wav(row: Dict[str, Any], outdir: str) -> None:
     torchaudio.save(path, wav_tensor, sr)
 
 def audio_as_path(row: Dict[str, Any], outdir: str) -> Dict[str, str]:
+    """
+    Get basename for audio path from Dataset Audio row (in the form of a dictionary),
+    join basename with `outdir` and return as a dict.
+    Allows audio paths to be moved to a new directory for an entire Dataset using e.g.
+    `Dataset.map`
+    """
     basepath = row['audio']['path']
     path = os.path.join(outdir, basepath)
     return {'path': path}
@@ -32,6 +42,9 @@ def empty_command(args) -> int:
     return 1
 
 def arrow_to_wav(args) -> int:
+    """
+    Load in a HugggingFace Audio Dataset and save a directory of wavs at `args.outdir`.
+    """
     outdir = args.outdir
     outdir = os.path.abspath(outdir)
     os.makedirs(outdir, exist_ok=True)
@@ -54,6 +67,11 @@ def arrow_to_wav(args) -> int:
     return 0
 
 def make_audio_dataset(args) -> int:
+    """
+    Read in a csv at `args.input` where one column is a list of paths for
+    wav files with the column name specified by `args.wav_col`.
+    Creates Audio Dataset from .csv file and saves in PyArrow format at `args.output`.
+    """
     csv_path = os.path.join(args.input, args.csv_basename)
     df = pd.read_csv(csv_path)
     df = df.rename({args.wav_col: 'audio'}, axis=1)
