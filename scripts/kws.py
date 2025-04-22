@@ -103,6 +103,12 @@ def get_frame(
         sample_rate: int = SAMPLE_RATE,
         return_timestamps: bool = False,        
 ):
+    f"""
+    Slice a frame from the audio tensor indicated by the sample indices `frame_start` and `frame_end`.
+    If `return_timestamps=True`, instead return a dict with keys `start_s` (start time in seconds),
+    `end_s` (end time in seconds) and `samples` (tensor of wav samples for the given frame).
+    Pass `sample_rate` to override the default sample rate of {SAMPLE_RATE}.
+    """
     if return_timestamps:
         frame_start_s = frame_start/sample_rate
         frame_end_s = frame_end/sample_rate
@@ -120,6 +126,12 @@ def get_sliding_window(
         sample_rate: int = SAMPLE_RATE,
         return_timestamps: bool = False,
     ):
+    f"""
+    Split audio tensor into a list of tensors, each corresponding to a frame of length `framelength_s`
+    staggered by `frameshift_s`. If `return_timestamps=True`, return a list of dictionaries with keys `start_s`
+    (start time in seconds), `end_s` (end time in seconds) and `samples` (tensor of wav samples for the given frame).
+    Pass `sample_rate` to override the default sample rate of {SAMPLE_RATE}.
+    """
     if len(audio)==0:
         return []
     framelength_samples = int(framelength_s * sample_rate)
