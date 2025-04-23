@@ -15,10 +15,10 @@ RUN python3 -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
 # Install dependencies in the virtual environment
-COPY pinned-requirements.cpu.txt .
+COPY requirements/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install setuptools
-RUN pip install --no-cache-dir -r pinned-requirements.cpu.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set entrypoint
 CMD ["/bin/bash"]
