@@ -7,6 +7,15 @@ from typing import Dict, Any, Literal
 from collections import defaultdict
 from argparse import ArgumentParser
 
+# --------------------- #
+# audio loading helpers #
+# --------------------- #
+
+
+# ------------------------ #
+# dataset metadata helpers #
+# ------------------------ #
+
 def get_words_per_language(df: pd.DataFrame, langs=None) -> Dict[str, int]:
     words_by_language = defaultdict(lambda:0)
     def update_words_per_lang(sentence):
@@ -23,6 +32,10 @@ def get_duration_by_columns(df: pd.DataFrame, col: str) -> Dict[str, Any]:
     for index in pivot.index:
         duration_by_col[index]=pivot.at[index,'duration']
     return duration_by_col
+
+# -------------- #
+# script helpers #
+# -------------- #
 
 def init_dataset_builder_parser(list_type: Literal['list', 'timestamps'] = 'list') -> ArgumentParser:
     parser = ArgumentParser()
