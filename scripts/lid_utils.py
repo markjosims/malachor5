@@ -5,6 +5,14 @@ import nltk
 from nltk.corpus import words
 from string_norm import has_tira_chars, remove_punct
 
+"""
+Helper methods for determining language identity of text.
+For English, use pyenchant if available, if not use nltk.words.
+For Tira, check if word is in list of Tira words (stored in `meta` folder)
+or if word has non-ascii characters AND only has characters used for transcribing Tira.
+For Zulu, check if word is in list of Zulu words (also stored in `meta`).
+"""
+
 try:
     en_words = set(words.words())
 except LookupError:
