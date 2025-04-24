@@ -1,22 +1,79 @@
 import sys
 sys.path.append('scripts')
 from lid_utils import get_word_language
+from longform import load_and_resample, SAMPLE_RATE
 
+import os
 import pandas as pd
-from typing import Dict, Any, Literal
+from typing import Dict, Any, Optional, List
 from collections import defaultdict
-from argparse import ArgumentParser
+import torchaudio
+import torch
 
 # --------------------- #
 # audio loading helpers #
 # --------------------- #
 
+def save_clips(
+        df: pd.DataFrame,
+        audio_dir: str,
+        clip_dir: str,
+    ) -> pd.DataFrame:
+    """
+    `df` is a dataframe with columns 'audio_basename', 'start', 'end'
+    `audio_dir` is a dirpath to load long audio from, `clip_dir` is a dirpath to save
+    clips for individual records to.
+    Loads individual clips indicated by rows in `df` and saves as .wav files in `clip_dir`.
+    Adds 'file_name' column to `df` containing clip paths (this colname chosen
+    for compatability with HuggingFace audio folder datasets).
+    """
+    df['file_name'] = ''
+    for audio_basename in df['audio_basename'].unique():
+        audio_mask = df['audio_basename'] == audio_basename
+        audio_path = os.path.join(audio_dir, audio_basename)
+        wav = load_and_resample(audio_path)
+        df.loc[audio_mask, 'file_name'] = df.loc[audio_mask].apply(
+            lambda row: save_clip(wav, row, clip_dir)
+        )
+    return df
+
+def save_clip(wav: torch.Tensor, row: Dict[str, Any], clip_dir: str):
+    """
+    Calls `get_clip` then saves resulting wav to a 
+    """
+    start_ms = row['start']
+    end_ms = row['end']
+    clip = get_clip(wav, start_ms, end_ms)
+
+    basename = row['audio_basename']
+    i = row.name
+    clip_basename = f'{basename}_{i}.wav'
+    clip_path = os.path.join(clip_dir, clip_basename)
+    torchaudio.save(clip_path, clip)
+    return clip_path
+
+
+def get_clip(wav: torch.Tensor, start_ms: int, end_ms: int):
+    """
+    `wav` is a 2d tensor of audio samples, `start_ms` and `end_ms`
+    are start and end times in milliseconds.
+    Returns a slice of `wav` corresponding to the start and end timestamps.
+    """
+    samples_per_ms = SAMPLE_RATE/1_000
+    start_samples = int(start_ms*samples_per_ms)
+    end_samples = int(end_ms*samples_per_ms)
+    return wav[:, start_samples:end_samples]
 
 # ------------------------ #
 # dataset metadata helpers #
 # ------------------------ #
 
-def get_words_per_language(df: pd.DataFrame, langs=None) -> Dict[str, int]:
+def get_words_per_language(df: pd.DataFrame, langs: Optional[List[str]]=None) -> Dict[str, int]:
+    """
+    `df` is a DataFrame containing the column 'transcription'.
+    Returns a dict of shape {'$lang': $num_words}
+    `langs` is an optional list of language strs to restrict the languages considered when counting.
+    """
     words_by_language = defaultdict(lambda:0)
     def update_words_per_lang(sentence):
         words = sentence.split()
@@ -26,23 +83,13 @@ def get_words_per_language(df: pd.DataFrame, langs=None) -> Dict[str, int]:
     df['transcription'].apply(update_words_per_lang)
     return words_by_language
 
-def get_duration_by_columns(df: pd.DataFrame, col: str) -> Dict[str, Any]:
+def get_duration_by_column(df: pd.DataFrame, col: str) -> Dict[str, Any]:
+    """
+    `df` is a DataFrame containing the column `duration`, and `col` is a str
+    indicating the column to pivot on. Returns a dict of shape {'$col_value': $duration_ms}
+    """
     duration_by_col = {}
-    pivot = df.pivot_table("duration", col)
+    pivot = df.pivot_table("duration", col, aggfunc='sum')
     for index in pivot.index:
         duration_by_col[index]=pivot.at[index,'duration']
     return duration_by_col
-
-# -------------- #
-# script helpers #
-# -------------- #
-
-def init_dataset_builder_parser(list_type: Literal['list', 'timestamps'] = 'list') -> ArgumentParser:
-    parser = ArgumentParser()
-    parser.add_argument('--audio', '-a', help="Directory of audio files to generate dataset from")
-    if list_type == 'list':
-        parser.add_argument('--list', '-l', help="Text file with list of basenames audio files to include (if each audio file is a single record)")
-    else:
-        parser.add_argument('--timestamps', '-t', help=".csv file with columns audio_basename,start,end,(split) indicating timestamps for each record (if records are sliced from a longer audio file)")
-    parser.add_argument('--output', '-o', help="Directory path to save PyArrow dataset to")
-    parser.add_argument('--version', '-v', help="Dataset version.")
