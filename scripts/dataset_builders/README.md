@@ -1,12 +1,16 @@
 # dataset_builders
 Scripts for building HuggingFace ASR datasets from raw data files.
-Each script should take the following args:
-`--audio` `-a`      Directory of audio files to generate dataset from
-`--list` `-l`       Text file with list of basenames audio files to include (if each audio file is a single record)
-**OR**
-`--timestamps` `-t` .csv file with columns audio_basename,start,end,(split) indicating timestamps for each record (if records are sliced from a longer audio file)
-`--output` `-o`     Directory path to save PyArrow dataset to
-`--version` `-v`    Dataset version
+Each script loads a .csv file from the `meta` folder with a list of records, with columns `audio`, `text`, (`start`, `end`), (`split`)
+    - `start` and `end` only included when slicing records from longer audio, else record is entire audio
+    - `split` not included if splits are made during dataset creation
+Dataset lists are stored in `meta` to ensure proper versioning through Git, since datasets used are small enough to store transcriptions and other metadata on Github.
+
+Directory paths to load audio from and save dataset to should be provided through environment variables, loaded in as constants at the top of the script.
+Each script loads three directories:
+- AUDIO_DIR                 directory audio source files are stored
+- ${DATASET}_CLIPS_DIR      directory to store clips and metadata in
+                            (only applicable when records are sliced from long audio)
+- ${DATASET_}_PYARROW_DIR   directory to store pyarrow dataset in
 
 Each script performs a series of preprocessing functions, with each preprocessing step adding a metadata str describing what action was taken with quantitative metrics e.g. "350 records excluded."
 These metadata strs will be aggregated into a `README.md` file in the dataset directory.
