@@ -14,6 +14,8 @@ epitran
 peft
 jiwer
 https://github.com/kpu/kenlm/archive/master.zip
+clap @ git+https://github.com/markjosims/clap-ipa.git@7e6256fb175faa1ef5aafc59e259bb04a1bb2a2f
 nemo_toolkit[all]
 PyYAML==6.0.2
 tbparse
+nltk
