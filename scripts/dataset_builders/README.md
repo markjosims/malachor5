@@ -15,3 +15,10 @@ Each script loads three directories:
 Each script performs a series of preprocessing functions, with each preprocessing step adding a metadata str describing what action was taken with quantitative metrics e.g. "350 records excluded."
 These metadata strs will be aggregated into a `README.md` file in the dataset directory.
 Scripts should also output `metadata.yaml` in the output directory containing metrics such as the number of records and duration in time by split, language and, if applicable, speaker.
+
+# dataset builder scripts
+## tira_asr_dataset_builder.py
+Loads list stored at `meta/tira_elan_raw.csv` and generates an ASR dataset of monolingual Tira using (relatively) clean IPA transcriptions.
+
+## tira_elan_scraper.py
+Reads .eaf files from `TIRA_RECORDINGS_GDRIVE` and makes a list stored in `meta/tira_elan_raw.csv` with file basenames, timestamps, Elan tier names and values.
