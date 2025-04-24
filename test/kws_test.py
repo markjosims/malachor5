@@ -3,7 +3,7 @@ sys.path.append('scripts')
 from kws import embed_speech, embed_text, get_sliding_window, get_keyword_sim, perform_kws, init_kws_parser
 from test_utils import NYEN_PATH, ALBRRIZO_PATH, XDDERE_PATH
 from test_utils import NYEN_IPA, ALBRRIZO_IPA, XDDERE_IPA
-from test_utils import SAMPLE_BILING_PATH
+from test_utils import SAMPLE_BILING_PATH, SAMPLE_BILING_TG_PATH, ZAVELEZE_IPA, NGINE_IPA
 from longform import load_and_resample
 import torch
 import torch.nn.functional as F
@@ -231,3 +231,29 @@ def test_perform_kws(tmpdir):
     assert type(json_obj['similarity_matrix']) is list
     assert type(json_obj['similarity_matrix'][0]) is list
     assert len(json_obj['similarity_matrix'][0]) == 3
+
+def test_kws_eval(tmpdir):
+    parser = init_kws_parser()
+    args=parser.parse_args([])
+    args.input = [SAMPLE_BILING_PATH]
+    args.textgrid = [SAMPLE_BILING_TG_PATH]
+    args.output_dir=tmpdir
+    args.keywords = [ZAVELEZE_IPA, NGINE_IPA]
+    args.eval_window=10.0
+    perform_kws(args)
+
+    wav_basename = os.path.basename(SAMPLE_BILING_PATH)
+    wav_path = os.path.join(tmpdir, wav_basename)
+    json_path = wav_path.replace('.wav', '.json')
+    with open(json_path, encoding='utf8') as f:
+        json_obj = json.load(f)
+    assert 'eer' in json_obj
+    assert type(json_obj['eer']) is list
+    for eer_dict in json_obj['eer']:
+        assert 'keyword' in json_obj
+        assert json_obj['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
+        assert 'value' in json_obj
+        assert type(json_obj['value']) is float
+        assert type(eer_dict['value']) is float
+        assert 'eer_threshold' in json_obj
+        assert type(json_obj['eer_threshold']) is float

@@ -4,6 +4,7 @@ from dataset_utils import SPECIAL_TOKENS_FLAT
 import numpy as np
 
 SAMPLE_BILING_PATH = 'test/data/sample_biling.wav'
+SAMPLE_BILING_TG_PATH = 'test/data/sample_biling.TextGrid'
 NYEN_PATH = 'test/data/nyen.wav'
 XDDERE_PATH = 'test/data/xddere.wav'
 ALBRRIZO_PATH = 'test/data/albrrizo.wav'
@@ -11,6 +12,8 @@ ALBRRIZO_PATH = 'test/data/albrrizo.wav'
 NYEN_IPA = 'ɲɛ̂n'
 XDDERE_IPA = 'èd̪ɛ̀ɾɛ̀'
 ALBRRIZO_IPA = 'ɜ̀lbrìðɔ̀'
+ZAVELEZE_IPA = 'ðàvə́lɛ̀ðɛ̀'
+NGINE_IPA = 'ŋínɛ̀'
 
 def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
