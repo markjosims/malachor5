@@ -20,7 +20,9 @@ import pickle
 from tokenization_utils import get_forced_decoder_ids, LANG_TOKEN_IDS
 from argparse_utils import make_arggroup_from_argdict
 import numpy as np
-import kenlm
+import importlib.util
+if importlib.util.find_spec('enchant') is not None:
+    import kenlm
 from datasets import Dataset
 
 
