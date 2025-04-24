@@ -19,3 +19,4 @@ nemo_toolkit[all]
 PyYAML==6.0.2
 tbparse
 nltk
+pomegranate
