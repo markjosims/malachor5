@@ -267,6 +267,15 @@ def perform_kws(args):
     if keyword_list is None:
         with open(args.keyword_file, encoding='utf8') as f:
             keyword_list = [line.strip() for line in f.readlines()]
+    if args.inference_type == 'single_word':
+        # split phrases into individual words
+        all_words = set()
+        for phrase in keyword_list:
+            all_words.update(*phrase.split())
+    elif args.inference_type == 'hmm':
+        # TODO: implement HMM inference where a state is loaded for each word
+        # and transition probabilities are initialized from keyphrase sequences
+        raise NotImplementedError('Sequence inference with HMM not implemented yet.')
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
     for audio, textgrid in zip(audio_files, textgrids):
