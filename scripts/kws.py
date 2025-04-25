@@ -331,7 +331,7 @@ def perform_kws(args):
                     for i, keyword in enumerate(tqdm(keyword_list)):
                         kw_probs_windowed = sim_mat_windowed[:,i]
                         ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
-                        eer_windowed, thresh_windowed = get_equal_error_rate(kw_probs_windowed, ground_truth_windowed)
+                        eer_windowed, thresh_windowed = get_equal_error_rate(ground_truth_windowed, kw_probs_windowed)
                         json_obj['eer'][-1]['eer_eval_window']=eer_windowed
                         json_obj['eer'][-1]['eer_threshold_eval_window']=thresh_windowed
         json_path = audio.replace('.wav', '.json')
