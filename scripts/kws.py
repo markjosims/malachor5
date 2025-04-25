@@ -85,13 +85,17 @@ def get_keyword_sim(
     speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
     text_embeds = embed_text(text_list, phone_encoder, encoder_size)
 
-    speech_embed_norm = torch.linalg.vector_norm(speech_embeds, dim=1)[:, None]
-    normalized_speech_embeds = speech_embeds/speech_embed_norm
-    
-    text_embed_norm = torch.linalg.vector_norm(text_embeds, dim=1)[:, None]
-    normalized_text_embeds = text_embeds/text_embed_norm
+    sim_mat = get_similarity_matrix(speech_embeds, text_embeds)
+    return sim_mat
 
-    sim_mat = torch.mm(normalized_speech_embeds, normalized_text_embeds.transpose(0,1))
+def get_similarity_matrix(x_embeds, y_embeds):
+    x_embed_norm = torch.linalg.vector_norm(x_embeds, dim=1)[:, None]
+    normalized_x_embeds = x_embeds/x_embed_norm
+    
+    y_embed_norm = torch.linalg.vector_norm(y_embeds, dim=1)[:, None]
+    normalized_y_embeds = y_embeds/y_embed_norm
+
+    sim_mat = torch.mm(normalized_x_embeds, normalized_y_embeds.transpose(0,1))
     return sim_mat
 
 # ------------- #
