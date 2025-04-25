@@ -166,7 +166,7 @@ def textgrid_to_df(textgrid_path):
     tg = Praat.TextGrid(textgrid_path)
     rows = []
     for tier in tg.get_tiers():
-        if 'words' not in tier.name:
+        if 'word' not in tier.name:
             continue
         speaker = tier.name.split()[0]
         for start, end, val in tier.get_all_intervals():
