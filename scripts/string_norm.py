@@ -5,6 +5,7 @@ import json
 import epitran
 
 DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde',]
+TONE_DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron',]
 
 COMBINING = {
     'grave': "\u0300",
@@ -195,11 +196,20 @@ def report_unique_chars(texts: Sequence[str]) -> Dict[str, Any]:
 
 def strip_diacs(text: str, tone_only: bool = False) -> str:
     text = unicode_normalize(text)
-    for diac in COMBINING.values():
-        if tone_only and diac == COMBINING['tilde']:
+    for diac_name, diac in COMBINING.items():
+        if tone_only and diac_name not in TONE_DIACS:
             continue
         text = text.replace(diac, '')
     return text
+
+def has_diac(text: str, tone_only: bool = False) -> str:
+    text = unicode_normalize(text)
+    for diac_name, diac in COMBINING.items():
+        if tone_only and diac_name not in TONE_DIACS:
+            continue
+        if diac in text:
+            return True
+    return False
 
 def get_tone_as_letters(text: str) -> str:
     tone_words = []
