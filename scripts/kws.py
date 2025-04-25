@@ -312,6 +312,8 @@ def perform_kws(args):
             # textgrid file passed, use to perform evaluation
             tg_df = textgrid_to_df(textgrid)
             json_obj['eer']=[]
+            # cast sim_mat to numpy array for easier indexing
+            sim_mat = np.array(sim_mat)
             if args.eval_window:
                 json_obj['eval_window']=args.eval_window
             for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword"):
