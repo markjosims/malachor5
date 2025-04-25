@@ -248,6 +248,7 @@ def init_kws_parser():
     parser.add_argument('--input', '-i', help="Input audio files", nargs='+')
     parser.add_argument('--keyword_file', '-kf')
     parser.add_argument('--keywords', '-kws', nargs='+')
+    parser.add_argument('--inference_type', choices=['single_word', 'hmm'], default='single_word')
     parser.add_argument('--framelength_s', default=2)
     parser.add_argument('--frameshift_s', default=0.5)
     parser.add_argument('--sample_rate', default=SAMPLE_RATE)
