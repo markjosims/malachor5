@@ -112,6 +112,10 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print(remove_tone_word_str)
     PREPROCESSING_STEPS.append(remove_tone_word_str)
 
+    readme_out = os.path.join(TIRA_ASR_CLIPS_DIR, 'README.md')
+    with open(readme_out, 'w', encoding='utf8') as f:
+        f.write(README_HEADER+'\n')
+        f.write('\n'.join(PREPROCESSING_STEPS))
 
 if __name__ == '__main__':
     main()
