@@ -18,5 +18,5 @@ clap @ git+https://github.com/markjosims/clap-ipa.git@7e6256fb175faa1ef5aafc59e2
 nemo_toolkit[all]
 PyYAML==6.0.2
 tbparse
-nltk
 pomegranate
+wordfreq

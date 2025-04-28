@@ -1,23 +1,15 @@
 from unidecode import unidecode
-import string
-import nltk
+import wordfreq
 from nltk.corpus import cmudict
 from string_norm import has_tira_chars, remove_punct, strip_punct
 
 """
 Helper methods for determining language identity of text.
-For English, use pyenchant if available, if not use nltk.words.
+For English, use `wordfreq` package.
 For Tira, check if word is in list of Tira words (stored in `meta` folder)
 or if word has non-ascii characters AND only has characters used for transcribing Tira.
 For Zulu, check if word is in list of Zulu words (also stored in `meta`).
 """
-
-try:
-    CMU_DICT = cmudict.dict()
-except LookupError:
-    nltk.download('cmudict')
-    CMU_DICT = cmudict.dict()
-CMU_WORDS = set(remove_punct(w.lower()) for w in CMU_DICT.keys())
 
 tira_words_path = 'meta/tira_words.txt'
 with open(tira_words_path, encoding='utf8') as f:
@@ -33,7 +25,7 @@ with open(zulu_words_path, encoding='utf8') as f:
 
 @strip_punct
 def is_en_word(w: str) -> bool:
-    return w.lower() in CMU_WORDS
+    return wordfreq.word_frequency(w, 'en')>0
 
 @strip_punct
 def has_unicode(s):
