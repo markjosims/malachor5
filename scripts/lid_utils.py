@@ -2,7 +2,7 @@ from unidecode import unidecode
 import string
 import nltk
 from nltk.corpus import cmudict
-from string_norm import has_tira_chars, remove_punct
+from string_norm import has_tira_chars, remove_punct, strip_punct
 
 """
 Helper methods for determining language identity of text.
@@ -17,7 +17,7 @@ try:
 except LookupError:
     nltk.download('cmudict')
     CMU_DICT = cmudict.dict()
-CMU_WORDS = set(strip_punct(w.lower()) for w in CMU_DICT.keys())
+CMU_WORDS = set(remove_punct(w.lower()) for w in CMU_DICT.keys())
 
 tira_words_path = 'meta/tira_words.txt'
 with open(tira_words_path, encoding='utf8') as f:
@@ -30,12 +30,6 @@ with open(zulu_words_path, encoding='utf8') as f:
 # ---------------- #
 # Text LID methods #
 # ---------------- #
-
-
-def strip_punct(f):
-    def g(s):
-        return f(s.strip(string.punctuation))
-    return g
 
 @strip_punct
 def is_en_word(w: str) -> bool:

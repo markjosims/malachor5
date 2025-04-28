@@ -3,6 +3,7 @@ from string import punctuation
 import unicodedata
 import json
 import epitran
+import string
 
 DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde',]
 TONE_DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron',]
@@ -188,6 +189,11 @@ def remove_punct(text: str) -> str:
     for p in punctuation:
         text = text.replace(p, '')
     return text
+
+def strip_punct(f):
+    def g(s):
+        return f(s.strip(string.punctuation))
+    return g
 
 def report_unique_chars(texts: Sequence[str]) -> Dict[str, Any]:
     unique = set()
