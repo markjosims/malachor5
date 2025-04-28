@@ -1,6 +1,5 @@
 from unidecode import unidecode
 import wordfreq
-from nltk.corpus import cmudict
 from string_norm import has_tira_chars, remove_punct, strip_punct
 
 """
