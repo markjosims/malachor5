@@ -33,7 +33,7 @@ def is_en_word(w: str, expect_ascii: bool = True, threshold=1e-9) -> bool:
     of `wordfreq` search.
     """
     if expect_ascii and has_unicode(w):
-        return True
+        return False
     return wordfreq.word_frequency(w, 'en')>threshold
 
 @strip_punct
