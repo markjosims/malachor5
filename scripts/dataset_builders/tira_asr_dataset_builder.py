@@ -8,6 +8,7 @@ from dataset_builder_utils import get_readable_duration
 import sys
 sys.path.append('scripts')
 from string_norm import unicode_normalize, has_diac, remove_punct
+from lid_utils import is_en_word
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
 TIRA_ASR_CLIPS_DIR = os.environ.get("TIRA_ASR_CLIPS")
@@ -45,9 +46,12 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print(nan_str)
     PREPROCESSING_STEPS.append(nan_str)
 
-    # performing NFKD unicode normalization
+    # basic string normalization
+    print("String normalization...")
     df["text"] = df["text"].apply(unicode_normalize)
-    nfkd_str = f"- applied NFKD unicode normalization to text"
+    df["text"] = df["text"].str.lower()
+    df["text"] = df["text"].apply(remove_punct)
+    nfkd_str = f"- applied NFKD unicode normalization to text, set to lowercase and removed punctuation"
     print(nfkd_str)
     PREPROCESSING_STEPS.append(nfkd_str)
 
@@ -56,10 +60,46 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     has_tone_mask = df["text"].apply(lambda s: has_diac(s, tone_only=True))
     prev_len = len(df)
     df = df[has_tone_mask]
-    toneless_rows = prev_len-len(df)
-    toneless_str = f"- removed {toneless_rows} rows with no tone marked, {len(df)} rows remaining, {get_df_duration()}"
+    toneless_row_num = prev_len-len(df)
+    toneless_str = f"- removed {toneless_row_num} rows with no tone marked, {len(df)} rows remaining, {get_df_duration()}"
     print(toneless_str)
     PREPROCESSING_STEPS.append(toneless_str)
+
+
+    # remove all rows with English words
+    print("Removing rows with English")
+    en_words = set()
+    tira_words = set()
+    def detect_en_words(sentence):
+        has_en_word = False
+        for word in sentence.split():
+            if is_en_word(word) and (len(word)>1):
+                en_words.add(word)
+                has_en_word=True
+            else:
+                tira_words.add(word)
+        return has_en_word
+
+    has_en_mask = df["text"].apply(detect_en_words)
+
+    # save detected words for manual verification
+    en_words_path = os.path.join(TIRA_ASR_CLIPS_DIR, "english_words.txt")
+    tira_words_path = os.path.join(TIRA_ASR_CLIPS_DIR, "tira_words.txt")
+    with open(en_words_path, 'w', encoding='utf8') as f:
+        f.writelines(['\n'.join(en_words)])
+    with open(tira_words_path, 'w', encoding='utf8') as f:
+        f.writelines(['\n'.join(tira_words)])
+
+    prev_len = len(df)
+    df = df[~has_en_mask]
+    en_row_num = prev_len-len(df)
+    no_en_str = f"- removed {en_row_num} rows with English words, {len(df)} rows remaining, {get_df_duration()}"
+    unique_words_str = "- saved all detected English words to $TIRA_ASR_CLIPS/english_words"+\
+        "and Tira words to $TIRA_ASR_CLIPS/tira_words.txt"
+    print(no_en_str)
+    print(unique_words_str)
+    PREPROCESSING_STEPS.append(no_en_str)
+    PREPROCESSING_STEPS.append(unique_words_str)
 
 
 if __name__ == '__main__':
