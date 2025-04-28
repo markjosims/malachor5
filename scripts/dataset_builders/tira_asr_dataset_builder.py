@@ -101,6 +101,17 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     PREPROCESSING_STEPS.append(no_en_str)
     PREPROCESSING_STEPS.append(unique_words_str)
 
+    # remove tone words (e.g. HLL, LHL,...)
+    print("Removing tone words from transcriptions...")
+    is_tone_word = lambda s: all(c in 'hml' for c in s)
+    has_tone_word = lambda s: any(is_tone_word(w) for w in s.split())
+    remove_tone_word = lambda s: ' '.join(word for word in s.split() if not is_tone_word(word))
+    has_tone_word_mask = df['text'].apply(has_tone_word)
+    df['text'] = df['text'].apply(remove_tone_word)
+    remove_tone_word_str = f"- removed tone words (e.g. HLL, LHL, LLHH) from transcription, {int(has_tone_word_mask.sum())} rows affected"
+    print(remove_tone_word_str)
+    PREPROCESSING_STEPS.append(remove_tone_word_str)
+
 
 if __name__ == '__main__':
     main()
