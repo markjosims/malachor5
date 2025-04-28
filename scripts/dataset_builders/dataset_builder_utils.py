@@ -5,7 +5,7 @@ from longform import load_and_resample, SAMPLE_RATE
 
 import os
 import pandas as pd
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Literal
 from collections import defaultdict
 import torchaudio
 import torch
@@ -93,3 +93,19 @@ def get_duration_by_column(df: pd.DataFrame, col: str) -> Dict[str, Any]:
     for index in pivot.index:
         duration_by_col[index]=pivot.at[index,'duration']
     return duration_by_col
+
+def get_readable_duration(duration, time_unit: Literal['s', 'ms']='ms') -> str:
+    if time_unit=='ms':
+        total_s = duration/1_000
+    else: # time_unit=='s'
+        total_s = duration
+    if total_s < 60:
+        return f"{total_s:.2f} seconds"
+    total_m = total_s//60
+    remain_s = int(total_s%60)
+    if total_m < 60:
+        return f"{total_m:02d} min {remain_s:02d} sec"
+    total_h = total_m//60
+    remain_m = int(total_m%60)
+    return f"{total_h} hr {remain_m:02d} min {remain_s:02d} sec"
+    
