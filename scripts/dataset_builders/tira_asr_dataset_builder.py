@@ -22,8 +22,8 @@ Dataset of monolingual Tira generated from ELAN annotations of Tira elicitation 
 Transcriptions were taken from the `IPA Transcription` tier.
 Noisy transcriptions were filtered out by various steps of preprocessing, described below.
 Remaining transcriptions were also preprocessed with various steps of text normalization.
-The resulting dataset has $num_records records for $duration hours of speech, with each record
-averaging $mean_duration seconds.
+The resulting dataset has $num_records records for $duration of speech, with each record
+averaging $mean_duration.
 """
 )
 PREPROCESSING_STEPS = []
@@ -112,9 +112,14 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print(remove_tone_word_str)
     PREPROCESSING_STEPS.append(remove_tone_word_str)
 
+    readme_header_str = README_HEADER.substitute(
+        num_records=len(df),
+        duration=get_df_duration(),
+        mean_duration=get_readable_duration(df['duration'].mean()),
+    )
     readme_out = os.path.join(TIRA_ASR_CLIPS_DIR, 'README.md')
     with open(readme_out, 'w', encoding='utf8') as f:
-        f.write(README_HEADER+'\n')
+        f.write(readme_header_str+'\n')
         f.write('\n'.join(PREPROCESSING_STEPS))
 
 if __name__ == '__main__':
