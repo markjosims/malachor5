@@ -1,8 +1,7 @@
 from unidecode import unidecode
 import string
-import importlib.util
 import nltk
-from nltk.corpus import words
+from nltk.corpus import cmudict
 from string_norm import has_tira_chars, remove_punct
 
 """
@@ -14,17 +13,11 @@ For Zulu, check if word is in list of Zulu words (also stored in `meta`).
 """
 
 try:
-    en_words = set(words.words())
+    CMU_DICT = cmudict.dict()
 except LookupError:
-    nltk.download('words')
-    en_words = set(words.words())
-
-ENCHANT = False
-en_dict = None
-if importlib.util.find_spec('enchant') is not None:
-    import enchant
-    en_dict = enchant.request_dict('en_US')
-    ENCHANT = True
+    nltk.download('cmudict')
+    CMU_DICT = cmudict.dict()
+CMU_WORDS = set(strip_punct(w.lower()) for w in CMU_DICT.keys())
 
 tira_words_path = 'meta/tira_words.txt'
 with open(tira_words_path, encoding='utf8') as f:
@@ -46,10 +39,7 @@ def strip_punct(f):
 
 @strip_punct
 def is_en_word(w: str) -> bool:
-    if ENCHANT:
-        return en_dict.check(w)
-    else:
-        return w.lower() in en_words
+    return w.lower() in CMU_WORDS
 
 @strip_punct
 def has_unicode(s):
