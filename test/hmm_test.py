@@ -71,13 +71,23 @@ def test_calculate_transition_probs():
     exit_prob = 0.01
     self_prob = 0.5
     cont_prob = 1-(exit_prob+self_prob)
-    transition_probs = calculate_transition_probs(
+    transition_probs, unigrams = calculate_transition_probs(
         keyphrase_list,
         enter_prob=entr_prob,
         self_trans_prob=self_prob,
         early_exit_prob=exit_prob,
         late_enter_prob=skip_prob,
     )
+    expected_unigrams = set([
+        "foo_S",
+        "foo_1",
+        "foo_F",
+        "bar_S",
+        "bar_F",
+        "baz_F",
+        "SIL",
+        "SPCH",
+    ])
     expected_transitions = [
         ("SIL",   "SIL",   (1/2)*(1-(entr_prob+skip_prob))),
         ("SIL",   "SPCH",  (1/2)*(1-(entr_prob+skip_prob))),
@@ -147,3 +157,5 @@ def test_calculate_transition_probs():
         transition_weight = transition[0][-1]
         expected_weight = expected_transition[-1]
         assert transition_weight == expected_weight
+
+    assert unigrams == expected_unigrams

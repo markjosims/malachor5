@@ -92,10 +92,14 @@ def calculate_transition_probs(
         early_exit_prob: float = 0.01,
         late_enter_prob: float = 0.01,
         non_keyword_states: List[str] = ['SIL', 'SPCH']
-    ) -> List[Tuple[str, str, float]]:
+    ) -> Tuple[
+        List[Tuple[str, str, float]],
+        Set[str]
+    ]:
     """
     Calculates transition probabilities between words given a list of keyphrases.
-    Returns a list of tuples of shape ('$start_word', '$end_word', $weight).
+    Returns a list of tuples of shape ('$start_word', '$end_word', $weight)
+    and a set of strs corresponding to each unique state.
     `non_keyword_states` indicates the names of all non-keyword states, by default
     'SIL' for silence/non-speech and 'SPCH' for (non-keyword) speech.
     """
@@ -175,9 +179,12 @@ def calculate_transition_probs(
             early_exit_weight = early_exit_prob / len(non_keyword_states)
             for non_keyword_state in non_keyword_states:
                 transitions.append((unigram, non_keyword_state, early_exit_weight))
-        
 
-
-    return transitions
+    states = set(unigrams)
+    states.remove(BOS)
+    states.remove(EOS)
+    for state in non_keyword_states:
+        states.add(state)
+    return transitions, states
     
     
