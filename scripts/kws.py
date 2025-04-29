@@ -215,7 +215,7 @@ def timestamp_hits(df, keyword, timestamps):
 def get_equal_error_rate(ground_truth, keyword_probs) -> Tuple[float, float]:
     fpr, tpr, thresholds=roc_curve(ground_truth, keyword_probs)
     eer = brentq(lambda x : 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
-    thresh = interp1d(fpr, thresholds)(eer)
+    thresh = interp1d(fpr, thresholds)(eer).item()
     return eer, thresh
 
 def max_in_window(sim_matrix: np.ndarray, start_s, end_s, framelength_s=2.0, frameshift_s=0.5):
