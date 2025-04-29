@@ -399,7 +399,7 @@ def evaluate_kws(
                 eer_windowed, thresh_windowed = get_equal_error_rate(ground_truth_windowed, kw_probs_windowed)
                 json_obj['eer'][-1]['eer_eval_window']=eer_windowed
                 json_obj['eer'][-1]['eer_threshold_eval_window']=thresh_windowed
-        return json_obj
+    return json_obj
 
 if __name__ == '__main__':
     parser = init_kws_parser()
