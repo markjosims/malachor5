@@ -26,6 +26,10 @@ def embed_speech(
         speech_encoder: Union[str, SpeechEncoder]=None,
         encoder_size: Literal["tiny", "base", "small"]="tiny",
     ) -> torch.Tensor:
+    """
+    Embed audio or list of strings as phone embeddings with CLAP-IPA.
+    Audio may be filepath, list of filepaths, or tensor of samples.
+    """
     if speech_encoder is None:
         speech_encoder = f'anyspeech/clap-ipa-{encoder_size}-speech'
     if type(speech_encoder) is str:
@@ -55,6 +59,9 @@ def embed_text(
         phone_encoder: Union[str, PhoneEncoder]=None,
         encoder_size: Literal["tiny", "base", "small"]="tiny",
     ) -> torch.Tensor:
+    """
+    Embed string or list of strings as phone embeddings with CLAP-IPA.
+    """
     if phone_encoder is None:
         phone_encoder = f'anyspeech/clap-ipa-{encoder_size}-phone'
     if type(phone_encoder) is str:
@@ -82,20 +89,30 @@ def get_keyword_sim(
         phone_encoder=None,
         encoder_size='tiny',
 ):  
+    """
+    Given `audio_list`, a list of audio chunks or audio filepath strs,
+    calculate speech embeddings with CLAP-IPA,
+    calculate phone embeddings with CLAP_IPA for each str in `text_list`
+    and return similarity matrix where each row is a speech embeddings
+    and each column a text embedding.
+    """
     speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
     text_embeds = embed_text(text_list, phone_encoder, encoder_size)
 
-    sim_mat = get_similarity_matrix(speech_embeds, text_embeds)
+    sim_mat = get_similarity_matrix(row_embeds=speech_embeds, col_embeds=text_embeds)
     return sim_mat
 
-def get_similarity_matrix(x_embeds, y_embeds):
-    x_embed_norm = torch.linalg.vector_norm(x_embeds, dim=1)[:, None]
-    normalized_x_embeds = x_embeds/x_embed_norm
+def get_similarity_matrix(row_embeds: torch.Tensor, col_embeds: torch.Tensor) -> torch.Tensor:
+    """
+    Returns a similarity matrix of shape len(row_embeds) x len(col_embeds)
+    """
+    row_embed_norm = torch.linalg.vector_norm(row_embeds, dim=1)[:, None]
+    normalized_row_embeds = row_embeds/row_embed_norm
     
-    y_embed_norm = torch.linalg.vector_norm(y_embeds, dim=1)[:, None]
-    normalized_y_embeds = y_embeds/y_embed_norm
+    col_embed_norm = torch.linalg.vector_norm(col_embeds, dim=1)[:, None]
+    normalized_col_embeds = col_embeds/col_embed_norm
 
-    sim_mat = torch.mm(normalized_x_embeds, normalized_y_embeds.transpose(0,1))
+    sim_mat = torch.mm(normalized_row_embeds, normalized_col_embeds.transpose(0,1))
     return sim_mat
 
 # ------------- #
