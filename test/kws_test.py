@@ -250,10 +250,10 @@ def test_kws_eval(tmpdir):
     assert 'eer' in json_obj
     assert type(json_obj['eer']) is list
     for eer_dict in json_obj['eer']:
-        assert 'keyword' in json_obj
-        assert json_obj['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
-        assert 'value' in json_obj
-        assert type(json_obj['value']) is float
+        assert 'keyword' in eer_dict
+        assert eer_dict['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
+        assert 'value' in eer_dict
         assert type(eer_dict['value']) is float
-        assert 'eer_threshold' in json_obj
-        assert type(json_obj['eer_threshold']) is float
+        assert type(eer_dict['value']) is float
+        assert 'eer_threshold' in eer_dict
+        assert type(eer_dict['eer_threshold']) is float
