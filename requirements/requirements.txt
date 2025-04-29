@@ -509,6 +509,7 @@ ninja==1.11.1.4 ; sys_platform != 'darwin'
     # via nvidia-modelopt
 nltk==3.9.1
     # via
+    #   -r requirements.in
     #   g2p-en
     #   nemo-toolkit
     #   rouge-score

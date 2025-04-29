@@ -20,3 +20,4 @@ seaborn
 wordfreq
 clap @ git+https://github.com/markjosims/clap-ipa.git@7e6256fb175faa1ef5aafc59e259bb04a1bb2a2f
 pomegranate
+nltk
