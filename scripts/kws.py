@@ -1,4 +1,4 @@
-from typing import Union, List, Literal, Sequence, Any, Generator, Tuple
+from typing import *
 from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
@@ -284,6 +284,20 @@ def init_kws_parser():
     return parser
 
 def perform_kws(args):
+    """
+    Read keyword list from `args.keyword_list` or `args.keyword_file`.
+    If `args.inference_type=='single_word'`, split key phrases into individual words and search for words.
+    If `args.inference_type=='hmm', create an HMM with a single state for each word and transition weights
+    defined by sentences in keyword list. Then, for each audio file in `args.input`, perform KWS.
+    Save a .json file with the similarity matrix computed during KWS.
+    For HMM inference, include the Viterbi output on the KWS probabilities.
+    If TextGrid files are passed to `args.textgrid`, use each to evaluate the KWS predictions against ground truth.
+    For the similarity matrix, calculate the EER for each word given its probabilities.
+    For HMM inference, calculate hits and false alarms within the eval window, as well as CER and WER
+    for all keywords detected in the window vs ground truth.
+    """
+
+    # get keyword list, audio files and, if applicable, textgrid files from `args`
     keyword_list = args.keywords
     if keyword_list is None:
         with open(args.keyword_file, encoding='utf8') as f:
@@ -299,6 +313,8 @@ def perform_kws(args):
         raise NotImplementedError('Sequence inference with HMM not implemented yet.')
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
+
+    # do KWS on each audio file
     for audio, textgrid in zip(audio_files, textgrids):
         wav = load_and_resample(audio).squeeze()
         sliding_windows = get_sliding_window(
@@ -309,7 +325,7 @@ def perform_kws(args):
             return_timestamps=True,
         )
         audio_frames = [frame.pop('samples') for frame in sliding_windows]
-        sim_mat = []
+        sim_mat_tensors = []
         for batch in dataloader(audio_frames, batch_size=args.batch_size):
             batch_sim_mat = get_keyword_sim(
                 audio_list=batch,
@@ -318,7 +334,8 @@ def perform_kws(args):
                 phone_encoder=args.phone_encoder,
                 encoder_size=args.encoder_size,
             )
-            sim_mat.extend(batch_sim_mat.tolist())
+            sim_mat_tensors.append(batch_sim_mat)
+        sim_mat = torch.cat(sim_mat_tensors)
         
         json_obj = {
             'audio_input': audio,
@@ -326,41 +343,63 @@ def perform_kws(args):
             'framelength_s': args.framelength_s,
             'frameshift_s': args.frameshift_s,
             'timestamps': sliding_windows,
-            'similarity_matrix': sim_mat,
+            'similarity_matrix': sim_mat.tolist(),
         }
 
         if textgrid:
             # textgrid file passed, use to perform evaluation
-            tg_df = textgrid_to_df(textgrid)
-            json_obj['eer']=[]
-            # cast sim_mat to numpy array for easier indexing
-            sim_mat = np.array(sim_mat)
-            if args.eval_window:
-                json_obj['eval_window']=args.eval_window
-            for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword"):
-                ground_truth = timestamp_hits(tg_df, keyword, sliding_windows)
-                kw_probs = sim_mat[:,i]
-                eer, thresh = get_equal_error_rate(ground_truth, kw_probs)
-                json_obj['eer'].append({
-                    'keyword': keyword,
-                    'value': eer,
-                    'eer_threshold': thresh,
-                })
-                if args.eval_window:
-                    eval_windows = get_chunks_w_silent_edges(tg_df, chunklen_s=args.eval_window)
-                    sim_mat_windowed = get_windowed_sim_mat(sim_mat, eval_windows)
-                    for i, keyword in enumerate(tqdm(keyword_list)):
-                        kw_probs_windowed = sim_mat_windowed[:,i]
-                        ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
-                        eer_windowed, thresh_windowed = get_equal_error_rate(ground_truth_windowed, kw_probs_windowed)
-                        json_obj['eer'][-1]['eer_eval_window']=eer_windowed
-                        json_obj['eer'][-1]['eer_threshold_eval_window']=thresh_windowed
+            json_obj.update(
+                **evaluate_kws(keyword_list, textgrid, sliding_windows, sim_mat)
+            )
         json_path = audio.replace('.wav', '.json')
         if args.output_dir:
             json_basename = os.path.basename(json_path)
             json_path = os.path.join(args.output_dir, json_basename)
         with open(json_path, 'w', encoding='utf8') as f:
             json.dump(json_obj, f, ensure_ascii=False, indent=2)
+
+def evaluate_kws(
+        keyword_list: List[str],
+        textgrid_path: str,
+        timestamps: List[Dict[str, float]],
+        sim_mat: torch.Tensor,
+        eval_window: Optional[float]=None,
+    ):
+    """
+    - `keyword_list`:   list of keyword strs
+    - `textgrid_path`:  path to a textgrid file containing ground truth time alignments
+    for keywords
+    - `timestamps`:     list of dicts of timestamps, each containing 'start' and 'end' keys
+    - `sim_mat`:        2d torch tensor where each row is a timestamp and each col a keyword
+    - `eval_window`:    optional float value for windowed evaluation, length of window in seconds
+    Calculate EER and equal error threshold for each keyword given probabilities from `sim_mat`
+    and ground truth alignments from `textgrid_path`. If `eval_window` is passed, also do
+    windowed evaluation, where any hit within the window length specified is counted.
+    """
+    tg_df = textgrid_to_df(textgrid_path)
+    json_obj = {}
+    json_obj['eer']=[]
+    if eval_window:
+        json_obj['eval_window']=eval_window
+    for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword"):
+        ground_truth = timestamp_hits(tg_df, keyword, timestamps)
+        kw_probs = sim_mat[:,i]
+        eer, thresh = get_equal_error_rate(ground_truth, kw_probs)
+        json_obj['eer'].append({
+                    'keyword': keyword,
+                    'value': eer,
+                    'eer_threshold': thresh,
+                })
+        if eval_window:
+            eval_windows = get_chunks_w_silent_edges(tg_df, chunklen_s=eval_window)
+            sim_mat_windowed = get_windowed_sim_mat(sim_mat, eval_windows)
+            for i, keyword in enumerate(tqdm(keyword_list)):
+                kw_probs_windowed = sim_mat_windowed[:,i]
+                ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
+                eer_windowed, thresh_windowed = get_equal_error_rate(ground_truth_windowed, kw_probs_windowed)
+                json_obj['eer'][-1]['eer_eval_window']=eer_windowed
+                json_obj['eer'][-1]['eer_threshold_eval_window']=thresh_windowed
+        return json_obj
 
 if __name__ == '__main__':
     parser = init_kws_parser()
