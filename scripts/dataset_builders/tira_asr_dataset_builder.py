@@ -4,10 +4,11 @@ import os
 import pandas as pd
 from string import Template
 from dataset_builder_utils import get_readable_duration
+import json
 
 import sys
 sys.path.append('scripts')
-from string_norm import unicode_normalize, has_diac, remove_punct
+from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description
 from lid_utils import is_en_word
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
@@ -111,6 +112,25 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     remove_tone_word_str = f"- removed tone words (e.g. HLL, LHL, LLHH) from transcription, {int(has_tone_word_mask.sum())} rows affected"
     print(remove_tone_word_str)
     PREPROCESSING_STEPS.append(remove_tone_word_str)
+
+    # normalize IPA charset
+    print("Normalizing IPA character set...")
+    unique_chars = set()
+    df['text'].apply(unique_chars.update)
+    char_rep_json_path = os.path.join(TIRA_ASR_CLIPS_DIR, 'char_replacements.json')
+    # Uncomment to overwrite `char_rep_json`
+    rep_dict = {
+        char: {
+            'target': char,
+            'comment': '',
+            **unicode_description(char)
+        } for char in unique_chars
+    }
+    with open(char_rep_json_path, 'w', encoding='utf8') as f:
+        json.dump(rep_dict, f, ensure_ascii=True, indent=2)
+    with open(char_rep_json_path, encoding='utf8') as f:
+        rep_dict = json.load(f)
+
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
