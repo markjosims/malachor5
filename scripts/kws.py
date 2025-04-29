@@ -4,6 +4,7 @@ from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
 from hmm_utils import calculate_transition_probs, KeySimilarityMatrix
+from regression_utils import get_lr_probs_params
 import torch
 from argparse import ArgumentParser
 import json
@@ -219,21 +220,20 @@ def get_equal_error_rate(ground_truth, keyword_probs) -> Tuple[float, float]:
     thresh = interp1d(fpr, thresholds)(eer).item()
     return eer, thresh
 
-def max_in_window(sim_matrix: np.ndarray, start_s, end_s, framelength_s=2.0, frameshift_s=0.5):
+def max_in_window(sim_matrix: torch.Tensor, start_s, end_s, framelength_s=2.0, frameshift_s=0.5):
     start_i = int(start_s//frameshift_s)
     end_i = int((end_s-framelength_s)//frameshift_s)
     sim_matrix_windowed = sim_matrix[start_i:end_i+1]
-    max_sim_col = sim_matrix_windowed.max(axis=0)
+    max_sim_col = sim_matrix_windowed.max(axis=0).values
     return max_sim_col
 
-def get_windowed_sim_mat(sim_mat, chunks):
+def get_windowed_probs(sim_mat, chunks):
     max_probs = []
     for chunk in chunks:
         start = chunk['start_s']
         end = chunk['end_s']
         max_probs.append(max_in_window(sim_mat, start, end))
-    max_probs=np.matrix(max_probs)
-    max_probs=np.asarray(max_probs)
+    max_probs=torch.stack(max_probs)
     return max_probs
 
 def all_intervals_at_time_empty(df, time):
@@ -271,6 +271,12 @@ def init_kws_parser():
     parser.add_argument('--keyword_file', '-kf')
     parser.add_argument('--keywords', '-kws', nargs='+')
     parser.add_argument('--inference_type', choices=['single_word', 'hmm'], default='single_word')
+    parser.add_argument(
+        '--oov_type',
+        choices=['inverse_kwd_prob', 'avg_speech_prob', 'avg_speech_prob_weighted', 'whisper_lid_prob'],
+        help="Strategy for representing probability of non-keyword speech",
+        default='inverse_kwd_prob',
+    )
     parser.add_argument('--framelength_s', default=2)
     parser.add_argument('--frameshift_s', default=0.5)
     parser.add_argument('--sample_rate', default=SAMPLE_RATE)
@@ -320,11 +326,11 @@ def perform_kws(args):
     if keyword_list is None:
         with open(args.keyword_file, encoding='utf8') as f:
             keyphrase_list = [line.strip() for line in f.readlines()]
-    # split phrases into individual words
-    all_words = set()
-    for phrase in keyphrase_list:
-        all_words.update(*phrase.split())
-    keyword_list = list(all_words)
+            # split phrases into individual words
+            all_words = set()
+            for phrase in keyphrase_list:
+                all_words.update(*phrase.split())
+        keyword_list = list(all_words)
 
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
@@ -340,6 +346,8 @@ def perform_kws(args):
             return_timestamps=True,
         )
         audio_frames = [frame.pop('samples') for frame in sliding_windows]
+
+        print("Calculating keyword probabilities...")
         sim_mat_tensors = []
         for batch in dataloader(audio_frames, batch_size=args.batch_size):
             batch_sim_mat = get_keyword_sim(
@@ -351,6 +359,13 @@ def perform_kws(args):
             )
             sim_mat_tensors.append(batch_sim_mat)
         sim_mat = torch.cat(sim_mat_tensors)
+
+        # get oo
+        if args.oov_type == 'inverse_kwd_prob':
+            max_keyword_probs = sim_mat.max(dim=1).values
+            oov_probs = 1-max_keyword_probs
+        else:
+            raise NotImplementedError(f"{args.oov_type} not implemented yet")
         
         json_obj = {
             'audio_input': audio,
@@ -359,12 +374,20 @@ def perform_kws(args):
             'frameshift_s': args.frameshift_s,
             'timestamps': sliding_windows,
             'similarity_matrix': sim_mat.tolist(),
+            'oov_probs': oov_probs.tolist(),
         }
 
         if textgrid:
             # textgrid file passed, use to perform evaluation
             json_obj.update(
-                **evaluate_kws(keyword_list, textgrid, sliding_windows, sim_mat)
+                **evaluate_kws(
+                    keyword_list,
+                    textgrid,
+                    sliding_windows, 
+                    sim_mat,
+                    oov_probs,
+                    args.eval_window,
+                )
             )
         json_path = audio.replace('.wav', '.json')
         if args.output_dir:
@@ -378,6 +401,7 @@ def evaluate_kws(
         textgrid_path: str,
         timestamps: List[Dict[str, float]],
         sim_mat: torch.Tensor,
+        oov_probs: torch.Tensor,
         eval_window: Optional[float]=None,
     ):
     """
@@ -385,7 +409,8 @@ def evaluate_kws(
     - `textgrid_path`:  path to a textgrid file containing ground truth time alignments
     for keywords
     - `timestamps`:     list of dicts of timestamps, each containing 'start' and 'end' keys
-    - `sim_mat`:        2d torch tensor where each row is a timestamp and each col a keyword
+    - `sim_mat`:        2d torch tensor of shape (T, K) where each row is a timestamo and each col a keyword
+    - `oov_probs`:      1d torch tensor of shape (T,) where each value is the OOV probability of a given timestamp
     - `eval_window`:    optional float value for windowed evaluation, length of window in seconds
     Calculate EER and equal error threshold for each keyword given probabilities from `sim_mat`
     and ground truth alignments from `textgrid_path`. If `eval_window` is passed, also do
@@ -393,28 +418,46 @@ def evaluate_kws(
     """
     tg_df = textgrid_to_df(textgrid_path)
     json_obj = {}
-    json_obj['eer']=[]
+    json_obj['metrics']=[]
     if eval_window:
         json_obj['eval_window']=eval_window
     for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword"):
         ground_truth = timestamp_hits(tg_df, keyword, timestamps)
+        
         kw_probs = sim_mat[:,i]
-        eer, thresh = get_equal_error_rate(ground_truth, kw_probs)
-        json_obj['eer'].append({
-                    'keyword': keyword,
-                    'value': eer,
-                    'eer_threshold': thresh,
-                })
+        eer_dict = get_eer_dict(ground_truth, kw_probs, oov_probs)
+        eer_dict['keyword']=keyword
+        json_obj['metrics'].append(eer_dict)
         if eval_window:
             eval_windows = get_chunks_w_silent_edges(tg_df, chunklen_s=eval_window)
-            sim_mat_windowed = get_windowed_sim_mat(sim_mat, eval_windows)
+            sim_mat_windowed = get_windowed_probs(sim_mat, eval_windows)
+            oov_probs_windowed = get_windowed_probs(oov_probs, eval_windows)
             for i, keyword in enumerate(tqdm(keyword_list)):
                 kw_probs_windowed = sim_mat_windowed[:,i]
                 ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
-                eer_windowed, thresh_windowed = get_equal_error_rate(ground_truth_windowed, kw_probs_windowed)
-                json_obj['eer'][-1]['eer_eval_window']=eer_windowed
-                json_obj['eer'][-1]['eer_threshold_eval_window']=thresh_windowed
+                eer_windowed = get_eer_dict(ground_truth_windowed, kw_probs_windowed, oov_probs_windowed)
+                for k, v in eer_windowed.items():
+                    eer_dict[k+'_windowed']=v
     return json_obj
+
+def get_eer_dict(ground_truth, kw_probs, oov_probs):
+    # get EER using just keyword probability
+    eer, thresh = get_equal_error_rate(ground_truth, kw_probs)
+
+    # get EER using keyword + OOV probability with LR
+    lr_probs, lr_params = get_lr_probs_params(
+        torch.stack([kw_probs, oov_probs]).transpose(0,1),
+        ground_truth
+    )
+    lr_eer, lr_thresh = get_equal_error_rate(ground_truth, lr_probs)
+    eer_dict = {
+        'eer': eer,
+        'eer_threshold': thresh,
+        'lr_eer': lr_eer,
+        'lr_eer_threshold': lr_thresh,
+        'lr_params': lr_params
+    }
+    return eer_dict
 
 if __name__ == '__main__':
     parser = init_kws_parser()

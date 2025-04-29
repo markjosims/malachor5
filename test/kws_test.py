@@ -247,13 +247,16 @@ def test_kws_eval(tmpdir):
     json_path = wav_path.replace('.wav', '.json')
     with open(json_path, encoding='utf8') as f:
         json_obj = json.load(f)
-    assert 'eer' in json_obj
-    assert type(json_obj['eer']) is list
-    for eer_dict in json_obj['eer']:
+    assert 'metrics' in json_obj
+    assert type(json_obj['metrics']) is list
+    for eer_dict in json_obj['metrics']:
         assert 'keyword' in eer_dict
         assert eer_dict['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
-        assert 'value' in eer_dict
-        assert type(eer_dict['value']) is float
-        assert type(eer_dict['value']) is float
-        assert 'eer_threshold' in eer_dict
-        assert type(eer_dict['eer_threshold']) is float
+        for suffix in ['', '_windowed']:
+            assert 'lr_params'+suffix in eer_dict
+            assert type(eer_dict['lr_params'+suffix]) is dict
+            for prefix in ['', 'lr_']:
+                assert prefix+'eer'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer'+suffix]) is float
+                assert prefix+'eer_threshold'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer_threshold'+suffix]) is float
