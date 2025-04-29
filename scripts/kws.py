@@ -3,6 +3,7 @@ from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
+from hmm_utils import calculate_transition_probs, KeySimilarityMatrix
 import torch
 from argparse import ArgumentParser
 import json
@@ -280,6 +281,23 @@ def init_kws_parser():
     parser.add_argument('--batch_size', '-b', type=int, default=32)
     parser.add_argument('--textgrid', '-tg', help='Textgrid files with ground truth timestamps.', nargs='+')
     parser.add_argument('--eval_window', type=float)
+    
+    # hmm-specific args
+    parser.add_argument(
+        '--trans_probs',
+        '-tp',
+        type=float,
+        nargs=4,
+        default=[0.1, 0.5, 0.01, 0.01],
+        help="List of values for HMM transition weights, specifically: enter_prob, "+\
+            "self_trans_prob, early_exit_prob, late_enter_prob",
+    )
+    parser.add_argument(
+        '--hmm_window_tolerance',
+        type=float,
+        default=2.0,
+        help="How far from `args.eval_window` to search for a stopping HMM state."
+    )
 
     return parser
 
@@ -301,16 +319,13 @@ def perform_kws(args):
     keyword_list = args.keywords
     if keyword_list is None:
         with open(args.keyword_file, encoding='utf8') as f:
-            keyword_list = [line.strip() for line in f.readlines()]
-    if args.inference_type == 'single_word':
-        # split phrases into individual words
-        all_words = set()
-        for phrase in keyword_list:
-            all_words.update(*phrase.split())
-    elif args.inference_type == 'hmm':
-        # TODO: implement HMM inference where a state is loaded for each word
-        # and transition probabilities are initialized from keyphrase sequences
-        raise NotImplementedError('Sequence inference with HMM not implemented yet.')
+            keyphrase_list = [line.strip() for line in f.readlines()]
+    # split phrases into individual words
+    all_words = set()
+    for phrase in keyphrase_list:
+        all_words.update(*phrase.split())
+    keyword_list = list(all_words)
+
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
 
