@@ -22,3 +22,8 @@ Loads list stored at `meta/tira_elan_raw.csv` and generates an ASR dataset of mo
 
 ## tira_elan_scraper.py
 Reads .eaf files from `TIRA_RECORDINGS_GDRIVE` and makes a list stored in `meta/tira_elan_raw.csv` with file basenames, timestamps, Elan tier names and values.
+
+## tira_eval_transcript.py
+Reads .eaf files stored in `meta/` folder and generates `.txt` files with transcriptions.
+For each reacording outputs `$RECORDING.txt` and `$RECORDING-no-overlap.txt`, where all overlapped segments are removed using following criterion:
+- If two segments overlap, delete shorter segment IF overlap portion >=50% of shorter segment duration.
