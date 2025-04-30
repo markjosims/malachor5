@@ -197,7 +197,7 @@ def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument("--reference", "-ref")
     parser.add_argument("--hypothesis", "-hyp")
-    parser.add_argument("--whisper_normalize")
+    parser.add_argument("--whisper_normalize", action="store_true")
     parser.add_argument("--langs", nargs="+", default=['tira', 'eng', 'misc'],
         help="List of languages to calculate metrics for. Default: ['tira', 'eng', 'misc']")
     parser.add_argument("--output", "-o", help="JSON file to save metrics to.")
@@ -214,11 +214,19 @@ def main(argv: Optional[Sequence[str]]=None):
     if args.whisper_normalize:
         reference = normalize_multiling(reference)
         hypothesis = normalize_multiling(hypothesis)
-    metrics = get_metrics_by_language(
+    wer_metrics = get_metrics_by_language(
         reference=reference,
         hypothesis=hypothesis,
         langs=args.langs,
-    )
+        metric='wer',
+    )[0]
+    cer_metrics = get_metrics_by_language(
+        reference=reference,
+        hypothesis=hypothesis,
+        langs=args.langs,
+        metric='cer',
+    )[0]
+    metrics = {**cer_metrics, **wer_metrics}
     print(f"WER: {metrics['wer']:.2f}")
     print(f"CER: {metrics['cer']:.2f}")
     with open(args.output, encoding='utf8', mode='w') as f:
