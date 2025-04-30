@@ -200,6 +200,7 @@ def init_parser() -> ArgumentParser:
     parser.add_argument("--whisper_normalize")
     parser.add_argument("--langs", nargs="+")
     parser.add_argument("--output", "-o", help="JSON file to save metrics to.")
+    return parser
 
 def main(argv: Optional[Sequence[str]]=None):
     parser = init_parser()
