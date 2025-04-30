@@ -197,7 +197,7 @@ def init_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument("--reference", "-ref")
     parser.add_argument("--hypothesis", "-hyp")
-    parser.add_argument("--whisper_normalize")
+    parser.add_argument("--whisper_normalize", action="store_true")
     parser.add_argument("--langs", nargs="+", default=['tira', 'eng', 'misc'],
         help="List of languages to calculate metrics for. Default: ['tira', 'eng', 'misc']")
     parser.add_argument("--output", "-o", help="JSON file to save metrics to.")
