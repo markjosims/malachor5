@@ -87,8 +87,8 @@ def get_remove_oov_char_funct(vocab_file: str) -> Callable[str, str]:
     not in the vocab file removed.
     """
     with open(vocab_file, encoding='utf8') as f:
-        chars=f.read()
-    return lambda s: ''.join(c for c in s if c in chars)
+        charlist=json.load(f)
+    return lambda s: ''.join(c for c in s if c in charlist)
 
 def condense_tones(s: str) -> str:
     """
@@ -232,7 +232,7 @@ def split_segs_and_tone(text: str) -> Tuple[str, str]:
     return strip_diacs(text, tone_only=True), get_tone_as_letters(text)
 
 
-remove_nontira_chars = get_remove_oov_char_funct('meta/tira_asr_unique_chars.txt')
+remove_nontira_chars = get_remove_oov_char_funct('meta/tira_asr_unique_chars.json')
 
 
 def has_tira_chars(s: str) -> bool:
