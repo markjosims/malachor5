@@ -8,7 +8,7 @@ import json
 
 import sys
 sys.path.append('scripts')
-from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description
+from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements
 from lid_utils import is_en_word
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
@@ -115,22 +115,44 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # normalize IPA charset
     print("Normalizing IPA character set...")
-    unique_chars = set()
-    df['text'].apply(unique_chars.update)
     char_rep_json_path = os.path.join(TIRA_ASR_CLIPS_DIR, 'char_replacements.json')
-    # Uncomment to overwrite `char_rep_json`
-    rep_dict = {
-        char: {
-            'target': char,
-            'comment': '',
-            **unicode_description(char)
-        } for char in unique_chars
-    }
-    with open(char_rep_json_path, 'w', encoding='utf8') as f:
-        json.dump(rep_dict, f, ensure_ascii=True, indent=2)
+    # # Uncomment to overwrite `char_rep_json`
+    # unique_chars = set()
+    # df['text'].apply(unique_chars.update)
+    # rep_dict = {
+    #     char: {
+    #         'target': char,
+    #         'comment': '',
+    #         **unicode_description(char)
+    #     } for char in unique_chars
+    # }
+    # with open(char_rep_json_path, 'w', encoding='utf8') as f:
+    #     json.dump(rep_dict, f, ensure_ascii=True, indent=2)
     with open(char_rep_json_path, encoding='utf8') as f:
         rep_dict = json.load(f)
+    rep_dict = {k: v['target'] for k, v in rep_dict.items()}
+    normalize_ipa = lambda s: make_replacements(s, rep_dict)
+    # apply twice since some diacritics may interfere with replacing digraphs
+    df['text']=df['text'].apply(normalize_ipa)
+    df['text']=df['text'].apply(normalize_ipa)
 
+    print("Checking only expected chars are found in dataset...")
+    unique_chars_path = os.path.join('meta', 'tira_asr_unique_chars.json')
+    with open(unique_chars_path, encoding='utf8') as f:
+        expected_ipa_chars = json.load(f)
+    unexpected_chars = set()
+    def find_unexpected_chars(sentence):
+        found_unexpected_char = False
+        for c in sentence:
+            if c not in expected_ipa_chars:
+                unexpected_chars.add(c)
+                found_unexpected_char=True
+        return found_unexpected_char
+    expected_char_str = f"- "
+
+    unexpected_chars_mask = df['text'].apply(find_unexpected_chars)
+    if (unexpected_chars_mask).sum()>0:
+        raise ValueError("Found unexpected chars after normalizing IPA. Inspect 'text' col in dataframe.")
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
