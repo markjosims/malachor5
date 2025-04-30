@@ -1,8 +1,11 @@
 from string_norm import remove_punct
 from jiwer.process import process_words, process_characters
-from typing import Union, List, Dict, Literal
+from typing import *
 from collections import defaultdict
 from lid_utils import get_word_language
+from argparse import ArgumentParser
+from tokenization_utils import normalize_multiling
+import json
 
 def get_metrics_by_language(
         reference: Union[str, List[str]],
@@ -185,3 +188,40 @@ def metric_factory(
         metrics[f'num_{lang}_hyp'] = 0
     
     return metrics
+
+# ------ #
+# script #
+# ------ #
+
+def init_parser() -> ArgumentParser:
+    parser = ArgumentParser()
+    parser.add_argument("--reference", "-r")
+    parser.add_argument("--hypothesis", "-h")
+    parser.add_argument("--whisper_normalize")
+    parser.add_argument("--langs", nargs="+")
+    parser.add_argument("--output", "-o", help="JSON file to save metrics to.")
+
+def main(argv: Optional[Sequence[str]]=None):
+    parser = init_parser()
+    args = parser.parse_args(argv)
+    
+    with open(args.reference, encoding='utf8', mode='r') as f:
+        reference = f.read()
+    with open(args.hypothesis, encoding='utf8', mode='r') as f:
+        hypothesis = f.read()
+    if args.whisper_normalize:
+        reference = normalize_multiling(reference)
+        hypothesis = normalize_multiling(hypothesis)
+    metrics = get_metrics_by_language(
+        reference=reference,
+        hypothesis=hypothesis,
+        langs=args.langs,
+    )
+    print(f"WER: {metrics['wer']:.2f}")
+    print(f"CER: {metrics['cer']:.2f}")
+    with open(args.output, encoding='utf8', mode='w') as f:
+        json.dump(metrics, f, indent=2, ensure_ascii=False)
+
+
+if __name__ == '__main__':
+    main()
