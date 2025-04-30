@@ -49,9 +49,10 @@ def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
     return forced_decoder_ids
 
 
-def normalize_eng_words_only(s: str, tokenizer: WhisperTokenizer=None) -> str:
+def normalize_multiling(s: str, tokenizer: WhisperTokenizer=None) -> str:
     """
-    Normalize all non-Tira words in string, leaving Tira unchanged
+    Use Whisper tokenizer to normalize all English words in a string,
+    and normalize all other words using unicode normalization and removing punctuation.
     """
     if tokenizer is None:
         tokenizer = TOKENIZER

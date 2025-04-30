@@ -14,7 +14,7 @@ import json
 from glob import glob
 from tqdm import tqdm
 from dataset_utils import load_and_prepare_dataset, load_data_collator, DATASET_ARGS, TRAIN_DS_ARGS, EVAL_DS_ARGS
-from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS, normalize_eng_words_only
+from tokenization_utils import LANG_TOKENS, LANG_TOKEN_IDS, normalize_multiling
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval, set_generation_config, PROCESSOR_ARGS, MODEL_ARGS, prepare_trainer_for_peft
 from argparse_utils import make_arggroup_from_argdict
 from string_norm import get_remove_oov_char_funct, condense_tones
@@ -125,7 +125,7 @@ def get_str_process_pipe(args):
         remove_oov=get_remove_oov_char_funct(args.char_vocab)
         str_process_pipe.append(remove_oov)
     if args.whisper_normalize:
-        str_process_pipe.append(normalize_eng_words_only)
+        str_process_pipe.append(normalize_multiling)
 
     if not str_process_pipe:
         return
