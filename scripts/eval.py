@@ -218,7 +218,7 @@ def main(argv: Optional[Sequence[str]]=None):
         reference=reference,
         hypothesis=hypothesis,
         langs=args.langs,
-    )
+    )[0]
     print(f"WER: {metrics['wer']:.2f}")
     print(f"CER: {metrics['cer']:.2f}")
     with open(args.output, encoding='utf8', mode='w') as f:
