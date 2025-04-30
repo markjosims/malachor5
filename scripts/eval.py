@@ -53,16 +53,32 @@ def get_metrics_by_language(
         reference = [remove_punct(ref) for ref in reference]
         hypothesis = [remove_punct(hyp) for hyp in hypothesis]
     metric_list = []
-    output = process_words(reference, hypothesis) if metric=='wer' else\
-        process_characters(reference, hypothesis)
+    process_f = process_words if metric=='wer' else process_characters
+    output = process_f(reference, hypothesis)
+
     alignments = output.alignments
     for ref, hyp, align in zip(reference, hypothesis, alignments):
         metrics = metric_factory(output, metric=metric, langs=langs)
 
+        # edits (substitutions, deletions and insertions) are calculated for entire alignment
         for aligned_word in align:
-            alignment_metrics = get_metrics_from_alignment(aligned_word, ref, hyp, metric=metric, langs=langs)
+            alignment_metrics = get_edits_from_alignment(aligned_word, ref, hyp, metric=metric, langs=langs)
             for key, value in alignment_metrics.items():
                 metrics[key] += value
+        # hits are calculated from reference with only language-specific words
+        for lang in langs:
+            lang_ref = " ".join([word for word in ref.split() if get_word_language(word, langs=langs)==lang])
+            if not lang_ref:
+                # don't calculate hits/deletions for empty reference
+                continue
+            lang_output = process_f(lang_ref, hyp)
+            lang_align = lang_output.alignments[0]
+            for aligned_word in lang_align:
+                lang_metrics = get_hit_from_alignment(
+                    aligned_word, lang_ref, hyp, metric=metric, langs=langs
+                )
+                for key, value in lang_metrics.items():
+                    metrics[key] += value
         # calculate rates
         for k, v in metrics.copy().items():
             if k.startswith('num_'):
@@ -101,7 +117,7 @@ def get_metrics_by_language(
         
     return metric_list
 
-def get_metrics_from_alignment(
+def get_edits_from_alignment(
         align,
         ref,
         hyp,
@@ -122,25 +138,41 @@ def get_metrics_from_alignment(
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f'num_{hyp_lang}_hyp'] += 1
             alignment_metrics[f"{ref_lang}2{hyp_lang}{'_char' if metric=='cer' else ''}_substitutions"] += 1
-    elif align_type == 'equal':
-        for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
-            ref_word = get_word_for_alignment(ref, ref_idx, metric)
-            ref_lang = get_word_language(ref_word, langs=langs)
-            alignment_metrics[f'num_{ref_lang}'] += 1
-            alignment_metrics[f'num_{ref_lang}_hyp'] += 1
-            alignment_metrics[f"{ref_lang}{'_char' if metric=='cer' else ''}_hits"] += 1
     elif align_type == 'insert':
         for hyp_idx in range(align.hyp_start_idx, align.hyp_end_idx):
             hyp_word = get_word_for_alignment(hyp, hyp_idx, metric)
             hyp_lang = get_word_language(hyp_word, langs=langs)
             alignment_metrics[f'num_{hyp_lang}_hyp'] += 1
             alignment_metrics[f"{hyp_lang}{'_char' if metric=='cer' else ''}_insertions"] += 1
-    else: # align_type == 'deletion'
+    elif align_type == 'delete':
         for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
             ref_word = get_word_for_alignment(ref, ref_idx, metric)
             ref_lang = get_word_language(ref_word, langs=langs)
             alignment_metrics[f'num_{ref_lang}'] += 1
             alignment_metrics[f"{ref_lang}{'_char' if metric=='cer' else ''}_deletions"] += 1
+    else: # align_type == 'equal'
+        pass
+    return alignment_metrics
+
+def get_hit_from_alignment(
+        align,
+        ref,
+        hyp,
+        metric: Literal['cer', 'wer']='wer',
+        langs=['tira', 'eng', 'misc'],
+    ) -> Dict[str, int]:
+    alignment_metrics = defaultdict(lambda:0)
+    align_type = align.type
+    if align_type == 'equal':
+        for ref_idx in range(align.ref_start_idx, align.ref_end_idx):
+            ref_word = get_word_for_alignment(ref, ref_idx, metric)
+            ref_lang = get_word_language(ref_word, langs=langs)
+            alignment_metrics[f'num_{ref_lang}'] += 1
+            alignment_metrics[f'num_{ref_lang}_hyp'] += 1
+            alignment_metrics[f"{ref_lang}{'_char' if metric=='cer' else ''}_hits"] += 1
+
+    else:
+        pass
     return alignment_metrics
 
 def get_word_for_alignment(s: str, i: int, metric: Literal['cer', 'wer']='wer') -> str:
