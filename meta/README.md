@@ -1,6 +1,6 @@
 - `language_codes.json`: Dictionary mapping Whisper language names to FLEURS language codes. Only contains data for languages that overlap between Whisper and FLEURS.
 - `whisper_special_tokens.json`: Default set of functional and language tokens in Whisper
-- `tira_asr_unique_chars.json`: list containing every unique char in the Tira ASR dataset. Used in Tira dataset generation and in ASR post-processing to constrain model output to only contain Tira characters.
+- `tira_asr_unique_chars.json`: list containing every unique char in the Tira ASR dataset. Used in Tira dataset generation and in ASR post-processing to constrain modeliiA output to only contain Tira characters.
 - `multispeaker_template.etf`: ELAN template containing tiers for all speakers in Tira elicitation recordings
 - `HH20210312.eaf`: Tira bilingual test data
 - `HH20220327-2.eaf`: Tira bilingual test data
