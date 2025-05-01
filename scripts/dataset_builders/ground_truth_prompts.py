@@ -6,6 +6,8 @@ sys.path.append('scripts')
 from lid_utils import is_tira_word
 from kws import textgrid_to_df
 import pandas as pd
+from tqdm import tqdm
+from string import Template
 
 """
 Given input TextGrids, divides each TextGrid into chunks and creates a prompt for each chunk
@@ -13,6 +15,89 @@ using Tira words present. Assumes TextGrid has tiers labeled "$SPEAKER - {phones
 as per format output by Montreal Forced Aligner. Saves a `.json` file with the resulting timestamps
 and prompt sentences.
 """
+
+# ---------------- #
+# textgrid helpers #
+# ---------------- #
+
+def get_window(
+        tg_df: pd.DataFrame,
+        start: float,
+        min_end: float,
+        max_end: float,
+        prompt_template: Template,
+    ) -> Dict[str, Union[str, float]]:
+    """
+    Given a DataFrame with TextGrid intervals, a start time value, and both
+    minimum and maximum end time values, return a window whose end time falls
+    between the specified min and max times with key `prompt` containing a prompt
+    with all Tira words in the interval.
+    """
+    after_min_end_mask = tg_df['end'] > min_end
+    before_max_end_mask = tg_df['end'] < max_end
+    end_window_mask = after_min_end_mask&before_max_end_mask
+    non_tira_mask = ~tg_df['is_tira']
+
+    # window should not cut off a Tira interval
+    # if no non-Tira intervals, extend window
+    extended_window = False
+    xmax = tg_df['end'].max()
+    while len(tg_df[end_window_mask&non_tira_mask])==0 and max_end<xmax:
+        print("No Tira break found in defined window, adding 1sec")
+        max_end+=1
+        before_max_end_mask = tg_df['end'] < max_end
+        end_window_mask = after_min_end_mask&before_max_end_mask
+        extended_window=True
+    if max_end>xmax:
+        window_end=xmax
+    else:
+        window_end = tg_df.loc[end_window_mask&non_tira_mask, 'start'].iloc[0]
+    if extended_window:
+        print("New duration:", window_end-start)
+    tira_phrases = get_tira_phrases_in_interval(tg_df, start, window_end)
+    prompt = prompt_template.substitute(tira_str=", ".join(tira_phrases))
+    return {
+        'start': start,
+        'end': window_end,
+        'prompt': prompt,
+    }
+
+
+def get_tira_phrases_in_interval(tg_df: pd.DataFrame, start: float, end: float) -> List[str]:
+    """
+    Given specified start and end time value, return a list
+    of all Tira phrases in the time interval from `tg_df`.
+    """
+    start_mask = tg_df['end'] >= start
+    end_mask = tg_df['start'] <= end
+    interval_df = tg_df[start_mask&end_mask]
+    tira_phrases = []
+    for speaker in interval_df['speaker'].unique():
+        speaker_mask = interval_df['speaker']==speaker
+        speaker_text: pd.Series = interval_df[speaker_mask].sort_values('start', inplace=False)['text']
+        tira_phrase = ''
+        for word in speaker_text.values:
+            if is_tira_word(word):
+                tira_phrase += ' '+word
+            elif tira_phrase:
+                tira_phrases.append(tira_phrase)
+                tira_phrase = ''
+        # case where text ends w Tira phrase
+        if tira_phrase:
+            tira_phrases.append(tira_phrase)
+    return tira_phrases
+
+def get_tira_intervals(tg_df: pd.DataFrame) -> pd.Series:
+    """
+    Using `is_tira_word`, identify intervals belonging to
+    OR overlapping with Tira speech.
+    """
+    tira_mask=tg_df['text'].apply(is_tira_word)
+    for _, row in tg_df[tira_mask.copy()].iterrows():
+        start_mask = tg_df['end'] >= row['start']
+        end_mask = tg_df['start'] <= row['end']
+        tira_mask[start_mask&end_mask]=True
+    return tira_mask
 
 # ------ #
 # script #
@@ -28,26 +113,33 @@ def init_parser() -> ArgumentParser:
     parser.add_argument('--window_tol', '-t', type=float, default=5.0,
                         help='Tolerance for window length'
     )
+    parser.add_argument('--prompt_template', '-p', type=Template, default="Yeah $tira_str umm")
     return parser
-
-def get_window(tg_df: pd.DataFrame, start: float, min_end: float, max_end: float):
-    """
-    Given a DataFrame with TextGrid intervals,
-    """
-
-def get_tira_phrases_in_interval():
-    ...
 
 def main(argv: Optional[Sequence[str]]=None):
     parser = init_parser()
     args = parser.parse_args(argv)
     for tg_path in args.input:
         tg_df = textgrid_to_df(tg_path)
-        tg_df['is_tira']=tg_df['word'].apply(is_tira_word)
-        breakpoint()
+        tg_df['is_tira']=get_tira_intervals(tg_df)
         windows = []
-        
-
+        xmin = 0
+        xmax = tg_df['end'].max()
+        min_windowlen = args.window_len-args.window_tol
+        max_windowlen = args.window_len+args.window_tol
+        with tqdm(total=xmax//min_windowlen) as pbar:
+            while xmin<xmax:
+                pbar.update(1)
+                window = get_window(
+                    tg_df,
+                    xmin,
+                    xmin+min_windowlen,
+                    xmin+max_windowlen,
+                    prompt_template=args.prompt_template,
+                )
+                windows.append(window)
+                xmin = window['end']
+                print(xmin)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
