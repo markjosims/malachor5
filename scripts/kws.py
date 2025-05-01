@@ -334,7 +334,7 @@ def perform_kws(args):
             # split phrases into individual words
             all_words = set()
             for phrase in keyphrase_list:
-                all_words.update(*phrase.split())
+                all_words.update(phrase.split())
         keyword_list = list(all_words)
 
     audio_files = args.input
