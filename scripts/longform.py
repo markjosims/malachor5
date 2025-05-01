@@ -462,8 +462,9 @@ def asr_pipeline(args) -> int:
             pipe=pipeline,
             return_timestamps=args.return_word_timestamps,
         )
+        model_basename = os.path.basename(args.model)
         eaf=pipeout_to_eaf(asr_out, tier_name='asr')
-        eaf_path = change_file_suffix(wav_path, '.eaf', tgt_dir=args.output)
+        eaf_path = change_file_suffix(wav_path, f'-{model_basename}.eaf', tgt_dir=args.output)
         eaf.to_file(eaf_path)
         df=pipeout_to_df(
             asr_out,
@@ -472,7 +473,7 @@ def asr_pipeline(args) -> int:
             wav_source=wav_path,
             eaf_path=eaf_path,
         )
-        txt_path = change_file_suffix(wav_path, '.txt', tgt_dir=args.output)
+        txt_path = change_file_suffix(wav_path, f'-{model_basename}.txt', tgt_dir=args.output)
         with open(txt_path, 'w', encoding='utf8') as f:
             f.write(asr_out['text']) 
 
@@ -499,7 +500,8 @@ def vad_sli_asr_pipeline(args) -> int:
         )
         eaf=pipeout_to_eaf(asr_out, tier_name='asr')
         eaf=pipeout_to_eaf(asr_out, tier_name='sli_pred', chunk_key='sli_pred', eaf=eaf)
-        eaf_path = change_file_suffix(wav_path, '.eaf', tgt_dir=args.output)
+        model_basename = os.path.basename(args.model)
+        eaf_path = change_file_suffix(wav_path, f'-{model_basename}.eaf', tgt_dir=args.output)
         eaf.to_file(eaf_path)
         df=pipeout_to_df(
             asr_out,
