@@ -426,7 +426,7 @@ def evaluate_kws(
     json_obj['metrics']=[]
     if eval_window:
         json_obj['eval_window']=eval_window
-    for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword", max=len(keyword_list)):
+    for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword", total=len(keyword_list)):
         ground_truth = timestamp_hits(tg_df, keyword, timestamps)
         if ground_truth.sum()==0:
             tqdm.write(f"Keyword {keyword} not found in textgrid.")
