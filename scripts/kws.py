@@ -5,6 +5,7 @@ from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
 from hmm_utils import calculate_transition_probs, KeySimilarityMatrix
 from regression_utils import get_lr_probs_params
+from string_norm import strip_diacs
 import torch
 from argparse import ArgumentParser
 import json
@@ -201,11 +202,15 @@ def textgrid_to_df(textgrid_path):
             })
     return pd.DataFrame(rows)
 
-def is_keyword_hit(df, keyword, timestamp):
+def is_keyword_hit(df, keyword, timestamp, ignore_diacs=True):
     midpoints = (df['start']+df['end'])/2
     start_mask = midpoints>=timestamp['start_s']
     end_mask = midpoints<=timestamp['end_s']
-    keyword_mask = df['text'].isin(keyword.split())
+    if ignore_diacs:
+        keyword = strip_diacs(keyword)
+        keyword_mask = df['text'].apply(strip_diacs) == keyword
+    else:
+        keyword_mask = df['text'] == keyword
     return 1 if (start_mask & end_mask & keyword_mask).sum() > 0 else 0
 
 def get_midpoints(timestamps):
