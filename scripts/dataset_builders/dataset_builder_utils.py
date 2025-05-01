@@ -9,10 +9,31 @@ from typing import Dict, Any, Optional, List, Literal
 from collections import defaultdict
 import torchaudio
 import torch
+from datasets import Dataset, Audio, load_dataset
+from tempfile import TemporaryDirectory
+from tqdm import tqdm
+tqdm.pandas()
 
 # --------------------- #
 # audio loading helpers #
 # --------------------- #
+
+def load_clips_to_ds(
+        df: pd.DataFrame,
+        audio_dir: str,
+) -> Dataset:
+    """
+    `df` is a dataframe with columns 'audio_basename', 'start', 'end'
+    `audio_dir` is a dirpath to load long audio from, `clip_dir` is a dirpath to save
+    clips for individual records to. Converts `df` to a HuggingFace Dataset
+    and loads individual clips indicated by rows in `df` into `audio` column
+    """
+    with TemporaryDirectory() as temp_dir:
+        save_clips(df, audio_dir, temp_dir)
+        df.to_csv(os.path.join(temp_dir, 'clips.csv'), index=False)
+        ds = load_dataset("audiofolder", data_dir=temp_dir)
+        ds = ds.cast_column("audio", Audio(sampling_rate=SAMPLE_RATE))
+    return ds
 
 def save_clips(
         df: pd.DataFrame,
@@ -28,18 +49,19 @@ def save_clips(
     for compatability with HuggingFace audio folder datasets).
     """
     df['file_name'] = ''
-    for audio_basename in df['audio_basename'].unique():
+    for audio_basename in tqdm(df['audio_basename'].unique()):
         audio_mask = df['audio_basename'] == audio_basename
         audio_path = os.path.join(audio_dir, audio_basename)
         wav = load_and_resample(audio_path)
-        df.loc[audio_mask, 'file_name'] = df.loc[audio_mask].apply(
-            lambda row: save_clip(wav, row, clip_dir)
+        df.loc[audio_mask, 'file_name'] = df.loc[audio_mask].progress_apply(
+            lambda row: save_clip(wav, row, clip_dir),
+            axis=1,
         )
     return df
 
 def save_clip(wav: torch.Tensor, row: Dict[str, Any], clip_dir: str):
     """
-    Calls `get_clip` then saves resulting wav to a 
+    Calls `get_clip` then saves resulting wav to disk in `clip_dir` using row index as a basename. 
     """
     start_ms = row['start']
     end_ms = row['end']
@@ -49,7 +71,7 @@ def save_clip(wav: torch.Tensor, row: Dict[str, Any], clip_dir: str):
     i = row.name
     clip_basename = f'{basename}_{i}.wav'
     clip_path = os.path.join(clip_dir, clip_basename)
-    torchaudio.save(clip_path, clip)
+    torchaudio.save(clip_path, clip, SAMPLE_RATE)
     return clip_path
 
 

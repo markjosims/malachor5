@@ -3,7 +3,7 @@ from tira_elan_scraper import LIST_PATH
 import os
 import pandas as pd
 from string import Template
-from dataset_builder_utils import get_readable_duration
+from dataset_builder_utils import get_readable_duration, load_clips_to_ds
 import json
 
 import sys
@@ -137,8 +137,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     df['text']=df['text'].apply(normalize_ipa)
 
     print("Checking only expected chars are found in dataset...")
-    unique_chars_path = os.path.join('meta', 'tira_asr_unique_chars.json')
-    with open(unique_chars_path, encoding='utf8') as f:
+    expected_chars_basename = 'tira_asr_unique_chars.json'
+    expected_chars_path = os.path.join('meta', expected_chars_basename)
+    with open(expected_chars_path, encoding='utf8') as f:
         expected_ipa_chars = json.load(f)
     unexpected_chars = set()
     def find_unexpected_chars(sentence):
@@ -148,11 +149,17 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
                 unexpected_chars.add(c)
                 found_unexpected_char=True
         return found_unexpected_char
-    expected_char_str = f"- "
 
     unexpected_chars_mask = df['text'].apply(find_unexpected_chars)
     if (unexpected_chars_mask).sum()>0:
         raise ValueError("Found unexpected chars after normalizing IPA. Inspect 'text' col in dataframe.")
+    expected_char_str = "- Checked that only expected IPA chars are found in dataset, "+\
+        f"as defined by JSON file {expected_chars_basename}"
+    print(expected_char_str)
+    PREPROCESSING_STEPS.append(expected_char_str)
+
+    print("Loading audio files into HuggingFace dataset...")
+    ds = load_clips_to_ds(df, AUDIO_DIR)
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
