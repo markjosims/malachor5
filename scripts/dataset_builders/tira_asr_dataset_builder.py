@@ -47,6 +47,13 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     print(nan_str)
     PREPROCESSING_STEPS.append(nan_str)
 
+    # drop ungrammatical rows
+    ungrammatical_mask = df['text'].str.contains('*', regex=False)
+    df = df[~ungrammatical_mask]
+    ungrammatical_str = f"- removed {int(ungrammatical_mask.sum())} ungrammatical rows, {len(df)} rows remaining, {get_df_duration()}"
+    print(ungrammatical_str)
+    PREPROCESSING_STEPS.append(ungrammatical_str)
+
     # basic string normalization
     print("String normalization...")
     df["text"] = df["text"].apply(unicode_normalize)
