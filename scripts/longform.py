@@ -458,9 +458,13 @@ def asr_pipeline(args) -> int:
     pipeline = load_whisper_pipeline(args)
     wav_paths = glob(os.path.join(args.input, '*.wav'))
     for wav_path in tqdm(wav_paths, desc='Annotating wavs'):
+        tqdm.write(f"Processing {wav_path}")
+        wav = load_and_resample(wav_path)
         asr_out = perform_asr(
+            audio=wav,
             pipe=pipeline,
             return_timestamps=args.return_word_timestamps,
+            args=args,
         )
         model_basename = os.path.basename(args.model)
         eaf=pipeout_to_eaf(asr_out, tier_name='asr')
