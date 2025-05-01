@@ -17,6 +17,11 @@ These metadata strs will be aggregated into a `README.md` file in the dataset di
 Scripts should also output `metadata.yaml` in the output directory containing metrics such as the number of records and duration in time by split, language and, if applicable, speaker.
 
 # dataset builder scripts
+
+## ground_truth_prompts.py
+Given input TextGrids, divides each TextGrid into chunks and creates a prompt for each chunk using Tira words present.
+Saves a `.json` file with the resulting timestamps and prompt sentences.
+
 ## tira_asr_dataset_builder.py
 Loads list stored at `meta/tira_elan_raw.csv` and generates an ASR dataset of monolingual Tira using (relatively) clean IPA transcriptions.
 
