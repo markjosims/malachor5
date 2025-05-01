@@ -423,6 +423,9 @@ def evaluate_kws(
         json_obj['eval_window']=eval_window
     for i, keyword in tqdm(enumerate(keyword_list), desc="Calculating EER per keyword"):
         ground_truth = timestamp_hits(tg_df, keyword, timestamps)
+        if ground_truth.sum()==0:
+            tqdm.write(f"Keyword {keyword} not found in textgrid.")
+            continue
         
         kw_probs = sim_mat[:,i]
         eer_dict = get_eer_dict(ground_truth, kw_probs, oov_probs)
