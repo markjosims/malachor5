@@ -440,12 +440,11 @@ def evaluate_kws(
             eval_windows = get_chunks_w_silent_edges(tg_df, chunklen_s=eval_window)
             sim_mat_windowed = get_windowed_probs(sim_mat, eval_windows)
             oov_probs_windowed = get_windowed_probs(oov_probs, eval_windows)
-            for i, keyword in enumerate(tqdm(keyword_list)):
-                kw_probs_windowed = sim_mat_windowed[:,i]
-                ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
-                eer_windowed = get_eer_dict(ground_truth_windowed, kw_probs_windowed, oov_probs_windowed)
-                for k, v in eer_windowed.items():
-                    eer_dict[k+'_windowed']=v
+            kw_probs_windowed = sim_mat_windowed[:,i]
+            ground_truth_windowed = timestamp_hits(tg_df, keyword, eval_windows)
+            eer_windowed = get_eer_dict(ground_truth_windowed, kw_probs_windowed, oov_probs_windowed)
+            for k, v in eer_windowed.items():
+                eer_dict[k+'_windowed']=v
     return json_obj
 
 def get_eer_dict(ground_truth, kw_probs, oov_probs):
