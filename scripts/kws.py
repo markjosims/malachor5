@@ -365,7 +365,7 @@ def perform_kws(args):
             sim_mat_tensors.append(batch_sim_mat)
         sim_mat = torch.cat(sim_mat_tensors).cpu()
 
-        # get oo
+        # get oov probs
         if args.oov_type == 'inverse_kwd_prob':
             max_keyword_probs = sim_mat.max(dim=1).values
             oov_probs = 1-max_keyword_probs
