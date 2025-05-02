@@ -368,8 +368,11 @@ def perform_kws(args):
 
         print("Calculating keyword probabilities...")
         sim_mat_tensors = []
+        speech_embeds = []
         for batch in dataloader(audio_frames, batch_size=args.batch_size):
             batch_speech_embeds = embed_speech(batch, speech_encoder)
+            if args.oov_type in ['avg_speech_prob', 'avg_speech_prob_weighted']:
+                speech_embeds.append(batch_speech_embeds)
             batch_sim_mat = get_keyword_sim(
                 audio_list=batch,
                 text_list=keyword_list,
@@ -384,6 +387,24 @@ def perform_kws(args):
         if args.oov_type == 'inverse_kwd_prob':
             max_keyword_probs = sim_mat.max(dim=1).values
             oov_probs = 1-max_keyword_probs
+        elif args.oov_type == 'avg_speech_prob':
+            speech_embeds = torch.cat(speech_embeds)
+            avg_speech_embed = speech_embeds.mean(dim=0)
+            sim_to_avg = get_similarity_matrix(
+                row_embeds=avg_speech_embed.unsqueeze(0),
+                col_embeds=speech_embeds,
+            ).squeeze()
+            oov_probs = sim_to_avg
+        elif args.oov_type == 'avg_speech_prob_weighted':
+            speech_embeds = torch.cat(speech_embeds)
+            max_keyword_probs = sim_mat.max(dim=1).values
+            weighted_embeds = speech_embeds * (1-max_keyword_probs)
+            avg_speech_embed_weighted = weighted_embeds.mean(dim=0)
+            sim_to_avg_weighted = get_similarity_matrix(
+                row_embeds=avg_speech_embed_weighted.unsqueeze(0),
+                col_embeds=speech_embeds,
+            ).squeeze()
+            oov_probs = sim_to_avg_weighted
         else:
             raise NotImplementedError(f"{args.oov_type} not implemented yet")
         
