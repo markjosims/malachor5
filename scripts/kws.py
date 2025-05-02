@@ -282,8 +282,8 @@ def init_kws_parser():
         help="Strategy for representing probability of non-keyword speech",
         default='inverse_kwd_prob',
     )
-    parser.add_argument('--framelength_s', default=2)
-    parser.add_argument('--frameshift_s', default=0.5)
+    parser.add_argument('--framelength_s', default=2, type=float)
+    parser.add_argument('--frameshift_s', default=0.5, type=float)
     parser.add_argument('--sample_rate', default=SAMPLE_RATE)
     parser.add_argument('--encoder_size', default='tiny')
     parser.add_argument('--speech_encoder')
