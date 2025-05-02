@@ -427,6 +427,10 @@ def init_parser() -> ArgumentParser:
         nargs='+',
     )
     parser.add_argument(
+        "--num_beams",
+        type=int,
+    )
+    parser.add_argument(
         "-r",
         "--recursive",
         action="store_true",
@@ -466,6 +470,8 @@ def asr_pipeline(args) -> int:
             tokenizer = WhisperTokenizer.from_pretrained(args.model)
             forced_decoder_ids = get_forced_decoder_ids(tokenizer, args.language)
             generate_kwargs['forced_decoder_ids'] = forced_decoder_ids
+        if args.num_beams:
+            generate_kwargs['num_beams']=args.num_beams
         asr_out = perform_asr(
             audio=wav,
             pipe=pipeline,
