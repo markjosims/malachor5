@@ -101,9 +101,9 @@ def get_keyword_sim(
     and return similarity matrix where each row is a speech embeddings
     and each column a text embedding, as well as the speech and text embeddings.
     """
-    if not speech_embeds:
+    if speech_embeds is None:
         speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
-    if not text_embeds:
+    if text_embeds is None:
         text_embeds = embed_text(text_list, phone_encoder, encoder_size)
 
     sim_mat = get_similarity_matrix(row_embeds=speech_embeds, col_embeds=text_embeds)
