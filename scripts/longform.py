@@ -418,12 +418,13 @@ def init_parser() -> ArgumentParser:
         default=30,
     )
     parser.add_argument(
-        "-w",
-        "--return_word_timestamps",
-        action='store_true',
-        help="Whisper by default chunks speech more or less into utterances. "\
-        +"Use this option to chunk by word, which may give more precise time accuracy "\
-        "When detecting speaker changes."
+        "--return_timestamps",
+        choices=[1, "word", "character"],
+    )
+    parser.add_argument(
+        "---language",
+        "-l",
+        nargs='+',
     )
     parser.add_argument(
         "-r",
@@ -460,23 +461,30 @@ def asr_pipeline(args) -> int:
     for wav_path in tqdm(wav_paths, desc='Annotating wavs'):
         tqdm.write(f"Processing {wav_path}")
         wav = load_and_resample(wav_path)
+        generate_kwargs = {}
+        if args.language:
+            tokenizer = WhisperTokenizer.from_pretrained(args.model)
+            forced_decoder_ids = get_forced_decoder_ids(tokenizer, args.language)
+            generate_kwargs['forced_decoder_ids'] = forced_decoder_ids
         asr_out = perform_asr(
             audio=wav,
             pipe=pipeline,
-            return_timestamps=args.return_word_timestamps,
+            return_timestamps=args.return_timestamps,
+            generate_kwargs=generate_kwargs,
             args=args,
         )
         model_basename = os.path.basename(args.model)
-        eaf=pipeout_to_eaf(asr_out, tier_name='asr')
-        eaf_path = change_file_suffix(wav_path, f'-{model_basename}.eaf', tgt_dir=args.output)
-        eaf.to_file(eaf_path)
-        df=pipeout_to_df(
-            asr_out,
-            tier_name='asr',
-            df=df,
-            wav_source=wav_path,
-            eaf_path=eaf_path,
-        )
+        if args.return_timestamps:
+            eaf=pipeout_to_eaf(asr_out, tier_name='asr')
+            eaf_path = change_file_suffix(wav_path, f'-{model_basename}.eaf', tgt_dir=args.output)
+            eaf.to_file(eaf_path)
+            df=pipeout_to_df(
+                asr_out,
+                tier_name='asr',
+                df=df,
+                wav_source=wav_path,
+                eaf_path=eaf_path,
+            )
         txt_path = change_file_suffix(wav_path, f'-{model_basename}.txt', tgt_dir=args.output)
         with open(txt_path, 'w', encoding='utf8') as f:
             f.write(asr_out['text']) 
@@ -499,7 +507,7 @@ def vad_sli_asr_pipeline(args) -> int:
         asr_out = perform_asr(
             sli_chunks,
             pipe=asr_pipelines,
-            return_timestamps=args.return_word_timestamps,
+            return_timestamps=args.return_timestamps,
             sli_map=args.sli_map,
         )
         eaf=pipeout_to_eaf(asr_out, tier_name='asr')
