@@ -78,7 +78,7 @@ def perform_asr(
             for chunk in audio:
                 chunk['wav']=chunk['wav'][0,:].numpy()
         audio = [chunk['wav'] for chunk in audio]
-    pipe_kwargs = prepare_pipe_kwargs(kwargs, model_family)
+    pipe_kwargs = prepare_pipe_kwargs(args, kwargs, model_family)
     result = pipe(
         audio,
         **pipe_kwargs,
@@ -87,12 +87,14 @@ def perform_asr(
         result = fix_chunk_timestamps(result, audio)   
     return result
 
-def prepare_pipe_kwargs(pipe_kwargs, model_family):
+def prepare_pipe_kwargs(args, pipe_kwargs, model_family):
     if model_family == 'wav2vec2':
         if pipe_kwargs.get('return_timestamps', None) is True:
             tqdm.write("`return_timestamps` must be 'word' or 'char' for CTC, not `True`. Setting to 'word'")
             pipe_kwargs['return_timestamps']='word'
         pipe_kwargs.pop('generate_kwargs', None)
+    if hasattr(args, 'chunk_length_s'):
+        pipe_kwargs['chunk_length_s']=args.chunk_length_s
     return pipe_kwargs
 
 
