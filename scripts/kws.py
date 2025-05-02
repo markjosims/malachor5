@@ -93,7 +93,7 @@ def get_keyword_sim(
         speech_encoder=None,
         phone_encoder=None,
         encoder_size='tiny',
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  
+) -> torch.Tensor:  
     """
     Given `audio_list`, a list of audio chunks or audio filepath strs,
     calculate speech embeddings with CLAP-IPA,
@@ -107,7 +107,7 @@ def get_keyword_sim(
         text_embeds = embed_text(text_list, phone_encoder, encoder_size)
 
     sim_mat = get_similarity_matrix(row_embeds=speech_embeds, col_embeds=text_embeds)
-    return sim_mat, speech_embeds, text_embeds
+    return sim_mat
 
 def get_similarity_matrix(row_embeds: torch.Tensor, col_embeds: torch.Tensor) -> torch.Tensor:
     """
