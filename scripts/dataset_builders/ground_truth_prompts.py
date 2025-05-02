@@ -41,25 +41,27 @@ def get_window(
     tira_end_mask = tg_df['tira_phrase_edge']==-1
 
     # window should not cut off a Tira interval
-    # if no non-Tira intervals, extend window
+    # if no non-Tira intervals, extend window up to 29s
     extended_window = False
     xmax = tg_df['end'].max()
     while (len(tg_df[end_window_mask&non_tira_mask])==0) and\
         (len(tg_df[end_window_mask&tira_end_mask])==0) and\
-        max_end<xmax:
-        tqdm.write("No Tira break found in defined window, adding 1sec")
+        (max_end<xmax) and\
+        ((max_end-start)<29):
         max_end+=1
         before_max_end_mask = tg_df['end'] < max_end
         end_window_mask = after_min_end_mask&before_max_end_mask
         extended_window=True
     if max_end>xmax:
         window_end=xmax
-    elif (len(tg_df[end_window_mask&non_tira_mask])==0):
+    elif (len(tg_df[end_window_mask&non_tira_mask])>0):
         window_end = tg_df.loc[end_window_mask&non_tira_mask, 'start'].iloc[0]
-    elif (len(tg_df[end_window_mask&tira_end_mask])==0):
+    elif len(tg_df[end_window_mask&tira_end_mask])>0:
         window_end = tg_df.loc[end_window_mask&tira_end_mask, 'start'].iloc[0]
+    else: # max_end-start>=29sec
+        window_end=max_end
     if extended_window:
-        tqdm.write(f"New duration:, {window_end-start}")
+        tqdm.write(f"Extended window past max, new duration:, {window_end-start}")
     tira_phrases = get_tira_phrases_in_interval(tg_df, start, window_end)
     prompt = prompt_template.substitute(tira_str=", ".join(tira_phrases))
     return {
@@ -104,7 +106,7 @@ def get_tira_intervals(tg_df: pd.DataFrame) -> pd.Series:
     tg_df['tira_phrase_edge']=0
     for speaker in tg_df['speaker'].unique():
         speaker_mask = tg_df['speaker']==speaker
-        tira_phrase_edges = np.diff(tg_df.loc[speaker_mask, 'is_tira'].to_numpy(dtype=int))
+        tira_phrase_edges = np.diff(tira_mask[speaker_mask].to_numpy(dtype=int))
         if tira_mask.iloc[0]:
             tira_phrase_edges = np.insert(tira_phrase_edges, 0, 1)
         else:
