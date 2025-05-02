@@ -479,10 +479,12 @@ def asr_pipeline(args) -> int:
             generate_kwargs=generate_kwargs,
             args=args,
         )
-        model_basename = os.path.basename(args.model)
+        output_suffix = os.path.basename(args.model)
+        for genkwarg, value in generate_kwargs.items():
+            output_suffix+=f"{genkwarg}-{value}"
         if args.return_timestamps:
             eaf=pipeout_to_eaf(asr_out, tier_name='asr')
-            eaf_path = change_file_suffix(wav_path, f'-{model_basename}.eaf', tgt_dir=args.output)
+            eaf_path = change_file_suffix(wav_path, f'-{output_suffix}.eaf', tgt_dir=args.output)
             eaf.to_file(eaf_path)
             df=pipeout_to_df(
                 asr_out,
