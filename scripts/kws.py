@@ -398,7 +398,7 @@ def perform_kws(args):
         elif args.oov_type == 'avg_speech_prob_weighted':
             speech_embeds = torch.cat(speech_embeds)
             max_keyword_probs = sim_mat.max(dim=1).values
-            weighted_embeds = speech_embeds * (1-max_keyword_probs)
+            weighted_embeds = speech_embeds * (1-max_keyword_probs).unsqueeze(1)
             avg_speech_embed_weighted = weighted_embeds.mean(dim=0)
             sim_to_avg_weighted = get_similarity_matrix(
                 row_embeds=avg_speech_embed_weighted.unsqueeze(0),
