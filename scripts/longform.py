@@ -495,7 +495,7 @@ def asr_pipeline(args) -> int:
                 wav_source=wav_path,
                 eaf_path=eaf_path,
             )
-        txt_path = change_file_suffix(wav_path, f'-{model_basename}.txt', tgt_dir=args.output)
+        txt_path = change_file_suffix(wav_path, f'-{output_suffix}.txt', tgt_dir=args.output)
         with open(txt_path, 'w', encoding='utf8') as f:
             f.write(asr_out['text']) 
 
