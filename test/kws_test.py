@@ -261,7 +261,7 @@ def test_kws_eval(tmpdir):
                 assert prefix+'eer_threshold'+suffix in eer_dict
                 assert type(eer_dict[prefix+'eer_threshold'+suffix]) is float
 
-def test_kws_eval_avg_speech_prob_weighted(tmpdir):
+def test_kws_eval_avg_speech_prob(tmpdir):
     parser = init_kws_parser()
     args=parser.parse_args([])
     args.input = [SAMPLE_BILING_PATH]
