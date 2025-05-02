@@ -87,23 +87,27 @@ def embed_text(
 
 def get_keyword_sim(
         audio_list: Union[List[str], List[torch.Tensor]],
-        text_list: List[str],
+        text_list: Optional[List[str]]=None,
+        speech_embeds: Optional[torch.Tensor]=None,
+        text_embeds: Optional[torch.Tensor]=None,
         speech_encoder=None,
         phone_encoder=None,
         encoder_size='tiny',
-):  
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  
     """
     Given `audio_list`, a list of audio chunks or audio filepath strs,
     calculate speech embeddings with CLAP-IPA,
     calculate phone embeddings with CLAP_IPA for each str in `text_list`
     and return similarity matrix where each row is a speech embeddings
-    and each column a text embedding.
+    and each column a text embedding, as well as the speech and text embeddings.
     """
-    speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
-    text_embeds = embed_text(text_list, phone_encoder, encoder_size)
+    if not speech_embeds:
+        speech_embeds = embed_speech(audio_list, speech_encoder, encoder_size)
+    if not text_embeds:
+        text_embeds = embed_text(text_list, phone_encoder, encoder_size)
 
     sim_mat = get_similarity_matrix(row_embeds=speech_embeds, col_embeds=text_embeds)
-    return sim_mat
+    return sim_mat, speech_embeds, text_embeds
 
 def get_similarity_matrix(row_embeds: torch.Tensor, col_embeds: torch.Tensor) -> torch.Tensor:
     """
@@ -340,6 +344,16 @@ def perform_kws(args):
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
 
+    speech_encoder = getattr(args, 'speech_encoder', f'anyspeech/clap-ipa-{args.encoder_size}-speech')
+    speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
+    speech_encoder.eval().to(DEVICE)
+
+    phone_encoder = getattr(args, 'phone_encoder', f'anyspeech/clap-ipa-{args.encoder_size}-phone')
+    phone_encoder = PhoneEncoder.from_pretrained(phone_encoder)
+    phone_encoder.eval().to(DEVICE)
+
+    text_embeds = embed_text(keyword_list, args.phone_encoder, args.encoder_size)
+
     # do KWS on each audio file
     for audio, textgrid in zip(audio_files, textgrids):
         wav = load_and_resample(audio).squeeze()
@@ -355,13 +369,14 @@ def perform_kws(args):
         print("Calculating keyword probabilities...")
         sim_mat_tensors = []
         for batch in dataloader(audio_frames, batch_size=args.batch_size):
+            batch_speech_embeds = embed_speech(batch, speech_encoder)
             batch_sim_mat = get_keyword_sim(
                 audio_list=batch,
                 text_list=keyword_list,
-                speech_encoder=args.speech_encoder,
-                phone_encoder=args.phone_encoder,
-                encoder_size=args.encoder_size,
+                speech_embeds=batch_speech_embeds,
+                text_embeds=text_embeds,
             )
+
             sim_mat_tensors.append(batch_sim_mat)
         sim_mat = torch.cat(sim_mat_tensors).cpu()
 
