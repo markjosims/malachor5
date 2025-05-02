@@ -44,6 +44,8 @@ def get_forced_decoder_ids(tokenizer, language=None, ids_only=False):
         )
     forced_decoder_ids=list(forced_decoder_ids)
     forced_decoder_ids.sort(key=lambda t:t[0])
+    # reset token idcs in case of duplicates
+    forced_decoder_ids = [(i, t[1]) for i, t in enumerate(forced_decoder_ids)]
     if ids_only:
         forced_decoder_ids=[t[1] for t in forced_decoder_ids]
     return forced_decoder_ids
