@@ -344,11 +344,11 @@ def perform_kws(args):
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
 
-    speech_encoder = getattr(args, 'speech_encoder', f'anyspeech/clap-ipa-{args.encoder_size}-speech')
+    speech_encoder = args.speech_encoder or f'anyspeech/clap-ipa-{args.encoder_size}-speech'
     speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
     speech_encoder.eval().to(DEVICE)
 
-    phone_encoder = getattr(args, 'phone_encoder', f'anyspeech/clap-ipa-{args.encoder_size}-phone')
+    phone_encoder = args.phone_encoder or f'anyspeech/clap-ipa-{args.encoder_size}-phone'
     phone_encoder = PhoneEncoder.from_pretrained(phone_encoder)
     phone_encoder.eval().to(DEVICE)
 
