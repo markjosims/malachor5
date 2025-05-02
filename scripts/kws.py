@@ -363,7 +363,7 @@ def perform_kws(args):
                 encoder_size=args.encoder_size,
             )
             sim_mat_tensors.append(batch_sim_mat)
-        sim_mat = torch.cat(sim_mat_tensors)
+        sim_mat = torch.cat(sim_mat_tensors).cpu()
 
         # get oo
         if args.oov_type == 'inverse_kwd_prob':
