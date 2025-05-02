@@ -527,6 +527,7 @@ numexpr==2.10.2
     # via lm-eval
 numpy==1.26.4
     # via
+    #   -r requirements.in
     #   accelerate
     #   apricot-select
     #   asteroid-filterbanks

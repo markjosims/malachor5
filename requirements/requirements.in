@@ -21,3 +21,4 @@ tbparse
 pomegranate
 wordfreq
 nltk
+numpy<2.2
