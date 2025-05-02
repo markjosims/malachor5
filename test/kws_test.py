@@ -260,3 +260,63 @@ def test_kws_eval(tmpdir):
                 assert type(eer_dict[prefix+'eer'+suffix]) is float
                 assert prefix+'eer_threshold'+suffix in eer_dict
                 assert type(eer_dict[prefix+'eer_threshold'+suffix]) is float
+
+def test_kws_eval_avg_speech_prob_weighted(tmpdir):
+    parser = init_kws_parser()
+    args=parser.parse_args([])
+    args.input = [SAMPLE_BILING_PATH]
+    args.textgrid = [SAMPLE_BILING_TG_PATH]
+    args.output_dir=tmpdir
+    args.keywords = [ZAVELEZE_IPA, NGINE_IPA]
+    args.eval_window=10.0
+    args.oov_type = 'avg_speech_prob'
+    perform_kws(args)
+
+    wav_basename = os.path.basename(SAMPLE_BILING_PATH)
+    wav_path = os.path.join(tmpdir, wav_basename)
+    json_path = wav_path.replace('.wav', '.json')
+    with open(json_path, encoding='utf8') as f:
+        json_obj = json.load(f)
+    assert 'metrics' in json_obj
+    assert type(json_obj['metrics']) is list
+    for eer_dict in json_obj['metrics']:
+        assert 'keyword' in eer_dict
+        assert eer_dict['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
+        for suffix in ['', '_windowed']:
+            assert 'lr_params'+suffix in eer_dict
+            assert type(eer_dict['lr_params'+suffix]) is dict
+            for prefix in ['', 'lr_']:
+                assert prefix+'eer'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer'+suffix]) is float
+                assert prefix+'eer_threshold'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer_threshold'+suffix]) is float
+
+def test_kws_eval_avg_speech_prob_weighted(tmpdir):
+    parser = init_kws_parser()
+    args=parser.parse_args([])
+    args.input = [SAMPLE_BILING_PATH]
+    args.textgrid = [SAMPLE_BILING_TG_PATH]
+    args.output_dir=tmpdir
+    args.keywords = [ZAVELEZE_IPA, NGINE_IPA]
+    args.eval_window=10.0
+    args.oov_type = 'avg_speech_prob_weighted'
+    perform_kws(args)
+
+    wav_basename = os.path.basename(SAMPLE_BILING_PATH)
+    wav_path = os.path.join(tmpdir, wav_basename)
+    json_path = wav_path.replace('.wav', '.json')
+    with open(json_path, encoding='utf8') as f:
+        json_obj = json.load(f)
+    assert 'metrics' in json_obj
+    assert type(json_obj['metrics']) is list
+    for eer_dict in json_obj['metrics']:
+        assert 'keyword' in eer_dict
+        assert eer_dict['keyword'] in [ZAVELEZE_IPA, NGINE_IPA]
+        for suffix in ['', '_windowed']:
+            assert 'lr_params'+suffix in eer_dict
+            assert type(eer_dict['lr_params'+suffix]) is dict
+            for prefix in ['', 'lr_']:
+                assert prefix+'eer'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer'+suffix]) is float
+                assert prefix+'eer_threshold'+suffix in eer_dict
+                assert type(eer_dict[prefix+'eer_threshold'+suffix]) is float
