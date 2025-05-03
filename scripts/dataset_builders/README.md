@@ -32,3 +32,7 @@ Reads .eaf files from `TIRA_RECORDINGS_GDRIVE` and makes a list stored in `meta/
 Reads .eaf files stored in `meta/` folder and generates `.txt` files with transcriptions.
 For each reacording outputs `$RECORDING.txt` and `$RECORDING-no-overlap.txt`, where all overlapped segments are removed using following criterion:
 - If two segments overlap, delete shorter segment IF overlap portion >=50% of shorter segment duration.
+
+## tira_morph_dataset_builder.py
+Loads list stored at `meta/tira_elan_raw.csv` and generates a text dataset for morphological analysis using IPA transcriptions
+with same preprocessing steps used by `tira_asr_dataset_builder.py`.

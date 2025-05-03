@@ -1,9 +1,9 @@
-from typing import Sequence, Optional
+from typing import *
 from tira_elan_scraper import LIST_PATH
 import os
 import pandas as pd
 from string import Template
-from dataset_builder_utils import get_readable_duration, load_clips_to_ds
+from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration
 import json
 
 import sys
@@ -29,10 +29,7 @@ averaging $mean_duration.
 )
 PREPROCESSING_STEPS = []
 
-def main(argv: Optional[Sequence[str]]=None) -> int:
-    df = pd.read_csv(LIST_PATH)
-    print(len(df))
-    
+def perform_textnorm(df: pd.DataFrame, preproc_steps: List[str]) -> Tuple[pd.DataFrame, List[str]]:
     # only interested in 'IPA Transcription', no other tiers
     print("Dropping non-transcription annotations...")
     ipa_mask = df['tier'] == 'IPA Transcription'
@@ -42,17 +39,17 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     # drop na rows
     df=df.dropna()
-    get_df_duration = lambda: get_readable_duration(df['duration'].sum())
-    nan_str = f"- {len(df)} non-NaN transcriptions in dataset, {get_df_duration()}"
+    nan_str = f"- {len(df)} non-NaN transcriptions in dataset, {get_df_duration(df)}"
     print(nan_str)
-    PREPROCESSING_STEPS.append(nan_str)
+    preproc_steps.append(nan_str)
 
     # drop ungrammatical rows
     ungrammatical_mask = df['text'].str.contains('*', regex=False)
     df = df[~ungrammatical_mask]
-    ungrammatical_str = f"- removed {int(ungrammatical_mask.sum())} ungrammatical rows, {len(df)} rows remaining, {get_df_duration()}"
+    ungrammatical_str = f"- removed {int(ungrammatical_mask.sum())} ungrammatical rows, "+\
+        f"{len(df)} rows remaining, {get_df_duration(df)}"
     print(ungrammatical_str)
-    PREPROCESSING_STEPS.append(ungrammatical_str)
+    preproc_steps.append(ungrammatical_str)
 
     # basic string normalization
     print("String normalization...")
@@ -61,7 +58,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     df["text"] = df["text"].apply(remove_punct)
     nfkd_str = f"- applied NFKD unicode normalization to text, set to lowercase and removed punctuation"
     print(nfkd_str)
-    PREPROCESSING_STEPS.append(nfkd_str)
+    preproc_steps.append(nfkd_str)
 
     # skip all toneless entries
     print("Dropping rows with no tone diacritics")
@@ -69,9 +66,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     prev_len = len(df)
     df = df[has_tone_mask]
     toneless_row_num = prev_len-len(df)
-    toneless_str = f"- removed {toneless_row_num} rows with no tone marked, {len(df)} rows remaining, {get_df_duration()}"
+    toneless_str = f"- removed {toneless_row_num} rows with no tone marked, {len(df)} rows remaining, {get_df_duration(df)}"
     print(toneless_str)
-    PREPROCESSING_STEPS.append(toneless_str)
+    preproc_steps.append(toneless_str)
 
 
     # remove all rows with English words
@@ -101,13 +98,13 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     prev_len = len(df)
     df = df[~has_en_mask]
     en_row_num = prev_len-len(df)
-    no_en_str = f"- removed {en_row_num} rows with English words, {len(df)} rows remaining, {get_df_duration()}"
+    no_en_str = f"- removed {en_row_num} rows with English words, {len(df)} rows remaining, {get_df_duration(df)}"
     unique_words_str = "- saved all detected English words to $TIRA_ASR_CLIPS/english_words"+\
         "and Tira words to $TIRA_ASR_CLIPS/tira_words.txt"
     print(no_en_str)
     print(unique_words_str)
-    PREPROCESSING_STEPS.append(no_en_str)
-    PREPROCESSING_STEPS.append(unique_words_str)
+    preproc_steps.append(no_en_str)
+    preproc_steps.append(unique_words_str)
 
     # remove tone words (e.g. HLL, LHL,...)
     print("Removing tone words from transcriptions...")
@@ -118,7 +115,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     df['text'] = df['text'].apply(remove_tone_word)
     remove_tone_word_str = f"- removed tone words (e.g. HLL, LHL, LLHH) from transcription, {int(has_tone_word_mask.sum())} rows affected"
     print(remove_tone_word_str)
-    PREPROCESSING_STEPS.append(remove_tone_word_str)
+    preproc_steps.append(remove_tone_word_str)
 
     # normalize IPA charset
     print("Normalizing IPA character set...")
@@ -163,15 +160,23 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     expected_char_str = "- Checked that only expected IPA chars are found in dataset, "+\
         f"as defined by JSON file {expected_chars_basename}"
     print(expected_char_str)
-    PREPROCESSING_STEPS.append(expected_char_str)
+    preproc_steps.append(expected_char_str)
+
+    return df, preproc_steps
+
+def main() -> int:
+    df = pd.read_csv(LIST_PATH)
+    print(len(df))
+    
+    df, _ = perform_textnorm(df, PREPROCESSING_STEPS)
 
     print("Loading audio files into HuggingFace dataset...")
-    ds = load_clips_to_ds(df, AUDIO_DIR)
+    hf_ds = load_clips_to_ds(df, AUDIO_DIR)
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
-        duration=get_df_duration(),
-        mean_duration=get_readable_duration(df['duration'].mean()),
+        duration=get_df_duration(df),
+        mean_duration=get_df_duration(df, agg='mean'),
     )
     readme_out = os.path.join(TIRA_ASR_CLIPS_DIR, 'README.md')
     with open(readme_out, 'w', encoding='utf8') as f:
