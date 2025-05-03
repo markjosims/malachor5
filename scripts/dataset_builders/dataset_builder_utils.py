@@ -131,3 +131,7 @@ def get_readable_duration(duration, time_unit: Literal['s', 'ms']='ms') -> str:
     remain_m = int(total_m%60)
     return f"{total_h} hr {remain_m:02d} min {remain_s:02d} sec"
     
+def get_df_duration(df, time_unit: Literal['s', 'ms']='ms', agg: Literal['sum', 'mean']='sum') -> str:
+    if agg=='mean':
+        return get_readable_duration(df['duration'].mean(), time_unit=time_unit)
+    return get_readable_duration(df['duration'].sum(), time_unit=time_unit)
