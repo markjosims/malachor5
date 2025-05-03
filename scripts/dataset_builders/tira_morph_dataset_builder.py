@@ -35,6 +35,9 @@ def main() -> int:
     df["text"].str.split().apply(all_words.extend)
     unique_words = set(all_words)
 
+    # drop audio-related cols
+    df=df.drop(["audio_basename", "start", "end", "duration"], axis=1)
+
     num_words = len(all_words)
     num_word_unique = len(unique_words)
 
