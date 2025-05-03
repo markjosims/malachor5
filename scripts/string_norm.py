@@ -1,4 +1,4 @@
-from typing import Dict, Sequence, Any, Literal, List, Tuple, Callable, Optional
+from typing import *
 from string import punctuation
 import unicodedata
 import json
@@ -185,8 +185,10 @@ def make_replacements(text: str, reps: Dict[str, str]) -> str:
         text = text.replace(sentinel, outtab)
     return text
 
-def remove_punct(text: str) -> str:
+def remove_punct(text: str, keep: Optional[Union[str, Sequence[str]]] = None) -> str:
     for p in punctuation:
+        if keep and p in keep:
+            continue
         text = text.replace(p, '')
     return text
 
