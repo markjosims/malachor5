@@ -144,7 +144,7 @@ def perform_vad(
     annotations['vad_chunks'] = vad_chunks
     return annotations
 
-def load_vad_pipeline(vad_uri, min_duration_on, min_duration_off):
+def load_vad_pipeline(vad_uri=VAD_URI, min_duration_on=0.0, min_duration_off=0.0):
     pipe = VoiceActivityDetection(segmentation=vad_uri)
     hyperparams = {
             # remove speech regions shorter than that many seconds.
