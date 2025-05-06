@@ -119,7 +119,7 @@ def load_asr_pipelines_for_sli(sli_map: Dict[str, Any], args: Optional[Namespace
     return pipelines
 
 def perform_vad(
-        audio: torch.Tensor,
+        audio: Union[torch.Tensor, np.ndarray],
         pipe: Optional[PyannotePipeline] = None,
         vad_uri: str = VAD_URI,
         annotations: Dict[str, Any] = dict(),
@@ -130,6 +130,8 @@ def perform_vad(
 
     if not pipe:
         pipe = load_vad_pipeline(vad_uri, min_duration_on, min_duration_off)
+
+    audio = prepare_audio_for_pyannote(audio)
 
     with ProgressHook() as hook:
         result = pipe(
@@ -232,8 +234,19 @@ def load_and_resample(
         raise ValueError("Cannot flatten wav unless converting to mono!")
     return wav
 
+def prepare_audio_for_pyannote(audio: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    """
+    Cast tensor `audio` to a 2d (channel, time) torch float32 Tensor, as expected by PyAnnote.
+    """
+    if type(audio) is not torch.Tensor:
+        audio = torch.tensor(audio)
+    if len(audio.shape) == 1:
+        audio = audio.unsqueeze(0)
+    audio = audio.to(torch.float32)
+    return audio
+
 def prepare_tensor_for_feature_extraction(
-        audio: Union[torch.Tensor, List[torch.Tensor], np.ndarray, List[np.ndarray]]
+        audio: Union[torch.Tensor, List[torch.Tensor], np.ndarray, List[np.ndarray]],
 ):
     """
     Cast tensor to numpy and remove extra dimensions.
