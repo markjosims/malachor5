@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, List, Literal
 from collections import defaultdict
 import torchaudio
 import torch
-from datasets import Dataset, Audio, load_dataset
+from datasets import DatasetDict, Audio, load_dataset
 from tempfile import TemporaryDirectory
 from tqdm import tqdm
 tqdm.pandas()
@@ -22,7 +22,7 @@ def load_clips_to_ds(
         df: pd.DataFrame,
         audio_dir: str,
         ds_dir: str,
-) -> Dataset:
+) -> DatasetDict:
     """
     `df` is a dataframe with columns 'audio_basename', 'start', 'end'
     `audio_dir` is a dirpath to load long audio from, `clip_dir` is a dirpath to save
