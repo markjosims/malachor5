@@ -438,7 +438,7 @@ def perform_kws(args):
         if os.path.isdir(args.output):
             json_basename = os.path.basename(json_path)
             json_path = os.path.join(args.output_dir, json_basename)
-        elif os.path.exists(args.output):
+        elif args.output:
             json_path = args.output
         with open(json_path, 'w', encoding='utf8') as f:
             json.dump(json_obj, f, ensure_ascii=False, indent=2)
