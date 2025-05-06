@@ -5,9 +5,11 @@ import pandas as pd
 from string import Template
 from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration
 import json
+from datasets import load_from_disk
 
 import sys
 sys.path.append('scripts')
+from longform import load_vad_pipeline, perform_vad
 from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements
 from lid_utils import is_en_word
 
@@ -179,7 +181,21 @@ def main() -> int:
     df, _ = perform_textnorm(df, PREPROCESSING_STEPS)
 
     print("Loading audio files into HuggingFace dataset...")
-    hf_ds = load_clips_to_ds(df, AUDIO_DIR)
+
+    unproc_ds_path = os.path.join(TIRA_ASR_CLIPS_DIR, 'unprocessed_audio_ds')
+
+    try:
+        hf_ds = load_from_disk(unproc_ds_path)
+    except FileNotFoundError:
+        hf_ds = load_clips_to_ds(df, AUDIO_DIR, ds_dir=unproc_ds_path)
+    unproc_audio_str = "- saved HF dataset with remaining audio records to 'unprocessed_audio_ds/' in $TIRA_ASR_CLIPS_DIR"
+    PREPROCESSING_STEPS.append(unproc_audio_str)
+    print(unproc_audio_str)
+
+    hf_ds = hf_ds.select(range(10)) # uncomment for debugging
+    vad_pipe = load_vad_pipeline()
+    vad_pcnts = hf_ds.map(lambda row: perform_vad(row['samples'], pipe=vad_pipe))
+    breakpoint()
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
