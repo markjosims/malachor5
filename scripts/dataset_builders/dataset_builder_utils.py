@@ -21,6 +21,7 @@ tqdm.pandas()
 def load_clips_to_ds(
         df: pd.DataFrame,
         audio_dir: str,
+        ds_dir: str,
 ) -> Dataset:
     """
     `df` is a dataframe with columns 'audio_basename', 'start', 'end'
@@ -33,6 +34,7 @@ def load_clips_to_ds(
         df.to_csv(os.path.join(temp_dir, 'clips.csv'), index=False)
         ds = load_dataset("audiofolder", data_dir=temp_dir)
         ds = ds.cast_column("audio", Audio(sampling_rate=SAMPLE_RATE))
+        ds.save_to_disk(ds_dir)
     return ds
 
 def save_clips(
