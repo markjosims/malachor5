@@ -292,7 +292,7 @@ def init_kws_parser():
     parser.add_argument('--encoder_size', default='tiny')
     parser.add_argument('--speech_encoder')
     parser.add_argument('--phone_encoder')
-    parser.add_argument('--output_dir', '-o')
+    parser.add_argument('--output', '-o')
     parser.add_argument('--batch_size', '-b', type=int, default=32)
     parser.add_argument('--textgrid', '-tg', help='Textgrid files with ground truth timestamps.', nargs='+')
     parser.add_argument('--eval_window', type=float)
@@ -329,6 +329,10 @@ def perform_kws(args):
     For HMM inference, calculate hits and false alarms within the eval window, as well as CER and WER
     for all keywords detected in the window vs ground truth.
     """
+
+    # make sure we don't save multiple results to single filepath
+    if len(args.input)>1 and os.path.isfile(args.output):
+        raise ValueError("Please pass directory as output path if processing multiple files.")
 
     # get keyword list, audio files and, if applicable, textgrid files from `args`
     keyword_list = args.keywords
@@ -431,9 +435,11 @@ def perform_kws(args):
                 )
             )
         json_path = audio.replace('.wav', '.json')
-        if args.output_dir:
+        if os.path.isdir(args.output):
             json_basename = os.path.basename(json_path)
             json_path = os.path.join(args.output_dir, json_basename)
+        elif os.path.exists(args.output):
+            json_path = args.output
         with open(json_path, 'w', encoding='utf8') as f:
             json.dump(json_obj, f, ensure_ascii=False, indent=2)
 
