@@ -169,3 +169,6 @@ data/
 
 # VS Code
 settings.json
+
+# device-specific environemnt file
+dockerenv.sh
