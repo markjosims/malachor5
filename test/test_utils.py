@@ -67,7 +67,7 @@ def assert_tokens_appear_once(row, token_names, col='labels'):
 
 # SQL helpers
 
-def popular_dataset_table(engine):
+def populate_dataset_table(engine):
     with Session(engine) as session:
         tira_asr = Dataset(language="Tira", name="Tira monolingual", path=TIRA_ASR_DS)
         fleurs = Dataset(language="English", name="FLEURS English", path=FLEURS)
