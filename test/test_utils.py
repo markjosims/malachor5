@@ -1,7 +1,10 @@
 import sys
 sys.path.append('scripts')
-from dataset_utils import SPECIAL_TOKENS_FLAT
+from dataset_utils import SPECIAL_TOKENS_FLAT, FLEURS, TIRA_ASR_DS, TIRA_BILING
+from sql_utils import Dataset, wrap_session
 import numpy as np
+from sqlalchemy import *
+from sqlalchemy.orm import Session
 
 SAMPLE_BILING_PATH = 'test/data/sample_biling.wav'
 SAMPLE_BILING_TG_PATH = 'test/data/sample_biling.TextGrid'
@@ -14,6 +17,8 @@ XDDERE_IPA = 'èd̪ɛ̀ɾɛ̀'
 ALBRRIZO_IPA = 'ɜ̀lbrìðɔ̀'
 ZAVELEZE_IPA = 'ðàvə́lɛ̀ðɛ̀'
 NGINE_IPA = 'ŋínɛ̀'
+
+# longform helpers
 
 def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
     assert type(chunk_dict) is dict
@@ -29,6 +34,8 @@ def assert_chunk_dict_shape(chunk_dict, chunks_key='chunks'):
         assert type(start) is float or isinstance(start, np.floating)
         assert type(end) is float or isinstance(end, np.floating)
         assert end>start
+
+# HF dataset helpers
 
 def assert_tokens_in_row(row, token_names, col='labels'):
     tok_ids = [SPECIAL_TOKENS_FLAT[token]['id'] for token in token_names]
@@ -57,3 +64,12 @@ def assert_tokens_appear_once(row, token_names, col='labels'):
     labels = row[col]
     for tok_id in tok_ids:
             assert labels.count(tok_id)==1, tok_id
+
+# SQL helpers
+@wrap_session
+def populate_dataset_table(sql_db):
+    tira_asr = Dataset(language="Tira", name="Tira monolingual", path=TIRA_ASR_DS)
+    fleurs = Dataset(language="English", name="FLEURS English", path=FLEURS)
+    tira_biling = Dataset(language="English+Tira", name="Tira bilingual eval", path=TIRA_BILING)
+    sql_db.add_all([tira_asr, fleurs, tira_biling])
+    sql_db.commit()

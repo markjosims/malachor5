@@ -215,7 +215,7 @@ def load_and_prepare_dataset(args):
         print("Resampling to 16kHz...")
         ds=ds.cast_column("audio", Audio(sampling_rate=16_000))
     ds_cache_files={}
-    if args.action=='evaluate':
+    if args.action=='validation':
         ds=DatasetDict({'validation': ds['validation']})
         colnames=ds['validation'].column_names
     elif args.action=='test':
@@ -327,7 +327,7 @@ def load_extra_datasets(args, split: Literal['train', 'eval', 'test']) -> Dict[s
         if 'fleurs' in dataset or 'commonvoice' in dataset:
             dataset_args.fleurs_lang = iso2_to_fleurs(lang[0])
         dataset_args.dataset=dataset
-        dataset_args.action='evaluate' if split=='eval' else split
+        dataset_args.action='validation' if split=='eval' else split
         dataset_obj, _ = load_and_prepare_dataset(dataset_args)
         
         dataset_name=dataset.removesuffix('/').split('/')[-1]

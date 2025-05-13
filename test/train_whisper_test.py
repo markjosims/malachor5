@@ -4,9 +4,13 @@ import json
 import sys
 import os
 sys.path.append('scripts')
-from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train
+from train_whisper import evaluate_dataset, init_parser, get_metrics, get_training_args, argmax_logits, calculate_fisher_matrix, get_lid_probs, train, DEFAULT_TRAINER_HYPERPARAMS
 from dataset_utils import load_and_prepare_dataset, load_data_collator, FLEURS, LANG_TOKENS, TIRA_BILING, TIRA_ASR_DS
 from model_utils import WhisperTrainer, load_whisper_model_for_training_or_eval
+import sqlalchemy as sql
+import pandas as pd
+from datetime import datetime
+from test_utils import populate_dataset_table
 
 def test_lang_col_generate(tmpdir):
     """
@@ -21,7 +25,7 @@ def test_lang_col_generate(tmpdir):
     args.num_records = 10
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
-    args.action = 'evaluate'
+    args.action = 'validation'
     args.eval_datasets=[FLEURS, FLEURS]
     args.eval_dataset_languages=['ar', 'zh']
 
@@ -58,7 +62,7 @@ def test_prompt_generate(tmpdir):
     args.num_records = 3
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
-    args.action = 'evaluate'
+    args.action = 'validation'
     args.per_device_eval_batch_size=1
 
     # define two prompt files
@@ -419,9 +423,9 @@ def test_compute_lid_loss():
     assert equal_prob_cs_loss_colwise != equal_prob_cs_loss
     # nvm I don't understand cross entropy
 
-def test_experiment_json(tmpdir):
+def test_sqlite_db(tmpdir):
     """
-    Train model and check that `experiment.json` is saved successfully
+    Train model and check that `experiment.db` is saved successfully
     """
     parser = init_parser()
     args = parser.parse_args([])
@@ -431,508 +435,497 @@ def test_experiment_json(tmpdir):
     args.num_records = 10
     args.model = 'openai/whisper-tiny'
     args.num_train_epochs = 2
+    args.experiment_name = "test_sqlite_db"
+    sql_path = str(tmpdir/'experiment.db')
+    os.environ['SQLITE_DB']=sql_path
 
     train(args)
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 1
-    assert type(execution_list[0]) is dict
-    assert type(execution_list[0]['uuid']) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-
-    train_data = exp_json['train_data']
-    assert type(train_data) is list
-    assert len(train_data) == 1
-    assert type(train_data[0]) is dict
-    assert train_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert train_data[0]['dataset_path'] == TIRA_ASR_DS
-    assert train_data[0]['num_records'] == 10
-
-    train_events = exp_json['train_events']
-    assert type(train_events) is list
-    assert len(train_events) > 1
-    for event in train_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-
-    val_data = exp_json['eval_data']
-    assert type(val_data) is list
-    assert len(val_data) == 1
-    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
-    assert val_data[0]['num_records'] == 10
-
-    val_events = val_data[0]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-
-def test_experiment_json_multi_ds(tmpdir):
-    """
-    Check `experiment.json` properly logs multiple train and evaluation datasets.
-    """
-    parser = init_parser()
-    args = parser.parse_args([])
-    args.output = str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['en', 'sw']
-    args.num_records = 2
-    args.model = 'openai/whisper-tiny'
-    args.num_train_epochs = 2
-
-    args.train_datasets = [FLEURS, TIRA_ASR_DS]
-    args.train_dataset_languages = ['en', 'sw']
-
-    args.eval_datasets = [FLEURS, TIRA_BILING]
-    args.eval_dataset_languages = ['en', 'sw+en']
-
-    train(args)
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 1
-    assert type(execution_list[0]) is dict
-    assert type(execution_list[0]['uuid']) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-
-
-    train_data = exp_json['train_data']
-    assert type(train_data) is list
-    assert len(train_data) == 3
-    assert type(train_data[0]) is dict
-    datasets = [d['dataset'] for d in train_data]
-    dataset_paths = [d['dataset_path'] for d in train_data]
-    for ds in [TIRA_ASR_DS, FLEURS]:
-        assert os.path.basename(ds) in datasets
-        assert ds in dataset_paths
-    for d in train_data:
-        if d['dataset'] == TIRA_ASR_DS:
-            assert (d['language'] == 'en+sw') or (d['language'] == 'sw')
-        elif d['dataset'] == FLEURS:
-            assert d['language'] == 'en'
-
-        assert d['num_records'] == 2
-    train_events = exp_json['train_events']
-    assert type(train_events) is list
-    assert len(train_events) > 1
-    for event in train_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-
-    val_data = exp_json['eval_data']
-    assert type(val_data) is list
-    assert len(val_data) == 3
-    datasets = [d['dataset'] for d in val_data]
-    dataset_paths = [d['dataset_path'] for d in val_data]
-    for ds in [TIRA_ASR_DS, TIRA_BILING, FLEURS]:
-        assert os.path.basename(ds) in datasets
-        assert ds in dataset_paths
-    for d in val_data:
-        if d['dataset_path'] == TIRA_BILING:
-            assert d['language'] == 'sw+en'
-        elif d['dataset_path'] == FLEURS:
-            assert d['language'] == 'en'
-        else:
-            assert d['language'] == 'en+sw'
-        assert d['num_records'] == 2
-        events = d['events']
-        assert type(events) is list
-        assert len(events) > 1
-        for event in events:
-            assert 'tag' in event
-            assert 'value' in event
-            assert 'step' in event
-            assert 'uuid' in event
-            assert 'start_time' in event
-
-def test_experiment_json_multi_exp(tmpdir):
-    """
-    Train model, then eval w beam search, then test.
-    Check that all three executions were saved in `experiment.json`
-    """
-    parser = init_parser()
-    args = parser.parse_args([])
-
-    # train
-    args.output = str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['sw']
-    args.num_records = 2
-    args.model = 'openai/whisper-tiny'
-    args.num_train_epochs = 2
-    train(args)
-
-    # evaluate
-    args.model = str(tmpdir)
-    args.action = 'evaluate'
-    args.predict_with_generate = True
-    args.generation_num_beams = 2
-    train(args)
-
-    # test
-    args.dataset = FLEURS
-    args.language = ['en']
-    args.action = 'test'
-    args.predict_with_generate = False
-    args.generation_num_beams = 1
-    train(args)
-
-    # check `experiment.json`
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 3
-
-    assert type(execution_list[0]) is dict
-    train_uuid = execution_list[0]['uuid']
-    assert type(train_uuid) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-    assert execution_list[0]['action'] == 'train'
-
-    assert type(execution_list[1]) is dict
-    eval_uuid = execution_list[1]['uuid']
-    assert type(eval_uuid) is str
-    assert type(execution_list[1]['start_time']) is str
-    assert type(execution_list[1]['argv']) is str
-    assert execution_list[1]['action'] == 'evaluate'
-
-    assert type(execution_list[2]) is dict
-    test_uuid = execution_list[2]['uuid']
-    assert type(test_uuid) is str
-    assert type(execution_list[2]['start_time']) is str
-    assert type(execution_list[2]['argv']) is str
-    assert execution_list[2]['action'] == 'test'
-
-    assert train_uuid != eval_uuid
-    assert eval_uuid != test_uuid
-    assert test_uuid != train_uuid
-
-
-    val_data = exp_json['eval_data']
-    assert type(val_data) is list
-    assert len(val_data) == 2
-    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
-    assert val_data[0]['language'] == 'sw'
-    assert val_data[0]['num_records'] == 2
-    assert val_data[0]['predict_with_generate'] is False
-    assert val_data[0]['generation_num_beams'] == 1
-
-    val_events = val_data[0]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==train_uuid
-
-    assert val_data[1]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert val_data[1]['dataset_path'] == TIRA_ASR_DS
-    assert val_data[1]['language'] == 'sw'
-    assert val_data[1]['num_records'] == 2
-    assert val_data[1]['predict_with_generate'] is True
-    assert val_data[1]['generation_num_beams'] == 2
-
-
-    val_events = val_data[1]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==eval_uuid
-
-    test_data = exp_json['test_data']
-    assert type(test_data) is list
-    assert len(test_data) == 1
-    assert test_data[0]['dataset'] == os.path.basename(FLEURS)
-    assert test_data[0]['dataset_path'] == FLEURS
-    assert test_data[0]['language'] == 'en'
-    assert test_data[0]['num_records'] == 2
-    assert test_data[0]['predict_with_generate'] is False
-    assert test_data[0]['generation_num_beams'] == 1
-
-    test_events = test_data[0]['events']
-    assert type(test_events) is list
-    assert len(test_events) > 1
-    for event in test_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==test_uuid
-
-def test_experiment_json_resume_train(tmpdir):
-    """
-    Train model for 2 epochs, then resume training for 2 more.
-    Check both train runs are saved in `experiment.json`
-    """
-    parser = init_parser()
-    args = parser.parse_args([])
-
-    # train for 2 epochs
-    args.output = str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['sw']
-    args.num_records = 2
-    args.model = 'openai/whisper-tiny'
-    args.num_train_epochs = 2
-    train(args)
-
-    # resume training same model
-    args.model = str(tmpdir)
-    args.resume_from_checkpoint = True
-    args.num_train_epochs = 4
-    train(args)
-
-    # check `experiment.json`
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 2
-
-    assert type(execution_list[0]) is dict
-    train_uuid1 = execution_list[0]['uuid']
-    assert type(train_uuid1) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-    assert execution_list[0]['action'] == 'train'
-
-    assert type(execution_list[1]) is dict
-    train_uuid2 = execution_list[1]['uuid']
-    assert type(train_uuid2) is str
-    assert type(execution_list[1]['start_time']) is str
-    assert type(execution_list[1]['argv']) is str
-    assert execution_list[1]['num_train_epochs'] == 4
-    assert execution_list[1]['action'] == 'train'
-
-    found_train1_event = False
-    found_train2_event = False
-    for event in exp_json['train_events']:
-        event_uuid = event['uuid']
-        if event_uuid == train_uuid1:
-            found_train1_event = True
-        elif event_uuid == train_uuid2:
-            found_train2_event = True
-        else:
-            assert False
-    assert found_train1_event
-    assert found_train2_event
-
-def test_experiment_json_eval_all_epochs(tmpdir):
-    """
-    Train model, then eval w beam search, then test.
-    Check that all three executions were saved in `experiment.json`
-    """
-    parser = init_parser()
-    args = parser.parse_args([])
-
-    # train
-    args.output = str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['sw']
-    args.num_records = 2
-    args.model = 'openai/whisper-tiny'
-    args.num_train_epochs = 2
-    train(args)
-
-    # evaluate
-    args.model = str(tmpdir)
-    args.action = 'evaluate'
-    args.dataset = FLEURS
-    args.language = ['en']
-    args.eval_checkpoints = ['all']
-    train(args)
-
-    # check `experiment.json`
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 2
-
-    assert type(execution_list[0]) is dict
-    train_uuid = execution_list[0]['uuid']
-    assert type(train_uuid) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-    assert execution_list[0]['action'] == 'train'
-
-    assert type(execution_list[1]) is dict
-    eval_uuid = execution_list[1]['uuid']
-    assert type(eval_uuid) is str
-    assert type(execution_list[1]['start_time']) is str
-    assert type(execution_list[1]['argv']) is str
-    assert execution_list[1]['action'] == 'evaluate'
-
-    assert train_uuid != eval_uuid
-
-
-    val_data = exp_json['eval_data']
-    assert type(val_data) is list
-    assert len(val_data) == 2
-    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
-    assert val_data[0]['language'] == 'sw'
-    assert val_data[0]['num_records'] == 2
-
-    val_events = val_data[0]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==train_uuid
-
-    assert val_data[1]['dataset'] == os.path.basename(FLEURS)
-    assert val_data[1]['dataset_path'] == FLEURS
-    assert val_data[1]['language'] == 'en'
-    assert val_data[1]['num_records'] == 2
-
-
-    found_checkpoint1 = False
-    found_checkpoint2 = False
-
-    val_events = val_data[1]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==eval_uuid
-
-        step = event['step']
-        if step == 1:
-            found_checkpoint1=True
-        elif step == 2:
-            found_checkpoint2=True
-        else:
-            assert False
-    assert found_checkpoint1
-    assert found_checkpoint2
-
-def test_experiment_json_eval_baseline(tmpdir):
-    """
-    Evaluate whisper-tiny w/o fine-tuning, then check `experiment.json` produced with `step=None`.
-    """
-    parser = init_parser()
-    args = parser.parse_args([])
-
-    # evaluate
-    args.output = str(tmpdir)
-    args.dataset = TIRA_ASR_DS
-    args.language = ['sw']
-    args.num_records = 2
-    args.model = 'openai/whisper-tiny'
-    args.action = 'evaluate'
-    args.num_train_epochs = 2
-    train(args)
-
-    # check `experiment.json`
-    json_path = str(tmpdir/'experiment.json')
-    assert os.path.exists(json_path)
-    with open(json_path) as f:
-        exp_json = json.load(f)
-    assert exp_json['experiment_name'] == tmpdir.basename
-    assert exp_json['experiment_path'] == str(tmpdir)
-    assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
-
-    execution_list = exp_json['executions']
-    assert type(execution_list) is list
-    assert len(execution_list) == 1
-
-    assert type(execution_list[0]) is dict
-    val_uuid = execution_list[0]['uuid']
-    assert type(val_uuid) is str
-    assert type(execution_list[0]['start_time']) is str
-    assert type(execution_list[0]['argv']) is str
-    assert execution_list[0]['num_train_epochs'] == 2
-    assert execution_list[0]['action'] == 'evaluate'
-
-
-    val_data = exp_json['eval_data']
-    assert type(val_data) is list
-    assert len(val_data) == 1
-    assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
-    assert val_data[0]['dataset_path'] == TIRA_ASR_DS
-    assert val_data[0]['language'] == 'sw'
-    assert val_data[0]['num_records'] == 2
-
-    val_events = val_data[0]['events']
-    assert type(val_events) is list
-    assert len(val_events) > 1
-    for event in val_events:
-        assert 'tag' in event
-        assert 'value' in event
-        assert 'step' in event
-        assert 'uuid' in event
-        assert 'start_time' in event
-        assert event['uuid']==val_uuid
-        assert event['step'] is None
+    assert os.path.exists(sql_path)
+    engine = sql.create_engine("sqlite:///"+sql_path)
+    experiment_table = pd.read_sql_table('experiments', con=engine)
+    assert len(experiment_table)==1
+    assert experiment_table['name'].item() == "test_sqlite_db"
+    assert experiment_table['path'].item() == str(tmpdir)
+    assert type(experiment_table['argv'].item()) is str
+    assert "pytest" in experiment_table['argv'].item()
+    model_id = experiment_table['model_id'].item()
+    exp_id = experiment_table['id'].item()
+    train_ds_id = experiment_table['train_data'].item()
+    eval_ds_id = experiment_table['eval_data'].item()
+    assert type(experiment_table['time'].item()) is datetime
+
+    hyperparam_table = pd.read_sql_table('hyperparams', con=engine)
+    assert hyperparam_table.loc[hyperparam_table["param"]=="num_train_epochs", "value"].item()==2
+    for k, v in DEFAULT_TRAINER_HYPERPARAMS:
+        assert hyperparam_table.loc[hyperparam_table["param"]==k, "value"].item()==v
+
+    ds_table = pd.read_sql_table('dataset', con=engine)
+    ds_id = ds_table['id'].item()
+    assert ds_id == train_ds_id
+    assert ds_id == eval_ds_id
+
+    train_event_table = pd.read_sql_table('train_event', con=engine)
+    assert len(train_event_table['experiment_id'].unique()==1)
+    assert train_event_table['experiment_id'].iloc[0] == exp_id
+    assert 'train_loss' in train_event_table['tag'].values
+
+    eval_event_table = pd.read_sql_table('eval_event', con=engine)
+    assert len(eval_event_table['experiment_id'].unique()==1)
+    assert eval_event_table['experiment_id'].iloc[0] == exp_id
+    assert 'eval_loss' in eval_event_table['tag'].values
+
+    model_table = pd.read_sql_table('model', con=engine)
+    model_id == model_table['id'].item()
+    assert model_table['language'].item() == 'Tira'
+
+# def test_sqlite_db_multi_ds(tmpdir):
+#     """
+#     Check `experiment.db` properly logs multiple train and evaluation datasets.
+#     """
+#     parser = init_parser()
+#     args = parser.parse_args([])
+#     args.output = str(tmpdir)
+#     args.dataset = TIRA_ASR_DS
+#     args.language = ['en', 'sw']
+#     args.num_records = 2
+#     args.model = 'openai/whisper-tiny'
+#     args.num_train_epochs = 2
+
+#     args.train_datasets = [FLEURS, TIRA_ASR_DS]
+#     args.train_dataset_languages = ['en', 'sw']
+
+#     args.eval_datasets = [FLEURS, TIRA_BILING]
+#     args.eval_dataset_languages = ['en', 'sw+en']
+
+#     train(args)
+#     json_path = str(tmpdir/'experiment.db')
+#     assert os.path.exists(json_path)
+#     with open(json_path) as f:
+#         exp_json = json.load(f)
+#     assert exp_json['experiment_name'] == tmpdir.basename
+#     assert exp_json['experiment_path'] == str(tmpdir)
+#     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+#     execution_list = exp_json['executions']
+#     assert type(execution_list) is list
+#     assert len(execution_list) == 1
+#     assert type(execution_list[0]) is dict
+#     assert type(execution_list[0]['uuid']) is str
+#     assert type(execution_list[0]['start_time']) is str
+#     assert type(execution_list[0]['argv']) is str
+#     assert execution_list[0]['num_train_epochs'] == 2
+
+
+#     train_data = exp_json['train_data']
+#     assert type(train_data) is list
+#     assert len(train_data) == 3
+#     assert type(train_data[0]) is dict
+#     datasets = [d['dataset'] for d in train_data]
+#     dataset_paths = [d['dataset_path'] for d in train_data]
+#     for ds in [TIRA_ASR_DS, FLEURS]:
+#         assert os.path.basename(ds) in datasets
+#         assert ds in dataset_paths
+#     for d in train_data:
+#         if d['dataset'] == TIRA_ASR_DS:
+#             assert (d['language'] == 'en+sw') or (d['language'] == 'sw')
+#         elif d['dataset'] == FLEURS:
+#             assert d['language'] == 'en'
+
+#         assert d['num_records'] == 2
+#     train_events = exp_json['train_events']
+#     assert type(train_events) is list
+#     assert len(train_events) > 1
+#     for event in train_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+
+#     val_data = exp_json['eval_data']
+#     assert type(val_data) is list
+#     assert len(val_data) == 3
+#     datasets = [d['dataset'] for d in val_data]
+#     dataset_paths = [d['dataset_path'] for d in val_data]
+#     for ds in [TIRA_ASR_DS, TIRA_BILING, FLEURS]:
+#         assert os.path.basename(ds) in datasets
+#         assert ds in dataset_paths
+#     for d in val_data:
+#         if d['dataset_path'] == TIRA_BILING:
+#             assert d['language'] == 'sw+en'
+#         elif d['dataset_path'] == FLEURS:
+#             assert d['language'] == 'en'
+#         else:
+#             assert d['language'] == 'en+sw'
+#         assert d['num_records'] == 2
+#         events = d['events']
+#         assert type(events) is list
+#         assert len(events) > 1
+#         for event in events:
+#             assert 'tag' in event
+#             assert 'value' in event
+#             assert 'step' in event
+#             assert 'uuid' in event
+#             assert 'start_time' in event
+
+# def test_sqlite_db_multi_exp(tmpdir):
+#     """
+#     Train model, then eval w beam search, then test.
+#     Check that all three executions were saved in `experiment.db`
+#     """
+#     parser = init_parser()
+#     args = parser.parse_args([])
+
+#     # train
+#     args.output = str(tmpdir)
+#     args.dataset = TIRA_ASR_DS
+#     args.language = ['sw']
+#     args.num_records = 2
+#     args.model = 'openai/whisper-tiny'
+#     args.num_train_epochs = 2
+#     train(args)
+
+#     # evaluate
+#     args.model = str(tmpdir)
+#     args.action = 'validation'
+#     args.predict_with_generate = True
+#     args.generation_num_beams = 2
+#     train(args)
+
+#     # test
+#     args.dataset = FLEURS
+#     args.language = ['en']
+#     args.action = 'test'
+#     args.predict_with_generate = False
+#     args.generation_num_beams = 1
+#     train(args)
+
+#     # check `experiment.db`
+#     json_path = str(tmpdir/'experiment.db')
+#     assert os.path.exists(json_path)
+#     with open(json_path) as f:
+#         exp_json = json.load(f)
+#     assert exp_json['experiment_name'] == tmpdir.basename
+#     assert exp_json['experiment_path'] == str(tmpdir)
+#     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+#     execution_list = exp_json['executions']
+#     assert type(execution_list) is list
+#     assert len(execution_list) == 3
+
+#     assert type(execution_list[0]) is dict
+#     train_uuid = execution_list[0]['uuid']
+#     assert type(train_uuid) is str
+#     assert type(execution_list[0]['start_time']) is str
+#     assert type(execution_list[0]['argv']) is str
+#     assert execution_list[0]['num_train_epochs'] == 2
+#     assert execution_list[0]['action'] == 'train'
+
+#     assert type(execution_list[1]) is dict
+#     eval_uuid = execution_list[1]['uuid']
+#     assert type(eval_uuid) is str
+#     assert type(execution_list[1]['start_time']) is str
+#     assert type(execution_list[1]['argv']) is str
+#     assert execution_list[1]['action'] == 'validation'
+
+#     assert type(execution_list[2]) is dict
+#     test_uuid = execution_list[2]['uuid']
+#     assert type(test_uuid) is str
+#     assert type(execution_list[2]['start_time']) is str
+#     assert type(execution_list[2]['argv']) is str
+#     assert execution_list[2]['action'] == 'test'
+
+#     assert train_uuid != eval_uuid
+#     assert eval_uuid != test_uuid
+#     assert test_uuid != train_uuid
+
+
+#     val_data = exp_json['eval_data']
+#     assert type(val_data) is list
+#     assert len(val_data) == 2
+#     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+#     assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+#     assert val_data[0]['language'] == 'sw'
+#     assert val_data[0]['num_records'] == 2
+#     assert val_data[0]['predict_with_generate'] is False
+#     assert val_data[0]['generation_num_beams'] == 1
+
+#     val_events = val_data[0]['events']
+#     assert type(val_events) is list
+#     assert len(val_events) > 1
+#     for event in val_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==train_uuid
+
+#     assert val_data[1]['dataset'] == os.path.basename(TIRA_ASR_DS)
+#     assert val_data[1]['dataset_path'] == TIRA_ASR_DS
+#     assert val_data[1]['language'] == 'sw'
+#     assert val_data[1]['num_records'] == 2
+#     assert val_data[1]['predict_with_generate'] is True
+#     assert val_data[1]['generation_num_beams'] == 2
+
+
+#     val_events = val_data[1]['events']
+#     assert type(val_events) is list
+#     assert len(val_events) > 1
+#     for event in val_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==eval_uuid
+
+#     test_data = exp_json['test_data']
+#     assert type(test_data) is list
+#     assert len(test_data) == 1
+#     assert test_data[0]['dataset'] == os.path.basename(FLEURS)
+#     assert test_data[0]['dataset_path'] == FLEURS
+#     assert test_data[0]['language'] == 'en'
+#     assert test_data[0]['num_records'] == 2
+#     assert test_data[0]['predict_with_generate'] is False
+#     assert test_data[0]['generation_num_beams'] == 1
+
+#     test_events = test_data[0]['events']
+#     assert type(test_events) is list
+#     assert len(test_events) > 1
+#     for event in test_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==test_uuid
+
+# def test_sqlite_db_resume_train(tmpdir):
+#     """
+#     Train model for 2 epochs, then resume training for 2 more.
+#     Check both train runs are saved in `experiment.db`
+#     """
+#     parser = init_parser()
+#     args = parser.parse_args([])
+
+#     # train for 2 epochs
+#     args.output = str(tmpdir)
+#     args.dataset = TIRA_ASR_DS
+#     args.language = ['sw']
+#     args.num_records = 2
+#     args.model = 'openai/whisper-tiny'
+#     args.num_train_epochs = 2
+#     train(args)
+
+#     # resume training same model
+#     args.model = str(tmpdir)
+#     args.resume_from_checkpoint = True
+#     args.num_train_epochs = 4
+#     train(args)
+
+#     # check `experiment.db`
+#     json_path = str(tmpdir/'experiment.db')
+#     assert os.path.exists(json_path)
+#     with open(json_path) as f:
+#         exp_json = json.load(f)
+#     assert exp_json['experiment_name'] == tmpdir.basename
+#     assert exp_json['experiment_path'] == str(tmpdir)
+#     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+#     execution_list = exp_json['executions']
+#     assert type(execution_list) is list
+#     assert len(execution_list) == 2
+
+#     assert type(execution_list[0]) is dict
+#     train_uuid1 = execution_list[0]['uuid']
+#     assert type(train_uuid1) is str
+#     assert type(execution_list[0]['start_time']) is str
+#     assert type(execution_list[0]['argv']) is str
+#     assert execution_list[0]['num_train_epochs'] == 2
+#     assert execution_list[0]['action'] == 'train'
+
+#     assert type(execution_list[1]) is dict
+#     train_uuid2 = execution_list[1]['uuid']
+#     assert type(train_uuid2) is str
+#     assert type(execution_list[1]['start_time']) is str
+#     assert type(execution_list[1]['argv']) is str
+#     assert execution_list[1]['num_train_epochs'] == 4
+#     assert execution_list[1]['action'] == 'train'
+
+#     found_train1_event = False
+#     found_train2_event = False
+#     for event in exp_json['train_events']:
+#         event_uuid = event['uuid']
+#         if event_uuid == train_uuid1:
+#             found_train1_event = True
+#         elif event_uuid == train_uuid2:
+#             found_train2_event = True
+#         else:
+#             assert False
+#     assert found_train1_event
+#     assert found_train2_event
+
+# def test_sqlite_db_eval_all_epochs(tmpdir):
+#     """
+#     Train model, then eval w beam search, then test.
+#     Check that all three executions were saved in `experiment.db`
+#     """
+#     parser = init_parser()
+#     args = parser.parse_args([])
+
+#     # train
+#     args.output = str(tmpdir)
+#     args.dataset = TIRA_ASR_DS
+#     args.language = ['sw']
+#     args.num_records = 2
+#     args.model = 'openai/whisper-tiny'
+#     args.num_train_epochs = 2
+#     train(args)
+
+#     # validation
+#     args.model = str(tmpdir)
+#     args.action = 'validation'
+#     args.dataset = FLEURS
+#     args.language = ['en']
+#     args.eval_checkpoints = ['all']
+#     train(args)
+
+#     # check `experiment.db`
+#     json_path = str(tmpdir/'experiment.db')
+#     assert os.path.exists(json_path)
+#     with open(json_path) as f:
+#         exp_json = json.load(f)
+#     assert exp_json['experiment_name'] == tmpdir.basename
+#     assert exp_json['experiment_path'] == str(tmpdir)
+#     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+#     execution_list = exp_json['executions']
+#     assert type(execution_list) is list
+#     assert len(execution_list) == 2
+
+#     assert type(execution_list[0]) is dict
+#     train_uuid = execution_list[0]['uuid']
+#     assert type(train_uuid) is str
+#     assert type(execution_list[0]['start_time']) is str
+#     assert type(execution_list[0]['argv']) is str
+#     assert execution_list[0]['num_train_epochs'] == 2
+#     assert execution_list[0]['action'] == 'train'
+
+#     assert type(execution_list[1]) is dict
+#     eval_uuid = execution_list[1]['uuid']
+#     assert type(eval_uuid) is str
+#     assert type(execution_list[1]['start_time']) is str
+#     assert type(execution_list[1]['argv']) is str
+#     assert execution_list[1]['action'] == 'validation'
+
+#     assert train_uuid != eval_uuid
+
+
+#     val_data = exp_json['eval_data']
+#     assert type(val_data) is list
+#     assert len(val_data) == 2
+#     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+#     assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+#     assert val_data[0]['language'] == 'sw'
+#     assert val_data[0]['num_records'] == 2
+
+#     val_events = val_data[0]['events']
+#     assert type(val_events) is list
+#     assert len(val_events) > 1
+#     for event in val_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==train_uuid
+
+#     assert val_data[1]['dataset'] == os.path.basename(FLEURS)
+#     assert val_data[1]['dataset_path'] == FLEURS
+#     assert val_data[1]['language'] == 'en'
+#     assert val_data[1]['num_records'] == 2
+
+
+#     found_checkpoint1 = False
+#     found_checkpoint2 = False
+
+#     val_events = val_data[1]['events']
+#     assert type(val_events) is list
+#     assert len(val_events) > 1
+#     for event in val_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==eval_uuid
+
+#         step = event['step']
+#         if step == 1:
+#             found_checkpoint1=True
+#         elif step == 2:
+#             found_checkpoint2=True
+#         else:
+#             assert False
+#     assert found_checkpoint1
+#     assert found_checkpoint2
+
+# def test_sqlite_db_eval_baseline(tmpdir):
+#     """
+#     Evaluate whisper-tiny w/o fine-tuning, then check `experiment.db` produced with `step=None`.
+#     """
+#     parser = init_parser()
+#     args = parser.parse_args([])
+
+#     # validation
+#     args.output = str(tmpdir)
+#     args.dataset = TIRA_ASR_DS
+#     args.language = ['sw']
+#     args.num_records = 2
+#     args.model = 'openai/whisper-tiny'
+#     args.action = 'validation'
+#     args.num_train_epochs = 2
+#     train(args)
+
+#     # check `experiment.db`
+#     json_path = str(tmpdir/'experiment.db')
+#     assert os.path.exists(json_path)
+#     with open(json_path) as f:
+#         exp_json = json.load(f)
+#     assert exp_json['experiment_name'] == tmpdir.basename
+#     assert exp_json['experiment_path'] == str(tmpdir)
+#     assert exp_json['base_checkpoint'] == 'openai/whisper-tiny'
+
+#     execution_list = exp_json['executions']
+#     assert type(execution_list) is list
+#     assert len(execution_list) == 1
+
+#     assert type(execution_list[0]) is dict
+#     val_uuid = execution_list[0]['uuid']
+#     assert type(val_uuid) is str
+#     assert type(execution_list[0]['start_time']) is str
+#     assert type(execution_list[0]['argv']) is str
+#     assert execution_list[0]['num_train_epochs'] == 2
+#     assert execution_list[0]['action'] == 'validation'
+
+
+#     val_data = exp_json['eval_data']
+#     assert type(val_data) is list
+#     assert len(val_data) == 1
+#     assert val_data[0]['dataset'] == os.path.basename(TIRA_ASR_DS)
+#     assert val_data[0]['dataset_path'] == TIRA_ASR_DS
+#     assert val_data[0]['language'] == 'sw'
+#     assert val_data[0]['num_records'] == 2
+
+#     val_events = val_data[0]['events']
+#     assert type(val_events) is list
+#     assert len(val_events) > 1
+#     for event in val_events:
+#         assert 'tag' in event
+#         assert 'value' in event
+#         assert 'step' in event
+#         assert 'uuid' in event
+#         assert 'start_time' in event
+#         assert event['uuid']==val_uuid
+#         assert event['step'] is None

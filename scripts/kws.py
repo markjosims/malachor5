@@ -376,7 +376,7 @@ def perform_kws(args):
         for batch in dataloader(audio_frames, batch_size=args.batch_size):
             batch_speech_embeds = embed_speech(batch, speech_encoder)
             if args.oov_type in ['avg_speech_prob', 'avg_speech_prob_weighted']:
-                speech_embeds.append(batch_speech_embeds)
+                speech_embeds.append(batch_speech_embeds.cpu())
             batch_sim_mat = get_keyword_sim(
                 audio_list=batch,
                 text_list=keyword_list,

@@ -438,7 +438,7 @@ def set_generation_config(args, model, tokenizer):
 def load_whisper_model_for_training_or_eval(args) -> WhisperForConditionalGeneration:
     if args.ft_peft_model:
         model = load_peft_model_for_finetuning(args)
-    elif args.action in ('evaluate', 'test') and args.peft_type:
+    elif args.action in ('validation', 'test') and args.peft_type:
         return load_whisper_peft(args)
     elif args.checkpoint and not args.peft_type:
         model = WhisperForConditionalGeneration.from_pretrained(args.checkpoint)
