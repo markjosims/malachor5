@@ -236,8 +236,12 @@ def populate_experiment_and_hyperparams(
 
     param_rows = []
     for arg, val in argdict.items():
-        row = Hyperparam(param=arg, value=val, experiment_id=experiment.id)
+        try:
+            row = Hyperparam(param=arg, value=float(val), experiment_id=experiment.id)
+        except ValueError:
+            row = Hyperparam(param=arg, text=str(val), experiment_id=experiment.id)
         param_rows.append(row)
+
     sql_db.add_all(param_rows)
     sql_db.commit()
 
