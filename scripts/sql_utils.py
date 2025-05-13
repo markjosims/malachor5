@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, declarative_base, Mapped, mapped_column
 from typing import *
 import sys
 from argparse import Namespace
+import os
 
 """
 Classes for managing SQL database for storing experiment results.
@@ -147,10 +148,10 @@ def wrap_session(f):
     def g(sql_db, *args, **kwargs):
         if type(sql_db) is Session:
             return f(*args, **kwargs, sql_db=sql_db)
-        elif type(sql_db) is str:
-            engine = create_engine(SQL_PREFIX+sql_db)
-        elif type(sql_db) is engine:
+        elif type(sql_db) is Engine:
             engine = sql_db
+        else: # type(sql_db) is str:
+            engine = create_engine(SQL_PREFIX+sql_db)
         with Session(engine) as session:
             return f(*args, **kwargs, sql_db=session)
     return g
@@ -161,8 +162,13 @@ def get_or_add_row(
         sql_db: Union[str, Engine, Session],
         **kwargs,
     ) -> Table:
+    """
+    Tries to find a row in the specified table with data indicated by `kwargs`,
+    if not, adds new row. Returns row object.
+    """
     criteria = [
         getattr(table, k) == v for k,v in kwargs.items()
+        if v is not None
     ]
     query = select(Dataset).where(*criteria)
     result = sql_db.execute(query).first()
@@ -185,13 +191,13 @@ def populate_experiment_and_hyperparams(
     """
     Adds a row to the `Experiment` table containing
     """
-    argdict = vars(args)
+    argdict = vars(args).copy()
 
     # get model id
     model_name = argdict.pop('model')
     peft = argdict.pop('peft_type', None)
     base = argdict.pop('base_model', None)
-    model = get_or_add_row(Model, name=model_name, peft=peft, base=base)
+    model = get_or_add_row(table=Model, sql_db=sql_db, name=model_name, peft=peft, base=base)
 
     # add experiment row
     experiment = Experiment(
@@ -202,7 +208,31 @@ def populate_experiment_and_hyperparams(
     sql_db.add(experiment)
 
     # get datasets
+    # assume validating if no 'action' arg specified
+    # (e.g. with scripts with no training logic)
+    if 'dataset' in argdict:
+        ds_path = argdict.pop('dataset')
+    else:
+        ds_path = argdict.pop('input')
     action = argdict.get('action', 'validation')
+    
+    # script may specify extra train/validation datasets
+    train_datasets = argdict.pop('train_datasets', [])
+    eval_datasets = argdict.pop('eval_datasets', [])
+    if action == 'train':
+        train_datasets.append(ds_path)
+    # every experiment involves evaluation
+    eval_datasets.append(ds_path)
+    experiment_datasets = []
+    for train_ds in train_datasets:
+        ds_name = os.path.basename(train_ds)
+        ds = get_or_add_row(table=Dataset, sql_db=sql_db, name=ds_name, split='train')
+        experiment_datasets.append(ds)
+    for eval_ds in eval_datasets:
+        ds_name = os.path.basename(eval_ds)
+        ds = get_or_add_row(table=Dataset, sql_db=sql_db, name=ds_name, split='validation')
+        experiment_datasets.append(ds)
+    experiment.datasets = experiment_datasets
 
     param_rows = []
     for arg, val in argdict.items():
