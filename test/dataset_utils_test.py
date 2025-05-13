@@ -14,7 +14,7 @@ def test_dataset_language():
     args.language=['en']
     args.model='openai/whisper-tiny'
     args.num_records=50
-    args.action='evaluate'
+    args.action='validation'
 
     ds, _ = load_and_prepare_dataset(args)
     ds.map(
@@ -31,7 +31,7 @@ def test_dataset_multi_language():
     args.language=['en', 'sw']
     args.model='openai/whisper-tiny'
     args.num_records=50
-    args.action='evaluate'
+    args.action='validation'
 
     ds, _ = load_and_prepare_dataset(args)
     ds.map(
@@ -50,7 +50,7 @@ def test_eval_datasets():
     args.num_records=50
     args.eval_datasets=[FLEURS, TIRA_BILING]
     args.eval_dataset_languages=['en', 'sw+en']
-    args.action='evaluate'
+    args.action='validation'
 
     ds, _ = load_and_prepare_dataset(args)
     eval_datasets=ds['validation']
@@ -92,7 +92,7 @@ def test_decoder_input_added():
     args.language=['sw']
     args.model='openai/whisper-tiny'
     args.num_records=50
-    args.action='evaluate'
+    args.action='validation'
     
     ds, _ = load_and_prepare_dataset(args)
     assert 'forced_decoder_ids' in ds['validation'][0]
@@ -155,7 +155,7 @@ def test_label_prefix_added():
     args.language=['sw']
     args.model='openai/whisper-tiny'
     args.num_records=50
-    args.action='evaluate'
+    args.action='validation'
 
     ds, _ = load_and_prepare_dataset(args)
     ds['validation'].map(

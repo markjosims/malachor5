@@ -105,7 +105,7 @@ def make_experiment_json(args, training_args=None, predictions=None, add_executi
         exp_json['train_events'].extend(train_events)
         for eval_data_obj in eval_data:
             merge_eval_or_test_data(exp_json['eval_data'], eval_data_obj)
-    elif args.action == 'evaluate':
+    elif args.action == 'validation':
         eval_data = gather_val_dataset_metadata(args, tb_df)
         for eval_data_obj in eval_data:
             merge_eval_or_test_data(exp_json['eval_data'], eval_data_obj)

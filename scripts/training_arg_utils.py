@@ -38,7 +38,7 @@ TRAIN_PROG_ARGS = {
     'ft_peft_model': {'action': 'store_true'},
     'resume_from_checkpoint': {'action': 'store_true'},
     'checkpoint': {'type': int},
-    'action': {'choices': ['train', 'evaluate', 'test', 'calculate_fisher', 'get_lid_probs'], 'default': 'train'},
+    'action': {'choices': ['train', 'validation', 'test', 'calculate_fisher', 'get_lid_probs'], 'default': 'train'},
 }
 
 # hyperparams associated with `transformers.Seq2SeqTrainingArguments`

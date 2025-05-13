@@ -25,7 +25,7 @@ def test_lang_col_generate(tmpdir):
     args.num_records = 10
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
-    args.action = 'evaluate'
+    args.action = 'validation'
     args.eval_datasets=[FLEURS, FLEURS]
     args.eval_dataset_languages=['ar', 'zh']
 
@@ -62,7 +62,7 @@ def test_prompt_generate(tmpdir):
     args.num_records = 3
     args.predict_with_generate=True
     args.model = 'openai/whisper-tiny'
-    args.action = 'evaluate'
+    args.action = 'validation'
     args.per_device_eval_batch_size=1
 
     # define two prompt files
@@ -587,7 +587,7 @@ def test_sqlite_db(tmpdir):
 
 #     # evaluate
 #     args.model = str(tmpdir)
-#     args.action = 'evaluate'
+#     args.action = 'validation'
 #     args.predict_with_generate = True
 #     args.generation_num_beams = 2
 #     train(args)
@@ -626,7 +626,7 @@ def test_sqlite_db(tmpdir):
 #     assert type(eval_uuid) is str
 #     assert type(execution_list[1]['start_time']) is str
 #     assert type(execution_list[1]['argv']) is str
-#     assert execution_list[1]['action'] == 'evaluate'
+#     assert execution_list[1]['action'] == 'validation'
 
 #     assert type(execution_list[2]) is dict
 #     test_uuid = execution_list[2]['uuid']
@@ -783,9 +783,9 @@ def test_sqlite_db(tmpdir):
 #     args.num_train_epochs = 2
 #     train(args)
 
-#     # evaluate
+#     # validation
 #     args.model = str(tmpdir)
-#     args.action = 'evaluate'
+#     args.action = 'validation'
 #     args.dataset = FLEURS
 #     args.language = ['en']
 #     args.eval_checkpoints = ['all']
@@ -817,7 +817,7 @@ def test_sqlite_db(tmpdir):
 #     assert type(eval_uuid) is str
 #     assert type(execution_list[1]['start_time']) is str
 #     assert type(execution_list[1]['argv']) is str
-#     assert execution_list[1]['action'] == 'evaluate'
+#     assert execution_list[1]['action'] == 'validation'
 
 #     assert train_uuid != eval_uuid
 
@@ -878,13 +878,13 @@ def test_sqlite_db(tmpdir):
 #     parser = init_parser()
 #     args = parser.parse_args([])
 
-#     # evaluate
+#     # validation
 #     args.output = str(tmpdir)
 #     args.dataset = TIRA_ASR_DS
 #     args.language = ['sw']
 #     args.num_records = 2
 #     args.model = 'openai/whisper-tiny'
-#     args.action = 'evaluate'
+#     args.action = 'validation'
 #     args.num_train_epochs = 2
 #     train(args)
 
@@ -907,7 +907,7 @@ def test_sqlite_db(tmpdir):
 #     assert type(execution_list[0]['start_time']) is str
 #     assert type(execution_list[0]['argv']) is str
 #     assert execution_list[0]['num_train_epochs'] == 2
-#     assert execution_list[0]['action'] == 'evaluate'
+#     assert execution_list[0]['action'] == 'validation'
 
 
 #     val_data = exp_json['eval_data']

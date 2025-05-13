@@ -1,7 +1,7 @@
 import sys
 sys.path.append('scripts')
 from dataset_utils import SPECIAL_TOKENS_FLAT, FLEURS, TIRA_ASR_DS, TIRA_BILING
-from sql_utils import Dataset
+from sql_utils import Dataset, wrap_session
 import numpy as np
 from sqlalchemy import *
 from sqlalchemy.orm import Session
@@ -66,11 +66,10 @@ def assert_tokens_appear_once(row, token_names, col='labels'):
             assert labels.count(tok_id)==1, tok_id
 
 # SQL helpers
-
-def populate_dataset_table(engine):
-    with Session(engine) as session:
-        tira_asr = Dataset(language="Tira", name="Tira monolingual", path=TIRA_ASR_DS)
-        fleurs = Dataset(language="English", name="FLEURS English", path=FLEURS)
-        tira_biling = Dataset(language="English+Tira", name="Tira bilingual eval", path=TIRA_BILING)
-        session.add_all([tira_asr, fleurs, tira_biling])
-        session.commit()
+@wrap_session
+def populate_dataset_table(sql_db):
+    tira_asr = Dataset(language="Tira", name="Tira monolingual", path=TIRA_ASR_DS)
+    fleurs = Dataset(language="English", name="FLEURS English", path=FLEURS)
+    tira_biling = Dataset(language="English+Tira", name="Tira bilingual eval", path=TIRA_BILING)
+    sql_db.add_all([tira_asr, fleurs, tira_biling])
+    sql_db.commit()
