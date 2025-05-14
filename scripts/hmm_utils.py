@@ -63,6 +63,15 @@ def init_keyword_hmm(
         **transprob_kwargs,
 ) -> Tuple[SparseHMM, List[str]]:
     transitions, states = calculate_transition_probs(keyphrase_list, **transprob_kwargs)
+
+    if keyword_list:
+        # check that each keyword is found in states
+        for keyword in keyword_list:
+            if keyword not in states:
+                raise ValueError(f"Keyword {keyword} not found in list of unigrams keyphrases: {keyphrase_list}")
+        # preserve order indicated by keyword list
+        states = keyword_list + [state for state in states if state not in keyword_list]
+
     distribution_dict = {}
     if dist_type == 'sim_mat':
         for i, state in enumerate(states):
