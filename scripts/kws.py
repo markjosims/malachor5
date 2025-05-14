@@ -3,7 +3,7 @@ from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
-from hmm_utils import calculate_transition_probs, KeySimilarityMatrix
+from hmm_utils import init_keyword_hmm
 from regression_utils import get_lr_probs_params
 from string_norm import strip_diacs
 import torch
@@ -347,6 +347,9 @@ def perform_kws(args):
 
     audio_files = args.input
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
+
+    if args.inference_type == 'hmm':
+        hmm = init_keyword_hmm(keyphrase_list)
 
     speech_encoder = args.speech_encoder or f'anyspeech/clap-ipa-{args.encoder_size}-speech'
     speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
