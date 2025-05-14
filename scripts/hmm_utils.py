@@ -58,6 +58,7 @@ class KeySimilarityMatrix(Distribution):
     
 def init_keyword_hmm(
         keyphrase_list: List[str],
+        keyword_list: Optional[List[str]]=None,
         dist_type: Literal['embed_sim', 'sim_mat'] = 'sim_mat',
         embeddings: Optional[torch.Tensor] = None,
         **transprob_kwargs,
