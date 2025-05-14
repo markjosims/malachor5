@@ -280,6 +280,7 @@ def init_kws_parser():
     parser.add_argument('--keyword_file', '-kf')
     parser.add_argument('--keywords', '-kws', nargs='+')
     parser.add_argument('--inference_type', choices=['single_word', 'hmm'], default='single_word')
+    parser.add_argument('--output_types', choices=['eer', 'viterbi'], nargs='+', default=['eer'])
     parser.add_argument(
         '--oov_type',
         choices=['inverse_kwd_prob', 'avg_speech_prob', 'avg_speech_prob_weighted', 'whisper_lid_prob'],
@@ -442,19 +443,29 @@ def perform_kws(args):
             else: # args.inference_type == 'hmm':
                 # for now, only doing hmm inference when gold standard passed for evaluation
                 emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
-                forward_prob = hmm.forward(emission_mat)
-                keyword_probs_hmm = forward_prob[:,:-1]
-                oov_probs_hmm = forward_prob[:,-1]
-                hmm_eval = evaluate_kws(
-                    hmm_states,
-                    textgrid,
-                    sliding_windows,
-                    keyword_probs_hmm,
-                    oov_probs_hmm,
-                    args.eval_window,
-                )
-                hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
-                json_obj.update(**hmm_eval)
+                if 'eer' in args.output_types:
+                    forward_prob = hmm.forward(emission_mat)
+                    keyword_probs_hmm = forward_prob[:,:-1]
+                    oov_probs_hmm = forward_prob[:,-1]
+                    hmm_eval = evaluate_kws(
+                        hmm_states,
+                        textgrid,
+                        sliding_windows,
+                        keyword_probs_hmm,
+                        oov_probs_hmm,
+                        args.eval_window,
+                    )
+                    hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
+                    json_obj.update(**hmm_eval)
+        if 'viterbi' in args.output_types:
+            print("Computing Viterbi path with HMM...")
+            emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
+            viterbi = hmm.viterbi(emission_mat)
+            for i, timestamp in enumerate(json['timestamps']):
+                state_i = viterbi[i]
+                timestamp_keyword = hmm_states[state_i]
+                timestamp['hmm_state']=timestamp_keyword
+
 
 
         json_path = audio.replace('.wav', '.json')
