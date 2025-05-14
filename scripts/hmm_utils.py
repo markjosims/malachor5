@@ -1,5 +1,6 @@
 from pomegranate.distributions._distribution import Distribution
 from pomegranate._utils import _cast_as_tensor
+from pomegranate.hmm import SparseHMM
 import torch
 from typing import *
 from nltk import ngrams, FreqDist
@@ -54,6 +55,30 @@ class KeySimilarityMatrix(Distribution):
     
     def _reset_cache(self):
         return
+    
+def init_keyword_hmm(
+        keyphrase_list: List[str],
+        transprob_kwargs: Dict[str, float] = dict(),
+        dist_type: Literal['embed_sim', 'sim_mat'] = 'sim_mat',
+        embeddings: Optional[torch.Tensor] = None,
+) -> Tuple[SparseHMM, ]:
+    transitions, states = calculate_transition_probs(keyphrase_list, **transprob_kwargs)
+    distribution_dict = {}
+    if dist_type == 'sim_mat':
+        for i, state in enumerate(states):
+            distribution_dict[state]=KeySimilarityMatrix(col_i=i, max_i=len(states))
+    else: # dist_type == 'embed_sim
+        for i, state in enumerate(states):
+            distribution_dict[state]=EmbeddingSimilarity(embeddings[i])
+    hmm = SparseHMM(distributions=list(distribution_dict.values()))
+    for instate, outstate, prob in transitions:
+        hmm.add_edge(
+            distribution_dict[instate],
+            distribution_dict[outstate],
+            prob
+        )
+    breakpoint()
+    return hmm
     
 def tag_sentence(sentence: str) -> str:
     """
