@@ -3,7 +3,7 @@ from tira_elan_scraper import LIST_PATH
 import os
 import pandas as pd
 from string import Template
-from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration
+from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration, overwrite_dataset
 import json
 from datasets import load_from_disk, Dataset, DatasetDict
 
@@ -12,6 +12,8 @@ sys.path.append('scripts')
 from longform import load_vad_pipeline, perform_vad
 from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements
 from lid_utils import is_en_word
+from kws import embed_speech, embed_text
+from clap.encoders import SpeechEncoder, PhoneEncoder
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
 TIRA_ASR_CLIPS_DIR = os.environ.get("TIRA_ASR_CLIPS")
@@ -194,12 +196,21 @@ def main() -> int:
     PREPROCESSING_STEPS.append(unproc_audio_str)
     print(unproc_audio_str)
 
-    len_zero = hf_ds.filter(lambda row: len(row['audio']['array'])==0)
-    breakpoint()
     # hf_ds = hf_ds.select(range(10)) # uncomment for debugging
-    if 'vad_pct' not in hf_ds.column_names:
+    if 'vad_chunks' not in hf_ds.column_names:
         vad_pipe = load_vad_pipeline()
         hf_ds = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))
+        overwrite_dataset(unproc_ds_path, hf_ds)
+
+    if 'speech_embed' not in hf_ds.column_names:
+        speech_enc = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
+        hf_ds=hf_ds.map(lambda row: {'speech_embed': embed_speech(row['audio']['array'], speech_encoder=speech_enc)})
+        overwrite_dataset(unproc_ds_path, hf_ds)
+    
+    if 'text_embed' not in hf_ds.column_names:
+        text_enc = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-small-phone')
+        hf_ds=hf_ds.map(lambda row: {'text_embed': embed_text(row['audio']['array'], speech_encoder=text_enc)})
+        overwrite_dataset(unproc_ds_path, hf_ds)
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),

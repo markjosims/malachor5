@@ -5,11 +5,11 @@ from longform import load_and_resample, SAMPLE_RATE
 
 import os
 import pandas as pd
-from typing import Dict, Any, Optional, List, Literal
+from typing import *
 from collections import defaultdict
 import torchaudio
 import torch
-from datasets import DatasetDict, Audio, load_dataset
+from datasets import DatasetDict, Dataset, Audio, load_dataset, load_from_disk
 from tempfile import TemporaryDirectory
 from tqdm import tqdm
 tqdm.pandas()
@@ -36,6 +36,24 @@ def load_clips_to_ds(
         ds = ds.cast_column("audio", Audio(sampling_rate=SAMPLE_RATE))
         ds.save_to_disk(ds_dir)
     return ds
+
+def overwrite_dataset(
+        ds_path: str,
+        ds: Optional[Union[Dataset, DatasetDict]]=None,
+) -> str:
+    """
+    Overwrite a HuggingFace dataset by saving to a temporary directory, removing the original dataset
+    folder, and saving again.
+    """
+    if ds is None:
+        ds = load_from_disk(ds_path)
+    with TemporaryDirectory() as temp_dir:
+        ds.save_to_disk(temp_dir)
+        os.rmdir(ds_path)
+        ds=load_from_disk(temp_dir)
+        ds.save_to_disk(ds_path)
+
+    return ds_path
 
 def save_clips(
         df: pd.DataFrame,
