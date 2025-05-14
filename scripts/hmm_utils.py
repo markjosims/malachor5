@@ -58,10 +58,10 @@ class KeySimilarityMatrix(Distribution):
     
 def init_keyword_hmm(
         keyphrase_list: List[str],
-        transprob_kwargs: Dict[str, float] = dict(),
         dist_type: Literal['embed_sim', 'sim_mat'] = 'sim_mat',
         embeddings: Optional[torch.Tensor] = None,
-) -> Tuple[SparseHMM, ]:
+        **transprob_kwargs,
+) -> Tuple[SparseHMM, List[str]]:
     transitions, states = calculate_transition_probs(keyphrase_list, **transprob_kwargs)
     distribution_dict = {}
     if dist_type == 'sim_mat':
@@ -77,8 +77,7 @@ def init_keyword_hmm(
             distribution_dict[outstate],
             prob
         )
-    breakpoint()
-    return hmm
+    return hmm, states
     
 def tag_sentence(sentence: str) -> str:
     """
