@@ -480,11 +480,25 @@ def perform_kws(args):
             if 'viterbi' in args.output_types:
                 tg = Praat.TextGrid(textgrid)
                 viterbi_tier = tg.add_tier('viterbi')
+                prev_start = 0
+                prev_end = 0
+                prev_val = 'SPCH'
                 for timestamp in json_obj['timestamps']:
                     start = timestamp['start_s']
                     end = timestamp['end_s']
-                    value = timestamp['hmm_state']
-                    viterbi_tier.add_interval(start, end, value)
+                    val = timestamp['hmm_state']
+                    if (prev_val != 'SPCH') and (prev_val != val):
+                        # add previous keyword
+                        viterbi_tier.add_interval(prev_start, prev_end, prev_val)
+                    if (prev_val != val):
+                        # only update `prev_start` and `prev_val` if state has changed
+                        prev_start = start
+                        prev_val = val
+                    prev_end = end
+                    viterbi_tier.add_interval(start, end, val)
+                # check if last value was keyword
+                if prev_val != 'SPCH':
+                    viterbi_tier.add_interval(prev_start, prev_end, prev_val)
                 out_tg_path = json_path.replace('.json', '.TextGrid')
                 tg.to_file(out_tg_path)
 
