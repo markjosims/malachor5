@@ -443,10 +443,11 @@ def perform_kws(args):
                 # for now, only doing hmm inference when gold standard passed for evaluation
                 emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
                 forward_prob = hmm.forward(emission_mat)
-                keyword_probs_hmm = forward_prob[:,:-1]
-                oov_probs_hmm = forward_prob[:,-1]
+                keyword_probs_hmm = forward_prob[0,:,:-1]
+                keywords_hmm = [state_label.split('_')[0] for state_label in hmm_states[:-1]]
+                oov_probs_hmm = forward_prob[0,:,-1]
                 hmm_eval = evaluate_kws(
-                    hmm_states,
+                    keywords_hmm,
                     textgrid,
                     sliding_windows,
                     keyword_probs_hmm,
