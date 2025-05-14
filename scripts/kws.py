@@ -428,17 +428,18 @@ def perform_kws(args):
 
         if textgrid:
             # textgrid file passed, use to perform evaluation
-            json_obj.update(
-                **evaluate_kws(
-                    keyword_list,
-                    textgrid,
-                    sliding_windows, 
-                    sim_mat,
-                    oov_probs,
-                    args.eval_window,
+            if args.inference_type == 'single_word':
+                json_obj.update(
+                    **evaluate_kws(
+                        keyword_list,
+                        textgrid,
+                        sliding_windows, 
+                        sim_mat,
+                        oov_probs,
+                        args.eval_window,
+                    )
                 )
-            )
-            if args.inference_type == 'hmm':
+            else: # args.inference_type == 'hmm':
                 # for now, only doing hmm inference when gold standard passed for evaluation
                 emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
                 forward_prob = hmm.forward(emission_mat)
