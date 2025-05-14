@@ -349,7 +349,8 @@ def perform_kws(args):
     textgrids = args.textgrid if args.textgrid else [None for _ in audio_files]
 
     if args.inference_type == 'hmm':
-        hmm = init_keyword_hmm(keyphrase_list)
+        # ignoring silence for now
+        hmm, hmm_states = init_keyword_hmm(keyphrase_list, non_keyword_states=['SPCH'])
 
     speech_encoder = args.speech_encoder or f'anyspeech/clap-ipa-{args.encoder_size}-speech'
     speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
@@ -423,7 +424,7 @@ def perform_kws(args):
             'timestamps': sliding_windows,
             'similarity_matrix': sim_mat.tolist(),
             'oov_probs': oov_probs.tolist(),
-        }
+        }    
 
         if textgrid:
             # textgrid file passed, use to perform evaluation
@@ -437,6 +438,24 @@ def perform_kws(args):
                     args.eval_window,
                 )
             )
+            if args.inference_type == 'hmm':
+                # for now, only doing hmm inference when gold standard passed for evaluation
+                emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
+                forward_prob = hmm.forward(emission_mat)
+                keyword_probs_hmm = forward_prob[:,:-1]
+                oov_probs_hmm = forward_prob[:,-1]
+                hmm_eval = evaluate_kws(
+                    hmm_states,
+                    textgrid,
+                    sliding_windows,
+                    keyword_probs_hmm,
+                    oov_probs_hmm,
+                    args.eval_window,
+                )
+                hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
+                json_obj.update(**hmm_eval)
+
+
         json_path = audio.replace('.wav', '.json')
         if os.path.isdir(args.output):
             json_basename = os.path.basename(json_path)
