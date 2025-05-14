@@ -461,6 +461,8 @@ def perform_kws(args):
                 emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
                 if 'eer' in args.output_types:
                     forward_prob = hmm.forward(emission_mat)
+                    forward_prob = forward_prob.exp()
+                    forward_prob = torch.nan_to_num(forward_prob)
                     keyword_probs_hmm = forward_prob[:,:-1]
                     oov_probs_hmm = forward_prob[:,-1]
                     hmm_eval = evaluate_kws(
