@@ -437,8 +437,8 @@ def perform_kws(args):
         if 'viterbi' in args.output_types:
             print("Computing Viterbi path with HMM...")
             emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
-            viterbi = hmm.viterbi(emission_mat)
-            for i, timestamp in enumerate(json['timestamps']):
+            viterbi = hmm.viterbi(emission_mat).squeeze()
+            for i, timestamp in enumerate(json_obj['timestamps']):
                 state_i = viterbi[i]
                 timestamp_keyword = hmm_states[state_i]
                 timestamp['hmm_state']=timestamp_keyword
