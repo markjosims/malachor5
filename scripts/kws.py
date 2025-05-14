@@ -351,7 +351,7 @@ def perform_kws(args):
 
     if args.inference_type == 'hmm':
         # ignoring silence for now
-        hmm, hmm_states = init_keyword_hmm(keyphrase_list, non_keyword_states=['SPCH'])
+        hmm, hmm_states = init_keyword_hmm(keyphrase_list, keyword_list, non_keyword_states=['SPCH'])
 
     speech_encoder = args.speech_encoder or f'anyspeech/clap-ipa-{args.encoder_size}-speech'
     speech_encoder = SpeechEncoder.from_pretrained(speech_encoder)
@@ -442,7 +442,7 @@ def perform_kws(args):
                 )
             else: # args.inference_type == 'hmm':
                 # for now, only doing hmm inference when gold standard passed for evaluation
-                emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
+                emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
                 if 'eer' in args.output_types:
                     forward_prob = hmm.forward(emission_mat)
                     keyword_probs_hmm = forward_prob[:,:-1]
@@ -459,7 +459,7 @@ def perform_kws(args):
                     json_obj.update(**hmm_eval)
         if 'viterbi' in args.output_types:
             print("Computing Viterbi path with HMM...")
-            emission_mat = torch.stack(sim_mat, oov_probs, dim=1)
+            emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
             viterbi = hmm.viterbi(emission_mat)
             for i, timestamp in enumerate(json['timestamps']):
                 state_i = viterbi[i]
@@ -524,7 +524,7 @@ def evaluate_kws(
     return json_obj
 
 def get_eer_dict(ground_truth, kw_probs, oov_probs):
-    # get EER using just keyword probability
+    # get EER using just keyword probabilitytor
     eer, thresh = get_equal_error_rate(ground_truth, kw_probs)
 
     # get EER using keyword + OOV probability with LR
