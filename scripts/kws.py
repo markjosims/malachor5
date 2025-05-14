@@ -427,6 +427,15 @@ def perform_kws(args):
             'oov_probs': oov_probs.tolist(),
         }    
 
+        if 'viterbi' in args.output_types:
+            print("Computing Viterbi path with HMM...")
+            emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
+            viterbi = hmm.viterbi(emission_mat)
+            for i, timestamp in enumerate(json['timestamps']):
+                state_i = viterbi[i]
+                timestamp_keyword = hmm_states[state_i]
+                timestamp['hmm_state']=timestamp_keyword
+
         if textgrid:
             # textgrid file passed, use to perform evaluation
             if args.inference_type == 'single_word':
@@ -457,14 +466,6 @@ def perform_kws(args):
                     )
                     hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
                     json_obj.update(**hmm_eval)
-        if 'viterbi' in args.output_types:
-            print("Computing Viterbi path with HMM...")
-            emission_mat = torch.concat([sim_mat, oov_probs.unsqueeze(1)], dim=1).unsqueeze(0)
-            viterbi = hmm.viterbi(emission_mat)
-            for i, timestamp in enumerate(json['timestamps']):
-                state_i = viterbi[i]
-                timestamp_keyword = hmm_states[state_i]
-                timestamp['hmm_state']=timestamp_keyword
 
 
 
