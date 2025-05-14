@@ -5,7 +5,7 @@ import pandas as pd
 from string import Template
 from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration
 import json
-from datasets import load_from_disk
+from datasets import load_from_disk, Dataset, DatasetDict
 
 import sys
 sys.path.append('scripts')
@@ -185,16 +185,20 @@ def main() -> int:
     unproc_ds_path = os.path.join(TIRA_ASR_CLIPS_DIR, 'unprocessed_audio_ds')
 
     try:
-        hf_ds = load_from_disk(unproc_ds_path)['train']
+        hf_ds = load_from_disk(unproc_ds_path)
     except FileNotFoundError:
-        hf_ds = load_clips_to_ds(df, AUDIO_DIR, ds_dir=unproc_ds_path)['train']
+        hf_ds = load_clips_to_ds(df, AUDIO_DIR, ds_dir=unproc_ds_path)
+    if type(hf_ds) is DatasetDict:
+        hf_ds = hf_ds['train']
     unproc_audio_str = "- saved HF dataset with remaining audio records to 'unprocessed_audio_ds/' in $TIRA_ASR_CLIPS_DIR"
     PREPROCESSING_STEPS.append(unproc_audio_str)
     print(unproc_audio_str)
 
-    hf_ds = hf_ds.select(range(10)) # uncomment for debugging
-    vad_pipe = load_vad_pipeline()
-    vad_pcnts = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))["vad_chunks"]
+    # hf_ds = hf_ds.select(range(10)) # uncomment for debugging
+    if 'vad_pct' not in hf_ds.column_names:
+        vad_pipe = load_vad_pipeline()
+        hf_ds = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))
+        breakpoint()
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
