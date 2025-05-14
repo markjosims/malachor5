@@ -365,6 +365,13 @@ def perform_kws(args):
 
     # do KWS on each audio file
     for audio, textgrid in zip(audio_files, textgrids):
+        json_path = audio.replace('.wav', '.json')
+        if os.path.isdir(args.output):
+            json_basename = os.path.basename(json_path)
+            json_path = os.path.join(args.output_dir, json_basename)
+        elif args.output:
+            json_path = args.output
+
         wav = load_and_resample(audio).squeeze()
         sliding_windows = get_sliding_window(
             wav,
@@ -467,14 +474,20 @@ def perform_kws(args):
                     hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
                     json_obj.update(**hmm_eval)
 
+            # add viterbi output to textgrid if applicable
+            if 'viterbi' in args.output_types:
+                tg = Praat.TextGrid(textgrid)
+                viterbi_tier = tg.add_tier('viterbi')
+                for timestamp in json_obj['timestamps']:
+                    start = timestamp['start_s']
+                    end = timestamp['end_s']
+                    value = timestamp['hmm_state']
+                    viterbi_tier.add_interval(start, end, value)
+                out_tg_path = json_path.replace('.json', '.TextGrid')
+                tg.to_file(out_tg_path)
 
 
-        json_path = audio.replace('.wav', '.json')
-        if os.path.isdir(args.output):
-            json_basename = os.path.basename(json_path)
-            json_path = os.path.join(args.output_dir, json_basename)
-        elif args.output:
-            json_path = args.output
+
         with open(json_path, 'w', encoding='utf8') as f:
             json.dump(json_obj, f, ensure_ascii=False, indent=2)
 
