@@ -70,7 +70,7 @@ def init_keyword_hmm(
     else: # dist_type == 'embed_sim
         for i, state in enumerate(states):
             distribution_dict[state]=EmbeddingSimilarity(embeddings[i])
-    hmm = SparseHMM(distributions=list(distribution_dict.values()))
+    hmm = SparseHMM(distributions=[distribution_dict[state] for state in states])
     for instate, outstate, prob in transitions:
         hmm.add_edge(
             distribution_dict[instate],
@@ -207,8 +207,8 @@ def calculate_transition_probs(
     states = set(unigrams)
     states.remove(BOS)
     states.remove(EOS)
-    for state in non_keyword_states:
-        states.add(state)
+    states = list(states)
+    states.extend(non_keyword_states)
     return transitions, states
     
     
