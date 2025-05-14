@@ -58,27 +58,31 @@ class KeySimilarityMatrix(Distribution):
     
 def init_keyword_hmm(
         keyphrase_list: List[str],
-        keyword_list: Optional[List[str]]=None,
+        keyword_list: List[str],
         dist_type: Literal['embed_sim', 'sim_mat'] = 'sim_mat',
         embeddings: Optional[torch.Tensor] = None,
         **transprob_kwargs,
 ) -> Tuple[SparseHMM, List[str]]:
     transitions, states = calculate_transition_probs(keyphrase_list, **transprob_kwargs)
 
-    if keyword_list:
-        # check that each keyword is found in states
-        for keyword in keyword_list:
-            if keyword not in states:
-                raise ValueError(f"Keyword {keyword} not found in list of unigrams keyphrases: {keyphrase_list}")
-        # preserve order indicated by keyword list
-        states = keyword_list + [state for state in states if state not in keyword_list]
+    num_states = len(keyword_list)+1
+    state_idcs = {}
+    # map states to keywords
+    for state in states:
+        # trim tag from state
+        keyword = state.split('_')[0]
+        if keyword in keyword_list:
+            keyword_i = keyword_list.index(keyword)
+            state_idcs[state]=keyword_i
+        else:
+            state_idcs[state]=num_states-1
 
     distribution_dict = {}
     if dist_type == 'sim_mat':
-        for i, state in enumerate(states):
-            distribution_dict[state]=KeySimilarityMatrix(col_i=i, max_i=len(states))
+        for state, i in state_idcs.items():
+            distribution_dict[state]=KeySimilarityMatrix(col_i=i, max_i=num_states)
     else: # dist_type == 'embed_sim'
-        for i, state in enumerate(states):
+        for state, i in state_idcs.items():
             distribution_dict[state]=EmbeddingSimilarity(embeddings[i])
     hmm = SparseHMM(distributions=[distribution_dict[state] for state in states])
     for instate, outstate, prob in transitions:
