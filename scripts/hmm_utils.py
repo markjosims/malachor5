@@ -76,7 +76,7 @@ def init_keyword_hmm(
     if dist_type == 'sim_mat':
         for i, state in enumerate(states):
             distribution_dict[state]=KeySimilarityMatrix(col_i=i, max_i=len(states))
-    else: # dist_type == 'embed_sim
+    else: # dist_type == 'embed_sim'
         for i, state in enumerate(states):
             distribution_dict[state]=EmbeddingSimilarity(embeddings[i])
     hmm = SparseHMM(distributions=[distribution_dict[state] for state in states])
