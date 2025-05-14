@@ -9,3 +9,6 @@ Much of code in this notebook was later encapsulated in `scripts/kws.py`.
 
 ## visualize_kws.ipynb
 Visualize output of various runs of KWS.
+
+## hmm_inference.ipynb
+Sandboxing custom distributions with `pomegranate` for embedding similarity.
