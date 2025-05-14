@@ -453,7 +453,7 @@ def perform_kws(args):
                     oov_probs_hmm,
                     args.eval_window,
                 )
-                hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
+                #hmm_eval = {'hmm_'+k:v for k, v in hmm_eval.items()}
                 json_obj.update(**hmm_eval)
 
 
