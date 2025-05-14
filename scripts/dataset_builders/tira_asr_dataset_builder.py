@@ -194,11 +194,12 @@ def main() -> int:
     PREPROCESSING_STEPS.append(unproc_audio_str)
     print(unproc_audio_str)
 
+    len_zero = hf_ds.filter(lambda row: len(row['audio']['array'])==0)
+    breakpoint()
     # hf_ds = hf_ds.select(range(10)) # uncomment for debugging
     if 'vad_pct' not in hf_ds.column_names:
         vad_pipe = load_vad_pipeline()
         hf_ds = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))
-        breakpoint()
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
