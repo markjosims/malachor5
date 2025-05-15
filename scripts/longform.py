@@ -126,6 +126,7 @@ def perform_vad(
         return_wav_slices: bool = False,
         min_duration_on: float = 0.0,
         min_duration_off: float = 0.0,
+        progress_bar: bool = True,
 ):
 
     if not pipe:
@@ -133,11 +134,14 @@ def perform_vad(
 
     audio = prepare_audio_for_pyannote(audio)
 
-    with ProgressHook() as hook:
-        result = pipe(
-            {"waveform": audio, "sample_rate": SAMPLE_RATE},
-            hook=hook,
-        )
+    if progress_bar:
+        with ProgressHook() as hook:
+            result = pipe(
+                {"waveform": audio, "sample_rate": SAMPLE_RATE},
+                hook=hook,
+            )
+    else:
+        result = pipe({"waveform": audio, "sample_rate": SAMPLE_RATE})
     vad_chunks = [{'timestamp':(seg.start, seg.end)} for seg in result.itersegments()]
     if return_wav_slices:
         for chunk in vad_chunks:
