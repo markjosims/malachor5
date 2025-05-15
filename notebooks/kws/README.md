@@ -11,4 +11,7 @@ Much of code in this notebook was later encapsulated in `scripts/kws.py`.
 Visualize output of various runs of KWS.
 
 ## hmm_inference.ipynb
+Decode keyword similarity matrices from KWS using HMMs.
+
+## embed_distributions.ipynb
 Sandboxing custom distributions with `pomegranate` for embedding similarity.
