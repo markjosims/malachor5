@@ -34,6 +34,11 @@ def load_clips_to_ds(
         df.to_csv(os.path.join(temp_dir, 'clips.csv'), index=False)
         ds = load_dataset("audiofolder", data_dir=temp_dir)
         ds = ds.cast_column("audio", Audio(sampling_rate=SAMPLE_RATE))
+        ds = ds.map(lambda row: {
+            'clip_name': row['audio']['path'],
+            'index': int(row['audio']['path'].split('_')[-1].removesuffix('.wav')),
+        })
+        ds = ds.sort('index')
         ds.save_to_disk(ds_dir)
     return ds
 
