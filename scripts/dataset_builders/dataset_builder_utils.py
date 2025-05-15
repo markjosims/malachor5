@@ -25,9 +25,9 @@ def load_clips_to_ds(
 ) -> DatasetDict:
     """
     `df` is a dataframe with columns 'audio_basename', 'start', 'end'
-    `audio_dir` is a dirpath to load long audio from, `clip_dir` is a dirpath to save
-    clips for individual records to. Converts `df` to a HuggingFace Dataset
-    and loads individual clips indicated by rows in `df` into `audio` column
+    `audio_dir` is a dirpath to load long audio from, `ds_dir` is a dirpath to save
+    Pyarrow table to. Converts `df` to a HuggingFace Dataset and loads individual clips
+    indicated by rows in `df` into `audio` column and saves to disk.
     """
     with TemporaryDirectory() as temp_dir:
         save_clips(df, audio_dir, temp_dir)
