@@ -87,7 +87,7 @@ def save_clip(wav: torch.Tensor, row: Dict[str, Any], clip_dir: str):
     end_ms = row['end']
     clip = get_clip(wav, start_ms, end_ms)
 
-    basename = row['audio_basename']
+    basename = row['audio_basename'].remove_suffix('.wav')
     i = row.name
     clip_basename = f'{basename}_{i}.wav'
     clip_path = os.path.join(clip_dir, clip_basename)
