@@ -206,22 +206,22 @@ def textgrid_to_df(textgrid_path):
             })
     return pd.DataFrame(rows)
 
-def is_keyword_hit(df, keyword, timestamp, ignore_diacs=True):
-    midpoints = (df['start']+df['end'])/2
+def is_keyword_hit(timestamp, keyword_mask, midpoints):
     start_mask = midpoints>=timestamp['start_s']
     end_mask = midpoints<=timestamp['end_s']
-    if ignore_diacs:
-        keyword = strip_diacs(keyword)
-        keyword_mask = df['text'].apply(strip_diacs) == keyword
-    else:
-        keyword_mask = df['text'] == keyword
     return 1 if (start_mask & end_mask & keyword_mask).sum() > 0 else 0
 
 def get_midpoints(timestamps):
     return [(timestamp['end_s']+timestamp['start_s'])/2 for timestamp in timestamps]
 
-def timestamp_hits(df, keyword, timestamps):
-    return np.array([is_keyword_hit(df, keyword, t) for t in timestamps])
+def timestamp_hits(df, keyword, timestamps, ignore_diacs=True):
+    if ignore_diacs:
+        keyword = strip_diacs(keyword)
+        keyword_mask = df['text'].apply(strip_diacs) == keyword
+    else:
+        keyword_mask = df['text'] == keyword
+    midpoints = (df['start']+df['end'])/2
+    return np.array([is_keyword_hit(t, keyword_mask, midpoints) for t in timestamps])
 
 def get_equal_error_rate(ground_truth, keyword_probs) -> Tuple[float, float]:
     fpr, tpr, thresholds=roc_curve(ground_truth, keyword_probs)
