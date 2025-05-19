@@ -4,6 +4,7 @@ from lid_utils import get_word_language
 from longform import load_and_resample, SAMPLE_RATE
 
 import os
+import shutil
 import pandas as pd
 from typing import *
 from collections import defaultdict
@@ -44,19 +45,19 @@ def load_clips_to_ds(
 
 def overwrite_dataset(
         ds_path: str,
-        ds: Optional[Union[Dataset, DatasetDict]]=None,
+        ds: Union[Dataset, DatasetDict],
 ) -> str:
     """
-    Overwrite a HuggingFace dataset by saving to a temporary directory, removing the original dataset
-    folder, and saving again.
+    Overwrites dataset, storing previous dataset at '${ds_path}_backup'
     """
-    if ds is None:
-        ds = load_from_disk(ds_path)
-    with TemporaryDirectory() as temp_dir:
-        ds.save_to_disk(temp_dir)
-        os.rmdir(ds_path)
-        ds=load_from_disk(temp_dir)
-        ds.save_to_disk(ds_path)
+    tmp_path = ds_path+'.tmp'
+    ds.save_to_disk(tmp_path)
+    backup_path = ds_path+'_backup'
+    shutil.move(ds_path, backup_path)
+    shutil.move(tmp_path, ds_path)
+    ds = load_from_disk(ds_path)
+    print(f"Saved backup of dataset at {ds_path} to {backup_path}.")
+    print("Check integrity of new dataset and delete backup if not needed.")
 
     return ds_path
 
