@@ -6,13 +6,14 @@ from string import Template
 from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration, overwrite_dataset
 import json
 from datasets import load_from_disk, Dataset, DatasetDict
+import torch
 
 import sys
 sys.path.append('scripts')
 from longform import load_vad_pipeline, perform_vad
 from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements
 from lid_utils import is_en_word
-from kws import embed_speech, embed_text
+from kws import embed_speech, embed_text, dataloader
 from clap.encoders import SpeechEncoder, PhoneEncoder
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
@@ -203,14 +204,36 @@ def main() -> int:
         overwrite_dataset(unproc_ds_path, hf_ds)
 
     if 'speech_embed' not in hf_ds.column_names:
+        audio_list = [row['audio']['array'] for row in hf_ds]
+        speech_embeds = []
         speech_enc = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
-        hf_ds=hf_ds.map(lambda row: {'speech_embed': embed_speech(row['audio']['array'], speech_encoder=speech_enc)})
+        for batch in dataloader(audio_list, batch_size=64):
+            speech_embeds.extend(t.cpu().numpy() for t in embed_speech(batch, speech_enc))
+        hf_ds = hf_ds.add_column("speech_embed", speech_embeds)
         overwrite_dataset(unproc_ds_path, hf_ds)
     
     if 'text_embed' not in hf_ds.column_names:
         text_enc = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-small-phone')
-        hf_ds=hf_ds.map(lambda row: {'text_embed': embed_text(row['audio']['array'], speech_encoder=text_enc)})
+        text_list = df['text'].tolist()
+        text_embeds = []
+        for batch in dataloader(text_list, batch_size=64):
+            text_embeds.extend(t.cpu().numpy() for t in embed_text(batch, text_enc))
+        hf_ds = hf_ds.add_column("text_embed", text_embeds)
         overwrite_dataset(unproc_ds_path, hf_ds)
+    
+    if 'embed_cos_sim' not in hf_ds.column_names:
+        similarity = torch.nn.functional.cosine_similarity(
+            torch.tensor(hf_ds['speech_embed']),
+            torch.tensor(hf_ds['text_embed']),
+            dim=-1
+        ).tolist()
+        hf_ds = hf_ds.add_column("embed_cos_sim", similarity)
+        overwrite_dataset(unproc_ds_path, hf_ds)
+
+    if ('wada_snr' not in hf_ds.column_names) or ('nist_snr' not in hf_ds.column_names):
+        raise ValueError(
+            "Audio dataset does not have SNR values, add these columns using Matlab and restart program."
+        )
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
@@ -221,6 +244,9 @@ def main() -> int:
     with open(readme_out, 'w', encoding='utf8') as f:
         f.write(readme_header_str+'\n')
         f.write('\n'.join(PREPROCESSING_STEPS))
+
+    transcriptions_path = os.path.join(TIRA_ASR_CLIPS_DIR, 'transcriptions.csv')
+    df.to_csv(transcriptions_path, index_label='index')
 
 if __name__ == '__main__':
     main()
