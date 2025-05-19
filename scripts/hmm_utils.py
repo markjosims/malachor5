@@ -91,6 +91,17 @@ def init_keyword_hmm(
             distribution_dict[outstate],
             prob
         )
+    for state in states:
+        hmm.add_edge(
+            distribution_dict[state],
+            hmm.end,
+            1/len(states)
+        )
+        hmm.add_edge(
+            hmm.start,
+            distribution_dict[state],
+            1/len(states)
+        )
     return hmm, states
     
 def tag_sentence(sentence: str) -> str:
