@@ -29,6 +29,9 @@ class EmbeddingSimilarity(Distribution):
         X = _cast_as_tensor(X)
         return torch.nn.functional.cosine_similarity(self.state_embed, X).log()
     
+    def from_summaries(self):
+        return
+    
 class KeySimilarityMatrix(Distribution):
     """
     Defines a 'distribution' whose probability is determined by the value of a certain column,
@@ -54,6 +57,9 @@ class KeySimilarityMatrix(Distribution):
         return X[:,self.col_i].log()
     
     def _reset_cache(self):
+        return
+
+    def from_summaries(self):
         return
     
 def init_keyword_hmm(
