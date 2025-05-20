@@ -11,7 +11,7 @@ import os
 # --------------- #
 def row_to_wav(row: Dict[str, Any], outdir: str) -> None:
     """
-    Reads samples a Dataset Audio row (in the form of a dictionary)
+    Reads samples from a Dataset Audio row (in the form of a dictionary)
     and save as a wav in the specified `outdir`.
     """
     basepath = row['audio']['path']
