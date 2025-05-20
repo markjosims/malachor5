@@ -197,11 +197,32 @@ def main() -> int:
     PREPROCESSING_STEPS.append(unproc_audio_str)
     print(unproc_audio_str)
 
+    col_added = False
+
     # hf_ds = hf_ds.select(range(10)) # uncomment for debugging
+    if 'duration' not in hf_ds.column_names:
+        duration = [row['audio']['array'].shape[-1] / row['audio']['sampling_rate'] for row in hf_ds]
+        hf_ds = hf_ds.add_column('duration', duration)
+        col_added = True
+
     if 'vad_chunks' not in hf_ds.column_names:
         vad_pipe = load_vad_pipeline()
         hf_ds = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))
-        overwrite_dataset(unproc_ds_path, hf_ds)
+        col_added = True
+
+    if 'vad_duration' not in hf_ds.column_names:
+        vad_duration = [
+            sum(
+                chunk['timestamp'][1]-chunk['timestamp'][0] for chunk in row['vad_chunks']
+            ) for row in hf_ds
+        ]
+        hf_ds = hf_ds.add_column('vad_duration', vad_duration)
+        col_added = True
+    
+    if 'vad_pct' not in hf_ds.column_names:
+        vad_pct = [row['vad_duration']/row['duration'] for row in hf_ds]
+        hf_ds = hf_ds.add_column('vad_pct', vad_pct)
+        col_added = True
 
     if 'speech_embed' not in hf_ds.column_names:
         audio_list = [row['audio']['array'] for row in hf_ds]
@@ -210,7 +231,7 @@ def main() -> int:
         for batch in dataloader(audio_list, batch_size=64):
             speech_embeds.extend(t.cpu().numpy() for t in embed_speech(batch, speech_enc))
         hf_ds = hf_ds.add_column("speech_embed", speech_embeds)
-        overwrite_dataset(unproc_ds_path, hf_ds)
+        col_added = True
     
     if 'text_embed' not in hf_ds.column_names:
         text_enc = PhoneEncoder.from_pretrained('anyspeech/clap-ipa-small-phone')
@@ -219,7 +240,7 @@ def main() -> int:
         for batch in dataloader(text_list, batch_size=64):
             text_embeds.extend(t.cpu().numpy() for t in embed_text(batch, text_enc))
         hf_ds = hf_ds.add_column("text_embed", text_embeds)
-        overwrite_dataset(unproc_ds_path, hf_ds)
+        col_added = True
     
     if 'embed_cos_sim' not in hf_ds.column_names:
         similarity = torch.nn.functional.cosine_similarity(
@@ -228,12 +249,15 @@ def main() -> int:
             dim=-1
         ).tolist()
         hf_ds = hf_ds.add_column("embed_cos_sim", similarity)
-        overwrite_dataset(unproc_ds_path, hf_ds)
+        col_added = True
 
     if ('wada_snr' not in hf_ds.column_names) or ('nist_snr' not in hf_ds.column_names):
         raise ValueError(
             "Audio dataset does not have SNR values, add these columns using Matlab and restart program."
         )
+    
+    if col_added:
+        overwrite_dataset(unproc_ds_path, hf_ds)
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
