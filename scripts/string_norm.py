@@ -238,8 +238,5 @@ def get_tone_as_letters(text: str) -> str:
 def split_segs_and_tone(text: str) -> Tuple[str, str]:
     return strip_diacs(text, tone_only=True), get_tone_as_letters(text)
 
-
-
-
 def has_tira_chars(s: str) -> bool:
     return s==remove_nontira_chars(s)
