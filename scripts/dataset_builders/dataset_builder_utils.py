@@ -112,6 +112,25 @@ def get_clip(wav: torch.Tensor, start_ms: int, end_ms: int):
     end_samples = int(end_ms*samples_per_ms)
     return wav[:, start_samples:end_samples]
 
+def save_row_and_label(row, outdir: str, df: pd.DataFrame) -> None:
+    """
+    Reads audio samples from Dataset row, find corresponding transcription
+    from Dataframe, and save as .wav and .lab files.
+    Useful for making a corpus for MFA.
+    """
+    index = row['index']
+    wav_path = os.path.join(outdir, f"{index}.wav")
+    wav_array = row['audio']['array']
+    sr = row['audio']['sampling_rate']
+    # cast to torch tensor and make 2D
+    wav_tensor = torch.Tensor(wav_array).unsqueeze(0)
+    torchaudio.save(wav_path, wav_tensor, sr)
+
+    text = df.at[index, 'text']
+    lab_path = wav_path.replace('.wav', '.lab')
+    with open(lab_path, encoding='utf8', mode='w') as f:
+        f.write(text)
+
 # ------------------------ #
 # dataset metadata helpers #
 # ------------------------ #
