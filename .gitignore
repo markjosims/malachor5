@@ -172,3 +172,6 @@ settings.json
 
 # device-specific environemnt file
 dockerenv.sh
+
+# lockfiles
+~$*
