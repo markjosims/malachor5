@@ -90,6 +90,11 @@ def get_remove_oov_char_funct(vocab_file: str) -> Callable[str, str]:
         charlist=json.load(f)
     return lambda s: ''.join(c for c in s if c in charlist)
 
+remove_nontira_chars_f = get_remove_oov_char_funct('meta/tira_asr_unique_chars.json')
+
+def remove_nontira_chars(s):
+    return remove_nontira_chars_f(s)
+
 def condense_tones(s: str) -> str:
     """
     Return a string such that for each sequence of multiple tone chars in `s`,
@@ -234,7 +239,6 @@ def split_segs_and_tone(text: str) -> Tuple[str, str]:
     return strip_diacs(text, tone_only=True), get_tone_as_letters(text)
 
 
-remove_nontira_chars = get_remove_oov_char_funct('meta/tira_asr_unique_chars.json')
 
 
 def has_tira_chars(s: str) -> bool:
