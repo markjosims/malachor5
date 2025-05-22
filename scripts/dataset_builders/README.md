@@ -36,3 +36,6 @@ For each reacording outputs `$RECORDING.txt` and `$RECORDING-no-overlap.txt`, wh
 ## tira_morph_dataset_builder.py
 Loads list stored at `meta/tira_elan_raw.csv` and generates a text dataset for morphological analysis using IPA transcriptions
 with same preprocessing steps used by `tira_asr_dataset_builder.py`.
+
+## tira_verb_dataset_builder.py
+Loads Excel spreadsheet stored at `meta/tira_verbs_raw.xlsx` and creates a `.csv` file with
