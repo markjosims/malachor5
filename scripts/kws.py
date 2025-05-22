@@ -190,11 +190,11 @@ def get_sliding_window(
 # eval helpers w Praat textgrids #
 # ------------------------------ #
 
-def textgrid_to_df(textgrid_path):
+def textgrid_to_df(textgrid_path, words_only: bool = True):
     tg = Praat.TextGrid(textgrid_path)
     rows = []
     for tier in tg.get_tiers():
-        if 'word' not in tier.name:
+        if words_only and 'word' not in tier.name:
             continue
         speaker = tier.name.split()[0]
         for start, end, val in tier.get_all_intervals():
@@ -202,7 +202,8 @@ def textgrid_to_df(textgrid_path):
                 'start': start,
                 'end': end,
                 'text': val,
-                'speaker': speaker
+                'speaker': speaker,
+                'tier': tier.name,
             })
     return pd.DataFrame(rows)
 
