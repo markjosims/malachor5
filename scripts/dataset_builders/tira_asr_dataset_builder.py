@@ -3,10 +3,11 @@ from tira_elan_scraper import LIST_PATH
 import os
 import pandas as pd
 from string import Template
-from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration, overwrite_dataset
+from dataset_builder_utils import get_readable_duration, load_clips_to_ds, get_df_duration, overwrite_dataset, save_row_and_label
 import json
 from datasets import load_from_disk, Dataset, DatasetDict
 import torch
+from glob import glob
 
 import sys
 sys.path.append('scripts')
@@ -15,6 +16,7 @@ from string_norm import unicode_normalize, has_diac, remove_punct, unicode_descr
 from lid_utils import is_en_word
 from kws import embed_speech, embed_text, dataloader
 from clap.encoders import SpeechEncoder, PhoneEncoder
+from string_norm import tira2mfa, condense_tones
 
 AUDIO_DIR = os.environ.get("TIRA_ELICITATION_WAVS")
 TIRA_ASR_CLIPS_DIR = os.environ.get("TIRA_ASR_CLIPS")
@@ -162,6 +164,14 @@ def perform_textnorm(
     print(expected_char_str)
     preproc_steps.append(expected_char_str)
 
+    no_stacked_tones = df['text'].apply(condense_tones)
+    stacked_tone_mask = df['text']!=no_stacked_tones
+    duplicate_tone_str = f"- Found {stacked_tone_mask.sum()} rows where on or more words had several consecutive tone markers. "+\
+        "Only keeping first tone marker."
+    df['text']=no_stacked_tones
+    print(duplicate_tone_str)
+    preproc_steps.append(duplicate_tone_str)
+
     return df, preproc_steps
 
 def main() -> int:
@@ -209,6 +219,9 @@ def main() -> int:
         vad_pipe = load_vad_pipeline()
         hf_ds = hf_ds.map(lambda row: perform_vad(row['audio']['array'], pipe=vad_pipe))
         col_added = True
+    vad_str = "- Detect regions of speech with PyAnnote VAD"
+    PREPROCESSING_STEPS.append(vad_str)
+    print(vad_str)
 
     if 'vad_duration' not in hf_ds.column_names:
         vad_duration = [
@@ -251,13 +264,44 @@ def main() -> int:
         hf_ds = hf_ds.add_column("embed_cos_sim", similarity)
         col_added = True
 
+    embed_str = "- Calculated CLAP IPA text and phone embeddings for dataset"
+    print(embed_str)
+    PREPROCESSING_STEPS.append(embed_str)
+
     if ('wada_snr' not in hf_ds.column_names) or ('nist_snr' not in hf_ds.column_names):
         raise ValueError(
             "Audio dataset does not have SNR values, add these columns using Matlab and restart program."
         )
     
+    snr_str = "- Calculated Wada SNR and NIST SNR on audio"
+    print(snr_str)
+    PREPROCESSING_STEPS.append(snr_str)
+
     if col_added:
         overwrite_dataset(unproc_ds_path, hf_ds)
+
+    print("Saving audio for MFA")
+    mfa_dir = os.path.join(TIRA_ASR_CLIPS_DIR, 'mfa_input')
+    mfa_audio = os.path.join(mfa_dir, 'himidan')
+    os.makedirs(mfa_dir, exist_ok=True)
+    mfa_num_wavs = len(glob(os.path.join(mfa_audio, '*.wav')))
+    mfa_num_labs = len(glob(os.path.join(mfa_audio, '*.lab')))
+    if not mfa_num_wavs == len(hf_ds) and mfa_num_labs == len(hf_ds):
+        hf_ds.map(lambda row: save_row_and_label(row, mfa_audio, df))
+    mfa_str = "- Saved audio and text labels for alignment with MFA in dir `mfa_input`"
+    PREPROCESSING_STEPS.append(mfa_str)
+    print(mfa_str)
+
+    unique_words = set()
+    df['text'].str.split().apply(unique_words.update)
+    wordlist_path = os.path.join(mfa_dir, 'tira.dict')
+    with open(wordlist_path, encoding='utf8', mode='w') as f:
+        f.write('\n'.join(
+            f"{word}\t{tira2mfa(word)}" for word in unique_words if len(word)>1
+        ))
+    unique_word_str = f"- Saved MFA dictionary for Tira to `mfa_input/tira.dict`"
+    PREPROCESSING_STEPS.append(unique_word_str)
+    print(unique_word_str)
 
     readme_header_str = README_HEADER.substitute(
         num_records=len(df),
