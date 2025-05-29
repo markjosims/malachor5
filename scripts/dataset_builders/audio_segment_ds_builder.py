@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from glob import glob
 from tqdm import tqdm
 import os
+import pandas as pd
 
 import sys
 sys.path.append('scripts')
