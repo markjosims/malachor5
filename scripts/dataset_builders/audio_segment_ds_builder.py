@@ -28,7 +28,7 @@ def get_windows(row, framelengths, frameshifts, window_ds_list):
         window_ds = window_ds.add_column("frameshift", [frameshift]*len(window_ds))
         window_ds = window_ds.add_column('level', ['sliding_window']*len(window_ds))
         window_ds = window_ds.add_column('index', [row['index']]*len(window_ds))
-        window_ds = window_ds.add_column('clip_name', [row['clip_name']]*len(all_windows_ds))
+        window_ds = window_ds.add_column('clip_name', [row['clip_name']]*len(window_ds))
         window_ds_list.append(window_ds)
 
 def main(argv: Optional[Sequence[str]]=None) -> int:
