@@ -140,7 +140,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     for batch in dataloader(unique_text):
         batch_embeds = embed_text(batch)
         batch_embeds = batch_embeds.cpu()
-        text2embed.update(k: batch_embeds[i] for k, i in enumerate(batch))
+        text2embed.update({k: batch_embeds[i] for k, i in enumerate(batch)})
     del text_encoder
 
     text2embed_align = {'': None}
@@ -148,7 +148,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     for batch in dataloader(unique_text):
         batch_embeds = embed_text(batch)
         batch_embeds = batch_embeds.cpu()
-        text2embed_align.update(k: batch_embeds[i] for k, i in enumerate(batch))
+        text2embed_align.update({k: batch_embeds[i] for k, i in enumerate(batch)})
     del text_aligner
 
     window_ds = window_ds.map(
