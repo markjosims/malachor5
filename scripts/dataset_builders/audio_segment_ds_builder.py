@@ -110,10 +110,9 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     outdir = args.output or args.dataset+'_frames'
 
     # get speech embeddings
-    audio_clips = [row['samples'] for row in window_ds]
     speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
     speech_embeds = []
-    for batch in dataloader(audio, args.batch_size):
+    for batch in dataloader(window_ds['samples'], args.batch_size):
         batch_embeds = embed_speech(batch, speech_encoder)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
@@ -122,7 +121,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     speech_aligner = SpeechEncoder.from_pretrained('anyspeech/ipa-align-small-speech')
     speech_embeds = []
-    for batch in dataloader(audio, args.batch_size):
+    for batch in dataloader(window_ds['samples'], args.batch_size):
         batch_embeds = embed_speech(batch, speech_aligner)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
