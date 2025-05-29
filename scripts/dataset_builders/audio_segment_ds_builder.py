@@ -81,7 +81,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     ds.map(
         lambda row: get_windows(row, args.framelengths, args.frameshifts, window_ds_list),
     )
-    tg_paths = glob(os.path.join(align_dir, '*.TextGrid'))
+    tg_paths = glob(os.path.join(args.textgrid_dir, '*.TextGrid'))
     tg_df=get_agg_tg_df(tg_paths)
     ds.map(
         lambda row: get_phone_word_rows(row, tg_df, window_ds_list)
