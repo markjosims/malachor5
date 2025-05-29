@@ -2,6 +2,7 @@ from typing import *
 from datasets import load_from_disk, Dataset, DatasetDict, concatenate_datasets
 from argparse import ArgumentParser
 from glob import glob
+from tqdm import tqdm
 import os
 
 import sys
