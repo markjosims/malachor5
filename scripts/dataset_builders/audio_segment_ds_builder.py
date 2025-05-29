@@ -119,7 +119,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
     speech_embeds = []
     for batch in dataloader(window_ds, args.batch_size):
-        batch_embeds = embed_speech(batch, speech_encoder)
+        audio = [row['samples'] for row in batch]
+        batch_embeds = embed_speech(audio, speech_encoder)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
     del speech_encoder
@@ -128,7 +129,8 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     speech_aligner = SpeechEncoder.from_pretrained('anyspeech/ipa-align-small-speech')
     speech_embeds = []
     for batch in dataloader(window_ds, args.batch_size):
-        batch_embeds = embed_speech(batch, speech_aligner)
+        audio = [row['samples'] for row in batch]
+        batch_embeds = embed_speech(audio, speech_aligner)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
     del speech_aligner
