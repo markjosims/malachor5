@@ -106,10 +106,11 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
         lambda row: get_phone_word_rows(row, tg_df, window_ds_list)
     )
 
+    print("Concatenating rows into single dataset...")
     window_ds = concatenate_datasets(window_ds_list)
     outdir = args.output or args.dataset+'_frames'
 
-    # get speech embeddings
+    print("Computing speech embeddings...")
     speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
     speech_embeds = []
     for batch in dataloader(window_ds['samples'], args.batch_size):
@@ -128,7 +129,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     del speech_aligner
     window_ds = window_ds.add_column('align_embed_speech', speech_embeds)
 
-    # get text embeddings
+    print("Computing text embeddings...")
     # since num(unique text strs) << num(rows), create a memo of embeds
     # for each unique str and map to dataset rows
     unique_text = set(window_ds['text'])
