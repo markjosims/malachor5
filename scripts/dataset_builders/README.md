@@ -18,6 +18,10 @@ Scripts should also output `metadata.yaml` in the output directory containing me
 
 # dataset builder scripts
 
+## audio_segment_ds_builder.py
+Given an input directory pointing to an audio dataset, creates a new dataset where each row is an audio frame
+sliced from a record in the original dataset.
+
 ## ground_truth_prompts.py
 Given input TextGrids, divides each TextGrid into chunks and creates a prompt for each chunk using Tira words present.
 Saves a `.json` file with the resulting timestamps and prompt sentences.
