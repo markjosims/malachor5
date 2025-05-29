@@ -135,15 +135,17 @@ def dataloader(
     if isinstance(data, IterableDataset):
         data_iterator = iter(data)
         reached_end = False
-        while not reached_end:
-            batch = []
-            i = 0
-            try:
-                while i<batch_size:
-                    batch.append(next(data_iterator))
-            except StopIteration:
-                reached_end=True
-            yield batch
+        with tqdm(total=data_len) as pbar:
+            while not reached_end:
+                pbar.update(1)
+                batch = []
+                i = 0
+                try:
+                    while i<batch_size:
+                        batch.append(next(data_iterator))
+                except StopIteration:
+                    reached_end=True
+                yield batch
     else:
         for start_index in tqdm(range(0, data_len, batch_size)):
             end_index = start_index+batch_size
