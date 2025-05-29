@@ -135,7 +135,7 @@ def dataloader(
     if isinstance(data, IterableDataset):
         data_iterator = iter(data)
         reached_end = False
-        with tqdm(total=data_len) as pbar:
+        with tqdm(total=data_len//batch_size) as pbar:
             while not reached_end:
                 pbar.update(1)
                 batch = []
