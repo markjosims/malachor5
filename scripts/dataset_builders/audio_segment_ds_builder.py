@@ -89,31 +89,36 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
     parser.add_argument("--framelengths", nargs="+", type=float, default=[0.020, 0.500])
     parser.add_argument("--frameshifts", nargs="+", type=float, default=[0.015, 0.400])
     args = parser.parse_args(argv)
-    ds = load_from_disk(args.dataset)
-    if type(ds) is DatasetDict:
-        ds = ds['train']
-
-    # get sliding windows
-    window_ds_list = []
-    ds.map(
-        lambda row: get_windows(row, args.framelengths, args.frameshifts, window_ds_list),
-    )
-
-    # get phone/word intervals from textgrids
-    tg_paths = glob(os.path.join(args.textgrid_dir, '*.TextGrid'))
-    tg_df=get_agg_tg_df(tg_paths)
-    ds.map(
-        lambda row: get_phone_word_rows(row, tg_df, window_ds_list)
-    )
-
-    print("Concatenating rows into single dataset...")
-    window_ds = concatenate_datasets(window_ds_list)
     outdir = args.output or args.dataset+'_frames'
+    if os.path.exists(outdir):
+        window_ds = load_from_disk(outdir)
+    else:
+        ds = load_from_disk(args.dataset)
+        if type(ds) is DatasetDict:
+            ds = ds['train']
+
+        # get sliding windows
+        window_ds_list = []
+        ds.map(
+            lambda row: get_windows(row, args.framelengths, args.frameshifts, window_ds_list),
+        )
+
+        # get phone/word intervals from textgrids
+        tg_paths = glob(os.path.join(args.textgrid_dir, '*.TextGrid'))
+        tg_df=get_agg_tg_df(tg_paths)
+        ds.map(
+            lambda row: get_phone_word_rows(row, tg_df, window_ds_list)
+        )
+
+        print("Concatenating rows into single dataset...")
+        window_ds = concatenate_datasets(window_ds_list)
+    ds_len = len(window_ds)
+    window_ds = window_ds.to_iterable_dataset()
 
     print("Computing speech embeddings...")
     speech_encoder = SpeechEncoder.from_pretrained('anyspeech/clap-ipa-small-speech')
     speech_embeds = []
-    for batch in dataloader(window_ds['samples'], args.batch_size):
+    for batch in dataloader(window_ds, args.batch_size):
         batch_embeds = embed_speech(batch, speech_encoder)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
@@ -122,7 +127,7 @@ def main(argv: Optional[Sequence[str]]=None) -> int:
 
     speech_aligner = SpeechEncoder.from_pretrained('anyspeech/ipa-align-small-speech')
     speech_embeds = []
-    for batch in dataloader(window_ds['samples'], args.batch_size):
+    for batch in dataloader(window_ds, args.batch_size):
         batch_embeds = embed_speech(batch, speech_aligner)
         speech_embeds.extend(batch_embeds.cpu())
         del batch_embeds
