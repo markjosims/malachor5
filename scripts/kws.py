@@ -143,6 +143,7 @@ def dataloader(
                 try:
                     while i<batch_size:
                         batch.append(next(data_iterator))
+                        i+=1
                 except StopIteration:
                     reached_end=True
                 yield batch
