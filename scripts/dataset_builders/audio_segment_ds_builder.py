@@ -34,6 +34,9 @@ def get_windows(row, framelengths, frameshifts, window_ds_list):
 
 def get_phone_word_rows(row, tg_df, window_ds_list):
     index = row['index']
+    # if index not in `tg_df`, MFA produced no output for this record
+    if index not in tg_df.index:
+        return
     clip_name = row['clip_name']
     audio = row['audio']['array']
     sr = row['audio']['sampling_rate']
