@@ -2,6 +2,7 @@ from typing import *
 from model_utils import DEVICE
 from clap.encoders import SpeechEncoder, PhoneEncoder
 from transformers import DebertaV2Tokenizer, AutoProcessor
+from datasets import IterableDataset
 from longform import load_and_resample, prepare_tensor_for_feature_extraction, SAMPLE_RATE
 from hmm_utils import init_keyword_hmm
 from regression_utils import get_lr_probs_params
@@ -126,10 +127,27 @@ def get_similarity_matrix(row_embeds: torch.Tensor, col_embeds: torch.Tensor) ->
 # audio helpers #
 # ------------- #
 
-def dataloader(data: Sequence[Any], batch_size: int) -> Generator[Sequence[any], None, None]:
-    for start_index in tqdm(range(0, len(data), batch_size)):
-        end_index = start_index+batch_size
-        yield data[start_index:end_index]
+def dataloader(
+    data: Sequence[Any], batch_size: int, data_len: Optional[int] = None
+)-> Generator[Sequence[any], None, None]:
+    if data_len is None:
+        data_len = len(data)
+    if isinstance(data, IterableDataset):
+        data_iterator = iter(data)
+        reached_end = False
+        while not reached_end:
+            batch = []
+            i = 0
+            try:
+                while i<batch_size:
+                    batch.append(next(data_iterator))
+            except StopIteration:
+                reached_end=True
+            yield batch
+    else:
+        for start_index in tqdm(range(0, data_len, batch_size)):
+            end_index = start_index+batch_size
+            yield data[start_index:end_index]
 
 def get_frame(
         audio: torch.Tensor,
