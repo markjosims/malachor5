@@ -299,8 +299,9 @@ def main() -> int:
         f.write('\n'.join(
             f"{word}\t{tira2mfa(word)}" for word in unique_words if len(word)>1
         ))
-        f.write("<GAP>\tsil")
-        f.write("<GAP>\tspn")
+        f.write('\n')
+        f.write("<GAP>\tsil\n")
+        f.write("<GAP>\tspn\n")
     unique_word_str = f"- Saved MFA dictionary for Tira to `mfa_input/tira.dict`"
     PREPROCESSING_STEPS.append(unique_word_str)
     print(unique_word_str)
