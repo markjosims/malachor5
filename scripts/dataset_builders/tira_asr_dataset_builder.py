@@ -286,7 +286,7 @@ def main() -> int:
     os.makedirs(mfa_dir, exist_ok=True)
     mfa_num_wavs = len(glob(os.path.join(mfa_audio, '*.wav')))
     mfa_num_labs = len(glob(os.path.join(mfa_audio, '*.lab')))
-    if not mfa_num_wavs == len(hf_ds) and mfa_num_labs == len(hf_ds):
+    if not (mfa_num_wavs == len(hf_ds)) and not (mfa_num_labs == len(hf_ds)):
         hf_ds.map(lambda row: save_row_and_label(row, mfa_audio, df))
     mfa_str = "- Saved audio and text labels for alignment with MFA in dir `mfa_input`"
     PREPROCESSING_STEPS.append(mfa_str)
