@@ -126,7 +126,8 @@ def save_row_and_label(row, outdir: str, df: pd.DataFrame) -> None:
     wav_tensor = torch.Tensor(wav_array).unsqueeze(0)
     torchaudio.save(wav_path, wav_tensor, sr)
 
-    text = df.at[index, 'text']
+    gap_token = '<GAP>'
+    text = f"{gap_token} {df.at[index, 'text']} {gap_token}"
     lab_path = wav_path.replace('.wav', '.lab')
     with open(lab_path, encoding='utf8', mode='w') as f:
         f.write(text)
