@@ -283,7 +283,7 @@ def main() -> int:
     print("Saving audio for MFA")
     mfa_dir = os.path.join(TIRA_ASR_CLIPS_DIR, 'mfa_input')
     mfa_audio = os.path.join(mfa_dir, 'himidan')
-    os.makedirs(mfa_dir, exist_ok=True)
+    os.makedirs(mfa_audio, exist_ok=True)
     mfa_num_wavs = len(glob(os.path.join(mfa_audio, '*.wav')))
     mfa_num_labs = len(glob(os.path.join(mfa_audio, '*.lab')))
     if not (mfa_num_wavs == len(hf_ds)) and not (mfa_num_labs == len(hf_ds)):
