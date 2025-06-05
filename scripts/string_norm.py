@@ -41,6 +41,8 @@ COMPOSITE = {
     "o": {"acute": "ó", "macrn": "ō", "grave": "ò", "caron": "ǒ", "circm": "ô", "tilde": "õ",},
     "u": {"acute": "ú", "macrn": "ū", "grave": "ù", "caron": "ǔ", "circm": "û", "tilde": "ũ",},
 }
+VOWELS = 'iɪuʊeɛoɔɜəa'
+SYLL_CONS = 'mnɲŋlrjw'
 with open('meta/language_codes.json') as f:
     LANG_CODES = json.load(f)
 with open('meta/tira2arpabet.json', encoding='utf8') as f:
