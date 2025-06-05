@@ -5,7 +5,7 @@ import json
 import epitran
 import string
 
-DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde',]
+DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron', 'tilde', 'bridge',]
 TONE_DIACS = ['grave', 'macrn', 'acute', 'circm', 'caron',]
 
 COMBINING = {
