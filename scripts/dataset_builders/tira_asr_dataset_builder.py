@@ -12,7 +12,7 @@ from glob import glob
 import sys
 sys.path.append('scripts')
 from longform import load_vad_pipeline, perform_vad
-from string_norm import unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements
+from string_norm import SYLL_CONS, VOWELS, unicode_normalize, has_diac, remove_punct, unicode_description, make_replacements, COMBINING_TONES, COMBINING
 from lid_utils import is_en_word
 from kws import embed_speech, embed_text, dataloader
 from clap.encoders import SpeechEncoder, PhoneEncoder
@@ -172,6 +172,84 @@ def perform_textnorm(
     print(duplicate_tone_str)
     preproc_steps.append(duplicate_tone_str)
 
+    def handle_stray_tone(sent: str):
+        """
+        Dock stray tone onto left or right char if its a tone-bearing segment.
+        If neither can bear tone, delete.
+        Also remove tone from beginning of str.
+        """
+        if sent[0] in COMBINING_TONES.values():
+            sent = sent[1:]
+        for tone in COMBINING_TONES.values():
+            stray_tone = ' ' + tone
+            while stray_tone in sent:
+                i = sent.index(stray_tone)
+                left_char = sent[i-1] if i>0 else None
+                right_char = sent[i+2] if i+2<len(sent) else None
+                if left_char and left_char in VOWELS+SYLL_CONS:
+                    sent = sent.replace(left_char+stray_tone, left_char+tone+' ', 1)
+                elif right_char and right_char in VOWELS+SYLL_CONS:
+                    sent = sent.replace(stray_tone+right_char, ' '+right_char+tone, 1)
+                else:
+                    sent = sent.replace(stray_tone, ' ', 1)
+        return sent
+    no_stray_tone = df['text'].apply(handle_stray_tone)
+    stray_tone_mask = no_stray_tone != df['text']
+    stray_tone_str = f"- Found {stray_tone_mask.sum()} rows with stray tone, docked to nearest TBU if applicable, else deleted"
+    df['text']=no_stray_tone
+    print(stray_tone_str)
+    preproc_steps.append(stray_tone_str)
+
+    tbu_chars = set()
+    tone_diacs = COMBINING_TONES.values()
+    def get_tbus_from_sent(sent):
+        tbus = []
+        for i, char in enumerate(sent[:-1]):
+            next_char = sent[i+1]
+            if next_char in tone_diacs:
+                tbus.append(char)
+        return tbus
+    tbu_col = df['text'].apply(get_tbus_from_sent)
+    tbu_col.apply(tbu_chars.update)
+
+
+    get_non_syll_tbus = lambda s: ''.join([c for c in s if c not in VOWELS+SYLL_CONS])
+    non_syll_tbus = tbu_col.apply(get_non_syll_tbus)
+    non_syll_tbu_mask = non_syll_tbus!=''
+    
+    def get_toneless_vowels(sent):
+        toneless_vowels = []
+        for i, char in enumerate(sent[:-1]):
+            next_char = sent[i+1]
+            if char in VOWELS and next_char not in COMBINING_TONES.values():
+                toneless_vowels.append(char)
+        return ''.join(toneless_vowels)
+    toneless_vowels = df['text'].apply(get_toneless_vowels)
+    toneless_vowel_mask = toneless_vowels!=''
+
+    bridge_diac = COMBINING['bridge']
+    def get_chars_w_bridge(sent: str):
+        chars_w_bridge = []
+        for i, char in enumerate(sent):
+            if char != bridge_diac:
+                continue
+            if i==0:
+                chars_w_bridge.append('^')
+            else:
+                prev_char = sent[i-1]
+                chars_w_bridge.append(prev_char)
+        return ''.join(chars_w_bridge)
+    
+    chars_w_bridge = df['text'].apply(get_chars_w_bridge)
+    only_t_or_d = lambda s: all(c in 'td' for c in s)
+    unexpected_bridge_mask = ~chars_w_bridge.apply(only_t_or_d)
+
+    year2023_mask = df['audio_basename'].str.contains('HH2023')
+
+    # TODO: exclude records from 2023 with any kind of malformed transcription
+    # as these are likely output from the MMS Tira finetune
+    # not resizing the dataset for now though
+
     return df, preproc_steps
 
 def main() -> int:
@@ -297,7 +375,7 @@ def main() -> int:
     wordlist_path = os.path.join(mfa_dir, 'tira.dict')
     with open(wordlist_path, encoding='utf8', mode='w') as f:
         f.write('\n'.join(
-            f"{word}\t{tira2mfa(word)}" for word in unique_words if len(word)>1
+            f"{word}\t{tira2mfa(word)}" for word in unique_words if len(word)>0
         ))
         f.write('\n')
         f.write("<GAP>\tsil\n")
