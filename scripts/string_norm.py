@@ -20,6 +20,13 @@ COMBINING = {
 COMBINING_TO_NAME = {
     v: k for k, v in COMBINING.items()
 }
+COMBINING_TONES = {
+    k: v for k, v in COMBINING.items()
+    if k in TONE_DIACS
+}
+TONE_TO_COMBINING = {
+    v: k for k, v in COMBINING.items()
+}
 TONE_LETTERS = {
     'grave': "L",
     'macrn': "M",
